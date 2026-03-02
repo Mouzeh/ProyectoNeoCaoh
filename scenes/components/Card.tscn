@@ -1,0 +1,40 @@
+[gd_scene format=3 uid="uid://bix4uu27k7jbc"]
+
+[ext_resource type="Script" uid="uid://chrk2waakwqd7" path="res://scripts/Card.gd" id="1_xk85y"]
+
+[node name="Card" type="Control" unique_id=663356070]
+layout_mode = 3
+anchors_preset = 0
+offset_right = 40.0
+offset_bottom = 40.0
+script = ExtResource("1_xk85y")
+
+[node name="CardFront" type="Panel" parent="." unique_id=994055808]
+layout_mode = 0
+offset_right = 40.0
+offset_bottom = 40.0
+
+[node name="NameLabel" type="Label" parent="CardFront" unique_id=376928758]
+layout_mode = 0
+offset_right = 40.0
+offset_bottom = 23.0
+
+[node name="HPLabel" type="Label" parent="CardFront" unique_id=1881699009]
+layout_mode = 0
+offset_right = 40.0
+offset_bottom = 23.0
+
+[node name="CardArt" type="TextureRect" parent="CardFront" unique_id=992395042]
+layout_mode = 0
+offset_right = 40.0
+offset_bottom = 40.0
+
+[node name="HPBar" type="ProgressBar" parent="CardFront" unique_id=1573017501]
+layout_mode = 0
+offset_right = 4.0
+offset_bottom = 27.0
+
+[node name="HighLigthBorder" type="Panel" parent="." unique_id=1764566681]
+layout_mode = 0
+offset_right = 40.0
+offset_bottom = 40.0
