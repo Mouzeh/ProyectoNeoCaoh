@@ -12,7 +12,7 @@ const CARDS: Dictionary = {
 		"retreat_cost": 2, "weakness": "FIGHTING", "resistance": "",
 		"rarity": "RARE_HOLO",
 		"attacks": [
-			{"name": "Gigaspark", "cost": {"LIGHTNING": 3}, "damage": 40, "effect": "Flip a coin. If heads, the Defending Pokémon is now Paralyzed and this attack does 10 damage to each of your opponent’s Benched Pokémon. Don’t apply Weakness and Resistance for Benched Pokémon."},
+			{"name": "Gigaspark", "cost": {"LIGHTNING": 3}, "damage": 40, "effect": "Flip a coin. If heads, the Defending Pokémon is now Paralyzed and this attack does 10 damage to each of your opponent's Benched Pokémon. Don't apply Weakness and Resistance for Benched Pokémon."},
 		]
 	},
 	"azumarill": {
@@ -24,7 +24,7 @@ const CARDS: Dictionary = {
 		"rarity": "RARE_HOLO",
 		"attacks": [
 			{"name": "Tackle", "cost": {"COLORLESS": 2}, "damage": 20, "effect": ""},
-			{"name": "Bubble Shower", "cost": {"WATER": 3}, "damage": 30, "effect": "Flip a coin. If heads, the Defending Pokémon is now Paralyzed and this attack does 10 damage to each of your opponent’s Benched Pokémon. Don’t apply Weakness and Resistance for Benched Pokémon."},
+			{"name": "Bubble Shower", "cost": {"WATER": 3}, "damage": 30, "effect": "Flip a coin. If heads, the Defending Pokémon is now Paralyzed and this attack does 10 damage to each of your opponent's Benched Pokémon. Don't apply Weakness and Resistance for Benched Pokémon."},
 		]
 	},
 	"bellossom": {
@@ -69,7 +69,7 @@ const CARDS: Dictionary = {
 			{"name": "Riptide", "cost": {"WATER": 1, "COLORLESS": 2}, "damage": 10, "effect": "Does 10 damage plus 10 damage times the number of Water Energy cards in your discard pile. Then, shuffle all Water Energy cards from your discard pile into your deck."}
 		]
 	},
-   "heracross": {
+	"heracross": {
 		"id": "heracross", "name": "Heracross", "number": "6/111",
 		"image": "res://assets/cards/Neo Genesis/heracross-neo-genesis-6.jpg",
 		"type": "POKEMON", "pokemon_type": "GRASS",
@@ -104,8 +104,8 @@ const CARDS: Dictionary = {
 		"retreat_cost": 2, "weakness": "", "resistance": "",
 		"rarity": "RARE_HOLO",
 		"attacks": [
-			{"name": "Agility", "cost": {"WATER": 2, "COLORLESS": 1}, "damage": 30, "effect": "Flip a coin. If heads, during your opponent’s next turn, prevent all effects of attacks, including damage, done to Kingdra."},
-			{"name": "Dragon Tornado", "cost": {"WATER": 4}, "damage": 50, "effect": "If this attack doesn’t Knock Out the Defending Pokémon, and if there are any Pokémon on your opponent’s Bench, choose 1 of them and switch it with the Defending Pokémon."},
+			{"name": "Agility", "cost": {"WATER": 2, "COLORLESS": 1}, "damage": 30, "effect": "Flip a coin. If heads, during your opponent's next turn, prevent all effects of attacks, including damage, done to Kingdra."},
+			{"name": "Dragon Tornado", "cost": {"WATER": 4}, "damage": 50, "effect": "If this attack doesn't Knock Out the Defending Pokémon, and if there are any Pokémon on your opponent's Bench, choose 1 of them and switch it with the Defending Pokémon."},
 		]
 	},
 	"lugia": {
@@ -116,7 +116,7 @@ const CARDS: Dictionary = {
 		"retreat_cost": 2, "weakness": "LIGHTNING", "resistance": "FIGHTING",
 		"rarity": "ULTRA_RARE",
 		"attacks": [
-			{"name": "Elemental Blast", "cost": {"WATER": 1,"FIRE": 1,"LIGHTNING": 1}, "damage": 90,"effect": "Discard a Fire Energy card, a Water Energy card, and a lighninth Energy card attached to Lugia in order to use this attack."},
+			{"name": "Elemental Blast", "cost": {"WATER": 1, "FIRE": 1, "LIGHTNING": 1}, "damage": 90, "effect": "Discard a Fire Energy card, a Water Energy card, and a Lightning Energy card attached to Lugia in order to use this attack."},
 		]
 	},
 	"meganium_1": {
@@ -157,7 +157,7 @@ const CARDS: Dictionary = {
 		"retreat_cost": 0, "weakness": "", "resistance": "",
 		"rarity": "RARE_HOLO",
 		"attacks": [
-			{"name": "Zzzap", "cost": {"LIGHTNING": 1}, "damage": 0, "effect": "Does 20 damage to each Pokémon in play that has a Pokémon Power. Don’t apply Weakness and Resistance."},
+			{"name": "Zzzap", "cost": {"COLORLESS": 1}, "damage": 0, "effect": "Does 20 damage to each Pokémon in play that has a Pokémon Power. Don't apply Weakness and Resistance."},
 		]
 	},
 	"skarmory": {
@@ -169,7 +169,7 @@ const CARDS: Dictionary = {
 		"rarity": "RARE_HOLO",
 		"attacks": [
 			{"name": "Claw", "cost": {"COLORLESS": 1}, "damage": 20, "effect": "Flip a coin. If tails, this attack does nothing."},
-			{"name": "Steel Wing", "cost": {"METAL": 1, "COLORLESS": 2}, "damage": 30, "effect": "Flip a coin. If heads, all damage done by attacks to Skarmory during your opponent’s next turn is reduced by 20 after applying Weakness and Resistance."},
+			{"name": "Steel Wing", "cost": {"METAL": 1, "COLORLESS": 2}, "damage": 30, "effect": "Flip a coin. If heads, all damage done by attacks to Skarmory during your opponent's next turn is reduced by 20 after applying Weakness and Resistance."},
 		]
 	},
 	"slowking": {
@@ -207,8 +207,8 @@ const CARDS: Dictionary = {
 		"retreat_cost": 1, "weakness": "", "resistance": "FIGHTING",
 		"rarity": "RARE_HOLO",
 		"attacks": [
-			{"name": "Super Metronome", "cost": {"COLORLESS": 1}, "damage": 0, "effect": "Flip a coin. If heads, choose an attack on 1 of your opponent’s Pokémon. Super Metronome copies that attack except for its Energy cost. You must still do anything else in order to use that attack. No matter what type the Defending Pokémon is, Togetic’s type is still COLORLESS. Togetic performs that attack. Togetic can make that attack even if it does not have the appropriate number or type of Energy attached to it necessary to make the attack."},
-			{"name": "Fly", "cost": {"COLORLESS": 3}, "damage": 30, "effect": "Flip a coin. If heads, during your opponent’s next turn, prevent all effects of attacks, including damage, done to Togetic; if tails, this attack does nothing, not even damage."},
+			{"name": "Super Metronome", "cost": {"COLORLESS": 1}, "damage": 0, "effect": "Flip a coin. If heads, choose an attack on 1 of your opponent's Pokémon. Super Metronome copies that attack except for its Energy cost. You must still do anything else in order to use that attack. No matter what type the Defending Pokémon is, Togetic's type is still COLORLESS. Togetic performs that attack. Togetic can make that attack even if it does not have the appropriate number or type of Energy attached to it necessary to make the attack."},
+			{"name": "Fly", "cost": {"COLORLESS": 3}, "damage": 30, "effect": "Flip a coin. If heads, during your opponent's next turn, prevent all effects of attacks, including damage, done to Togetic; if tails, this attack does nothing, not even damage."},
 		]
 	},
 	"typhlosion_1": {
@@ -226,7 +226,7 @@ const CARDS: Dictionary = {
 			{"name": "Flame Burst", "cost": {"FIRE": 4}, "damage": 60, "effect": "Flip a coin. If heads, this attack does 60 damage plus 20 more damage and does 20 damage to Typhlosion. If tails, this attack does 60 damage."}
 		]
 	},
-"typhlosion_2": {
+	"typhlosion_2": {
 		"id": "typhlosion_2", "name": "Typhlosion", "number": "18/111",
 		"image": "res://assets/cards/Neo Genesis/typhlosion-neo-genesis-18.jpg",
 		"type": "POKEMON", "pokemon_type": "FIRE",
@@ -238,26 +238,27 @@ const CARDS: Dictionary = {
 			"effect": "When you play Typhlosion from your hand, you may flip a coin. If heads, search your deck for up to 4 Fire Energy cards and attach them to Typhlosion. Shuffle your deck afterward."
 		},
 		"attacks": [
-			{
-				"name": "Flame Wheel", 
-				"cost": {"FIRE": 4}, 
-				"damage": 80, 
-				"effect": "Discard 3 Fire Energy cards attached to Typhlosion in order to use this attack. Do 20 damage to each Benched Pokémon (yours and your opponent's). (Don't apply Weakness and Resistance for Benched Pokémon.)"
-			}
+			{"name": "Flame Wheel", "cost": {"FIRE": 4}, "damage": 80, "effect": "Discard 3 Fire Energy cards attached to Typhlosion in order to use this attack. Do 20 damage to each Benched Pokémon (yours and your opponent's). (Don't apply Weakness and Resistance for Benched Pokémon.)"}
 		]
 	},
+	# ═══════════════════════════════════
+	# ENERGÍA METAL (#19)
+	# ═══════════════════════════════════
 	"metal_energy": {
 		"id": "metal_energy", "name": "Metal Energy", "number": "19/111",
 		"image": "res://assets/cards/Neo Genesis/metal-energy-neo-genesis-19.jpg",
 		"type": "ENERGY", "energy_type": "METAL", "provides": 1, "rarity": "RARE"
 	},
+	# ═══════════════════════════════════
+	# RARAS NO HOLO (#20-25)
+	# ═══════════════════════════════════
 	"cleffa": {
 		"id": "cleffa", "name": "Cleffa", "number": "20/111",
 		"image": "res://assets/cards/Neo Genesis/cleffa-neo-genesis-20.jpg",
 		"type": "POKEMON", "pokemon_type": "COLORLESS",
 		"hp": 30, "stage": "baby", "evolves_from": "",
 		"retreat_cost": 0, "weakness": "", "resistance": "",
-		"rarity": "UNCOMMON",
+		"rarity": "RARE",
 		"attacks": [
 			{"name": "Eeeeeeek", "cost": {"COLORLESS": 1}, "damage": 0, "effect": "Shuffle your hand into your deck, then draw 7 cards. Your turn ends."},
 		]
@@ -268,7 +269,7 @@ const CARDS: Dictionary = {
 		"type": "POKEMON", "pokemon_type": "FIGHTING",
 		"hp": 70, "stage": 1, "evolves_from": "phanpy",
 		"retreat_cost": 3, "weakness": "GRASS", "resistance": "LIGHTNING",
-		"rarity": "UNCOMMON",
+		"rarity": "RARE",
 		"attacks": [
 			{"name": "Flail", "cost": {"FIGHTING": 1}, "damage": 10, "effect": "Does 10 damage times the number of damage counters on Donphan."},
 			{"name": "Rapid Spin", "cost": {"FIGHTING": 2, "COLORLESS": 1}, "damage": 50, "effect": "If your opponent has any Benched Pokémon, he or she chooses 1 of them and switches it with his or her Active Pokémon, then, if you have any Benched Pokémon, you switch 1 of them with your Active Pokémon. Do the damage before switching the Pokémon."},
@@ -280,10 +281,10 @@ const CARDS: Dictionary = {
 		"type": "POKEMON", "pokemon_type": "LIGHTNING",
 		"hp": 30, "stage": "baby", "evolves_from": "",
 		"retreat_cost": 0, "weakness": "", "resistance": "",
-		"rarity": "UNCOMMON",
+		"rarity": "RARE",
 		"pokemon_power": {
 			"name": "Playful Punch",
-			"effect": "Once during your turn (before your attack), you may flip a coin. If heads, do 20 damage to your opponent’s Active Pokémon. (Apply Weakness and Resistance.) Either way, this ends your turn. This power can’t be used if Elekid is Asleep, Confused, or Paralyzed."
+			"effect": "Once during your turn (before your attack), you may flip a coin. If heads, do 20 damage to your opponent's Active Pokémon. (Apply Weakness and Resistance.) Either way, this ends your turn. This power can't be used if Elekid is Asleep, Confused, or Paralyzed."
 		},
 		"attacks": []
 	},
@@ -293,7 +294,7 @@ const CARDS: Dictionary = {
 		"type": "POKEMON", "pokemon_type": "FIRE",
 		"hp": 30, "stage": "baby", "evolves_from": "",
 		"retreat_cost": 0, "weakness": "", "resistance": "",
-		"rarity": "UNCOMMON",
+		"rarity": "RARE",
 		"attacks": [
 			{"name": "Sputter", "cost": {"FIRE": 1}, "damage": 10, "effect": "All Pokémon Powers stop working until the end of your next turn."},
 		]
@@ -304,10 +305,10 @@ const CARDS: Dictionary = {
 		"type": "POKEMON", "pokemon_type": "DARKNESS",
 		"hp": 50, "stage": 0, "evolves_from": "",
 		"retreat_cost": 1, "weakness": "", "resistance": "FIGHTING",
-		"rarity": "UNCOMMON",
+		"rarity": "RARE",
 		"attacks": [
-			{"name": "Mean Look", "cost": {"DARKNESS": 1}, "damage": 0, "effect": "Choose 1 of your opponent’s Pokémon. This attack does 20 damage to that Pokémon. This attack’s damage isn’t affected by Weakness, Resistance, Pokémon Powers, or any other effects on the Defending Pokémon."},
-			{"name": "Feint Attack", "cost": {"DARKNESS": 1, "COLORLESS": 1}, "damage": 0, "effect": "Choose 1 of your opponent’s Pokémon. This attack does 20 damage to that Pokémon. This attack’s damage isn’t affected by Weakness, Resistance, Pokémon Powers, or any other effects on the Defending Pokémon."},
+			{"name": "Mean Look", "cost": {"DARKNESS": 1}, "damage": 0, "effect": "Choose 1 of your opponent's Pokémon. This attack does 20 damage to that Pokémon. This attack's damage isn't affected by Weakness, Resistance, Pokémon Powers, or any other effects on the Defending Pokémon."},
+			{"name": "Feint Attack", "cost": {"DARKNESS": 1, "COLORLESS": 1}, "damage": 0, "effect": "Choose 1 of your opponent's Pokémon. This attack does 20 damage to that Pokémon. This attack's damage isn't affected by Weakness, Resistance, Pokémon Powers, or any other effects on the Defending Pokémon."},
 		]
 	},
 	"sneasel": {
@@ -316,19 +317,22 @@ const CARDS: Dictionary = {
 		"type": "POKEMON", "pokemon_type": "DARKNESS",
 		"hp": 60, "stage": 0, "evolves_from": "",
 		"retreat_cost": 1, "weakness": "", "resistance": "PSYCHIC",
-		"rarity": "UNCOMMON",
+		"rarity": "ULTRA_RARE",
 		"attacks": [
 			{"name": "Fury Swipes", "cost": {"COLORLESS": 1}, "damage": 10, "effect": "Flip 3 coins. This attack does 10 damage times the number of heads."},
 			{"name": "Beat Up", "cost": {"DARKNESS": 2}, "damage": 20, "effect": "Flip a coin for each of your Pokémon in play including this one. This attack does 20 damage times the number of heads."},
 		]
 	},
+	# ═══════════════════════════════════
+	# NO COMUNES (#26-52)
+	# ═══════════════════════════════════
 	"aipom": {
 		"id": "aipom", "name": "Aipom", "number": "26/111",
 		"image": "res://assets/cards/Neo Genesis/aipom-neo-genesis-26.jpg",
 		"type": "POKEMON", "pokemon_type": "COLORLESS",
 		"hp": 40, "stage": 0, "evolves_from": "",
 		"retreat_cost": 1, "weakness": "FIGHTING", "resistance": "PSYCHIC",
-		"rarity": "COMMON",
+		"rarity": "UNCOMMON",
 		"attacks": [
 			{"name": "Pilfer", "cost": {"COLORLESS": 1}, "damage": 0, "effect": "Shuffle Aipom and all cards attached to it into your deck. Flip a coin. If heads, shuffle a card from your discard pile into your deck."},
 			{"name": "Tail Rap", "cost": {"COLORLESS": 2}, "damage": 10, "effect": "Flip 2 coins. This attack does 10 damage times the number of heads."},
@@ -342,7 +346,7 @@ const CARDS: Dictionary = {
 		"retreat_cost": 2, "weakness": "FIRE", "resistance": "",
 		"rarity": "UNCOMMON",
 		"attacks": [
-			{"name": "Spider Web", "cost": {"GRASS": 1}, "damage": 0, "effect": "Flip a coin. If heads, the Defending Pokémon can’t retreat. Benching or evolving that Pokémon ends this effect."},
+			{"name": "Spider Web", "cost": {"GRASS": 1}, "damage": 0, "effect": "Flip a coin. If heads, the Defending Pokémon can't retreat. Benching or evolving that Pokémon ends this effect."},
 			{"name": "Poison Bite", "cost": {"GRASS": 3}, "damage": 20, "effect": "If this attack damages the Defending Pokémon, the Defending Pokémon is now Poisoned and you remove a number of damage counters from Ariados equal to half that damage rounded up to the nearest 10. If Ariados has fewer damage counters than that, remove all of them."},
 		]
 	},
@@ -355,7 +359,7 @@ const CARDS: Dictionary = {
 		"rarity": "UNCOMMON",
 		"attacks": [
 			{"name": "Poisonpowder", "cost": {"GRASS": 1, "COLORLESS": 1}, "damage": 20, "effect": "Flip a coin. If heads, the Defending Pokémon is now Poisoned."},
-			{"name": "Pollen Shield ", "cost": {"GRASS": 2, "COLORLESS": 1}, "damage": 30, "effect": "During your opponent’s next turn, Bayleef can’t become Asleep, Confused, Paralyzed, or Poisoned. All other effects of attacks, Pokémon Powers and Trainer cards still happen."},
+			{"name": "Pollen Shield ", "cost": {"GRASS": 2, "COLORLESS": 1}, "damage": 30, "effect": "During your opponent's next turn, Bayleef can't become Asleep, Confused, Paralyzed, or Poisoned. All other effects of attacks, Pokémon Powers and Trainer cards still happen."},
 		]
 	},
 	"bayleef_2": {
@@ -366,7 +370,7 @@ const CARDS: Dictionary = {
 		"retreat_cost": 2, "weakness": "FIRE", "resistance": "",
 		"rarity": "UNCOMMON",
 		"attacks": [
-			{"name": "Sweet Scent", "cost": {"GRASS": 1}, "damage": 0, "effect": "Flip a coin. If heads and if any of your Pokémon have any damage counters on them, then remove 2 damage counters from 1 of them or 1 if it only has 1. If tails and if any of your opponent’s Pokémon have any damage counters on them, choose 1 of them and remove 2 damage counters from it or 1 if it only has 1."},
+			{"name": "Sweet Scent", "cost": {"GRASS": 1}, "damage": 0, "effect": "Flip a coin. If heads and if any of your Pokémon have any damage counters on them, then remove 2 damage counters from 1 of them or 1 if it only has 1. If tails and if any of your opponent's Pokémon have any damage counters on them, choose 1 of them and remove 2 damage counters from it or 1 if it only has 1."},
 			{"name": "Double Razor Leaf", "cost": {"GRASS": 3}, "damage": 40, "effect": "Flip 2 coins. This attack does 40 damage times the number of heads."},
 		]
 	},
@@ -391,7 +395,7 @@ const CARDS: Dictionary = {
 		"rarity": "UNCOMMON",
 		"attacks": [
 			{"name": "Screech", "cost": {"WATER": 1}, "damage": 0, "effect": "Until the end of your next turn, if an attack damages the Defending Pokémon (after applying Weakness and Resistance), that attack does 20 more damage to the Defending Pokémon"},
-			{"name": "Jaw Clamp", "cost": {"WATER": 2, "COLORLESS": 1}, "damage": 30, "effect": "Until the end of your opponent’s next turn, as long as Croconaw is your Active Pokémon, the Defending Pokémon can’t retreat, and if the effect of an attack, Pokémon Power, or Trainer card would change that player’s Active Pokémon, that part of the effect does nothing."},
+			{"name": "Jaw Clamp", "cost": {"WATER": 2, "COLORLESS": 1}, "damage": 30, "effect": "Until the end of your opponent's next turn, as long as Croconaw is your Active Pokémon, the Defending Pokémon can't retreat, and if the effect of an attack, Pokémon Power, or Trainer card would change that player's Active Pokémon, that part of the effect does nothing."},
 		]
 	},
 	"croconaw_2": {
@@ -415,7 +419,7 @@ const CARDS: Dictionary = {
 		"rarity": "UNCOMMON",
 		"attacks": [
 			{"name": "Punch", "cost": {"COLORLESS": 2}, "damage": 20, "effect": ""},
-			{"name": "Swift", "cost": {"LIGHTNING": 3}, "damage": 30, "effect": "This attack’s damage isn’t affected by Weakness, Resistance, Pokémon Powers, or any other effects on the Defending Pokémon."},
+			{"name": "Swift", "cost": {"LIGHTNING": 3}, "damage": 30, "effect": "This attack's damage isn't affected by Weakness, Resistance, Pokémon Powers, or any other effects on the Defending Pokémon."},
 		]
 	},
 	"flaaffy": {
@@ -451,7 +455,7 @@ const CARDS: Dictionary = {
 		"rarity": "UNCOMMON",
 		"attacks": [
 			{"name": "Strange Powder", "cost": {"GRASS": 1, "COLORLESS": 1}, "damage": 20, "effect": "Flip a coin. If heads, the Defending Pokémon is now Confused; if tails, the Defending Pokémon is now Asleep."},
-			{"name": "Sticky Nectar", "cost": {"GRASS": 2, "COLORLESS": 1}, "damage": 20, "effect": "Flip a coin. If heads, this attack does 20 damage plus 10 more damage and, until the end of your opponent’s next turn, as long as Gloom is your Active Pokémon, the Defending Pokémon can’t retreat, and if the effect of an attack, Pokémon Power, or Trainer card would change that player’s Active Pokémon, that part of the effect does nothing. If tails, this attack does 20 damage."},
+			{"name": "Sticky Nectar", "cost": {"GRASS": 2, "COLORLESS": 1}, "damage": 20, "effect": "Flip a coin. If heads, this attack does 20 damage plus 10 more damage and, until the end of your opponent's next turn, as long as Gloom is your Active Pokémon, the Defending Pokémon can't retreat, and if the effect of an attack, Pokémon Power, or Trainer card would change that player's Active Pokémon, that part of the effect does nothing. If tails, this attack does 20 damage."},
 		]
 	},
 	"granbull": {
@@ -540,7 +544,7 @@ const CARDS: Dictionary = {
 		"rarity": "UNCOMMON",
 		"attacks": [
 			{"name": "Tackle", "cost": {"COLORLESS": 1}, "damage": 10, "effect": ""},
-			{"name": "Endure", "cost": {"FIGHTING": 1}, "damage": 0, "effect": "Flip a coin. If heads, then if, during your opponent’s next turn, Phanpy would be Knocked Out by an attack, Phanpy isn’t Knocked Out and its remaining HP become 10 instead."},
+			{"name": "Endure", "cost": {"FIGHTING": 1}, "damage": 0, "effect": "Flip a coin. If heads, then if, during your opponent's next turn, Phanpy would be Knocked Out by an attack, Phanpy isn't Knocked Out and its remaining HP become 10 instead."},
 		]
 	},
 	"piloswine": {
@@ -551,8 +555,8 @@ const CARDS: Dictionary = {
 		"retreat_cost": 3, "weakness": "GRASS", "resistance": "LIGHTNING",
 		"rarity": "UNCOMMON",
 		"attacks": [
-			{"name": "Freeze", "cost": {"WATER": 2}, "damage": 10, "effect": "Flip a coin. If heads, the Defending Pokémon can’t attack. Benching or evolving the Defending Pokémon ends this effect"},
-			{"name": "Blizzard", "cost": {"WATER": 3}, "damage": 30, "effect": "Flip a coin. If heads, this attack does 10 damage to each of your opponent’s Benched Pokémon; if tails, this attack does 10 damage to each of your own Benched Pokémon. Don’t apply Weakness and Resistance for Benched Pokémon."},
+			{"name": "Freeze", "cost": {"WATER": 2}, "damage": 10, "effect": "Flip a coin. If heads, the Defending Pokémon can't attack. Benching or evolving the Defending Pokémon ends this effect"},
+			{"name": "Blizzard", "cost": {"WATER": 3}, "damage": 30, "effect": "Flip a coin. If heads, this attack does 10 damage to each of your opponent's Benched Pokémon; if tails, this attack does 10 damage to each of your own Benched Pokémon. Don't apply Weakness and Resistance for Benched Pokémon."},
 		]
 	},
 	"quagsire": {
@@ -564,7 +568,7 @@ const CARDS: Dictionary = {
 		"rarity": "UNCOMMON",
 		"attacks": [
 			{"name": "Surf", "cost": {"WATER": 2}, "damage": 30, "effect": ""},
-			{"name": "Earthquake", "cost": {"FIGHTING": 2, "COLORLESS": 2}, "damage": 60, "effect": "Does 10 damage to each of your own Benched Pokémon. Don’t apply Weakness and Resistance for Benched Pokémon."},
+			{"name": "Earthquake", "cost": {"FIGHTING": 2, "COLORLESS": 2}, "damage": 60, "effect": "Does 10 damage to each of your own Benched Pokémon. Don't apply Weakness and Resistance for Benched Pokémon."},
 		]
 	},
 	"quilava_1": {
@@ -576,7 +580,7 @@ const CARDS: Dictionary = {
 		"rarity": "UNCOMMON",
 		"attacks": [
 			{"name": "Ember", "cost": {"FIRE": 1, "COLORLESS": 1}, "damage": 30, "effect": "Discard 1 FIRE Energy card attached to Quilava in order to use this attack."},
-			{"name": "Fire Wind", "cost": {"FIRE": 2}, "damage": 20, "effect": "f your opponent has any Benched Pokémon, choose 1 of them. Flip 2 coins. For each heads, this attack does 10 damage to that Pokémon. Don’t apply Weakness and Resistance."},
+			{"name": "Fire Wind", "cost": {"FIRE": 2}, "damage": 20, "effect": "f your opponent has any Benched Pokémon, choose 1 of them. Flip 2 coins. For each heads, this attack does 10 damage to that Pokémon. Don't apply Weakness and Resistance."},
 		]
 	},
 	"quilava_2": {
@@ -587,8 +591,8 @@ const CARDS: Dictionary = {
 		"retreat_cost": 1, "weakness": "WATER", "resistance": "",
 		"rarity": "UNCOMMON",
 		"attacks": [
-			{"name": "Smokescreen", "cost": {"FIRE": 2}, "damage": 20, "effect": "f the Defending Pokémon tries to attack during your opponent’s next turn, your opponent flips a coin. If tails, that attack does nothing."},
-			{"name": "Char", "cost": {"FIRE": 3}, "damage": 30, "effect": "If the Defending Pokémon doesn’t have a Char counter on it, flip a coin. If heads, put a Char counter on it. A Char counter requires your opponent to flip a coin after every turn. If tails, put 2 damage counters on the Pokémon with that Char counter. Char counters stay on the Pokémon as long as it’s in play."},
+			{"name": "Smokescreen", "cost": {"FIRE": 2}, "damage": 20, "effect": "f the Defending Pokémon tries to attack during your opponent's next turn, your opponent flips a coin. If tails, that attack does nothing."},
+			{"name": "Char", "cost": {"FIRE": 3}, "damage": 30, "effect": "If the Defending Pokémon doesn't have a Char counter on it, flip a coin. If heads, put a Char counter on it. A Char counter requires your opponent to flip a coin after every turn. If tails, put 2 damage counters on the Pokémon with that Char counter. Char counters stay on the Pokémon as long as it's in play."},
 		]
 	},
 	"seadra": {
@@ -600,7 +604,7 @@ const CARDS: Dictionary = {
 		"rarity": "UNCOMMON",
 		"attacks": [
 			{"name": "Bubble", "cost": {"WATER": 1}, "damage": 10, "effect": "Flip a coin. If heads, the Defending Pokémon is now Paralyzed."},
-			{"name": "Mud Splash", "cost": {"WATER": 2}, "damage": 30, "effect": "If your opponent has any Benched Pokémon, choose 1 of them and flip a coin. If heads, this attack does 10 damage to that Pokémon. Don’t apply Weakness and Resistance for Benched Pokémon."},
+			{"name": "Mud Splash", "cost": {"WATER": 2}, "damage": 30, "effect": "If your opponent has any Benched Pokémon, choose 1 of them and flip a coin. If heads, this attack does 10 damage to that Pokémon. Don't apply Weakness and Resistance for Benched Pokémon."},
 		]
 	},
 	"skiploom": {
@@ -645,10 +649,13 @@ const CARDS: Dictionary = {
 		"retreat_cost": 1, "weakness": "PSYCHIC", "resistance": "FIGHTING",
 		"rarity": "UNCOMMON",
 		"attacks": [
-			{"name": "Psy Bolt", "cost": {"PSYCHIC": 1}, "damage": 0, "effect": "Look at the top 3 cards of either player’s deck and rearrange them as you like."},
+			{"name": "Psy Bolt", "cost": {"PSYCHIC": 1}, "damage": 0, "effect": "Look at the top 3 cards of either player's deck and rearrange them as you like."},
 			{"name": "Confuse Ray", "cost": {"PSYCHIC": 3}, "damage": 30, "effect": "Flip a coin. If heads, the Defending Pokémon is now Confused."},
 		]
 	},
+	# ═══════════════════════════════════
+	# COMUNES (#53-82)
+	# ═══════════════════════════════════
 	"chikorita_1": {
 		"id": "chikorita_1", "name": "Chikorita", "number": "53/111",
 		"image": "res://assets/cards/Neo Genesis/chikorita-neo-genesis-53.jpg",
@@ -658,7 +665,7 @@ const CARDS: Dictionary = {
 		"rarity": "COMMON",
 		"attacks": [
 			{"name": "Tackle", "cost": {"COLORLESS": 1}, "damage": 10, "effect": ""},
-			{"name": "Deflector", "cost": {"GRASS": 1, "COLORLESS": 1}, "damage": 0, "effect": "During your opponent’s next turn, whenever Chikorita takes damage, divide that damage in half rounded down to the nearest 10. Any other effects still happen."},
+			{"name": "Deflector", "cost": {"GRASS": 1, "COLORLESS": 1}, "damage": 0, "effect": "During your opponent's next turn, whenever Chikorita takes damage, divide that damage in half rounded down to the nearest 10. Any other effects still happen."},
 		]
 	},
 	"chikorita_2": {
@@ -669,7 +676,7 @@ const CARDS: Dictionary = {
 		"retreat_cost": 1, "weakness": "FIRE", "resistance": "",
 		"rarity": "COMMON",
 		"attacks": [
-			{"name": "Growl", "cost": {"GRASS": 1}, "damage": 0, "effect": "If the Defending Pokémon attacks Chikorita during your opponent’s next turn, any damage done to Chikorita is reduced by 10 before applying Weakness and Resistance. Benching or evolving either Pokémon ends this effect."},
+			{"name": "Growl", "cost": {"GRASS": 1}, "damage": 0, "effect": "If the Defending Pokémon attacks Chikorita during your opponent's next turn, any damage done to Chikorita is reduced by 10 before applying Weakness and Resistance. Benching or evolving either Pokémon ends this effect."},
 			{"name": "Poisonpowder", "cost": {"GRASS": 1, "COLORLESS": 1}, "damage": 20, "effect": ""},
 		]
 	},
@@ -693,8 +700,8 @@ const CARDS: Dictionary = {
 		"retreat_cost": 1, "weakness": "WATER", "resistance": "",
 		"rarity": "COMMON",
 		"attacks": [
-			{"name": "Leer", "cost": {"COLORLESS": 1}, "damage": 0, "effect": "Flip a coin. If heads, the Defending Pokémon can’t attack Cyndaquil during your opponent’s next turn. Benching or evolving either Pokémon ends this effect."},
-			{"name": "Swift", "cost": {"FIRE": 1, "COLORLESS": 1 }, "damage": 20, "effect": "This attack’s damage isn’t affected by Weakness, Resistance, Pokémon Powers, or any other effects on the Defending Pokémon."},
+			{"name": "Leer", "cost": {"COLORLESS": 1}, "damage": 0, "effect": "Flip a coin. If heads, the Defending Pokémon can't attack Cyndaquil during your opponent's next turn. Benching or evolving either Pokémon ends this effect."},
+			{"name": "Swift", "cost": {"FIRE": 1, "COLORLESS": 1 }, "damage": 20, "effect": "This attack's damage isn't affected by Weakness, Resistance, Pokémon Powers, or any other effects on the Defending Pokémon."},
 		]
 	},
 	"cyndaquil_2": {
@@ -717,7 +724,7 @@ const CARDS: Dictionary = {
 		"retreat_cost": 1, "weakness": "", "resistance": "",
 		"rarity": "COMMON",
 		"attacks": [
-			{"name": "Agility", "cost": {"COLORLESS": 2}, "damage": 10, "effect": "Flip a coin. If heads, during your opponent’s next turn, prevent all effects of attacks, including damage, done to Girafarig."},
+			{"name": "Agility", "cost": {"COLORLESS": 2}, "damage": 10, "effect": "Flip a coin. If heads, during your opponent's next turn, prevent all effects of attacks, including damage, done to Girafarig."},
 			{"name": "Psybeam", "cost": {"PSYCHIC": 2}, "damage": 20, "effect": "Flip a coin. If heads, the Defending Pokémon is now Confused."},
 		]
 	},
@@ -754,7 +761,7 @@ const CARDS: Dictionary = {
 		"rarity": "COMMON",
 		"attacks": [
 			{"name": "Hop", "cost": {"GRASS": 1}, "damage": 10, "effect": ""},
-			{"name": "Sprout", "cost": {"GRASS": 1}, "damage": 0, "effect": "Search your deck for a Basic Pokémon named Hoppip and put it onto your Bench. Shuffle your deck afterward. You can’t use this attack if your Bench is full."},
+			{"name": "Sprout", "cost": {"GRASS": 1}, "damage": 0, "effect": "Search your deck for a Basic Pokémon named Hoppip and put it onto your Bench. Shuffle your deck afterward. You can't use this attack if your Bench is full."},
 		]
 	},
 	"horsea": {
@@ -765,7 +772,7 @@ const CARDS: Dictionary = {
 		"retreat_cost": 0, "weakness": "LIGHTNING", "resistance": "",
 		"rarity": "COMMON",
 		"attacks": [
-			{"name": "Fin Slap", "cost": {"WATER": 2}, "damage": 20, "effect": "If an attack damaged Horsea during your opponent’s last turn, this attack does 20 damage plus 10 more damage. If not, this attack does 20 damage."},
+			{"name": "Fin Slap", "cost": {"WATER": 2}, "damage": 20, "effect": "If an attack damaged Horsea during your opponent's last turn, this attack does 20 damage plus 10 more damage. If not, this attack does 20 damage."},
 		]
 	},
 	"ledyba": {
@@ -788,7 +795,7 @@ const CARDS: Dictionary = {
 		"retreat_cost": 1, "weakness": "LIGHTNING", "resistance": "FIGHTING",
 		"rarity": "COMMON",
 		"attacks": [
-			{"name": "Undulate", "cost": {"WATER": 2}, "damage": 20, "effect": "Flip a coin. If heads, during your opponent’s next turn, prevent all effects of attacks, including damage, done to Mantine."},
+			{"name": "Undulate", "cost": {"WATER": 2}, "damage": 20, "effect": "Flip a coin. If heads, during your opponent's next turn, prevent all effects of attacks, including damage, done to Mantine."},
 		]
 	},
 	"mareep": {
@@ -811,7 +818,7 @@ const CARDS: Dictionary = {
 		"retreat_cost": 1, "weakness": "LIGHTNING", "resistance": "",
 		"rarity": "COMMON",
 		"attacks": [
-			{"name": "Defense Curle", "cost": {"COLORLESS": 1}, "damage": 10, "effect": "Flip a coin. If heads, prevent all damage done to Marill during your opponent’s next turn. Any other effects of attacks still happen."},
+			{"name": "Defense Curle", "cost": {"COLORLESS": 1}, "damage": 10, "effect": "Flip a coin. If heads, prevent all damage done to Marill during your opponent's next turn. Any other effects of attacks still happen."},
 			{"name": "Bubble Bomb", "cost": {"WATER": 2}, "damage": 20, "effect": "Flip a coin. If heads, the Defending Pokémon is now Paralyzed. If tails, Marril does 10 damage to itself."},
 		]
 	},
@@ -824,7 +831,7 @@ const CARDS: Dictionary = {
 		"rarity": "COMMON",
 		"attacks": [
 			{"name": "Peck", "cost": {"COLORLESS": 1}, "damage": 10, "effect": ""},
-			{"name": "Telekinesis", "cost": {"PSYCHIC": 1}, "damage": 0, "effect": "Choose 1 of your opponent’s Pokémon. This attack does 20 damage to that Pokémon. Don’t apply Weakness and Resistance for this attack. (Any other effects that would happen after applying Weakness and Resistance still happen.)"},
+			{"name": "Telekinesis", "cost": {"PSYCHIC": 1}, "damage": 0, "effect": "Choose 1 of your opponent's Pokémon. This attack does 20 damage to that Pokémon. Don't apply Weakness and Resistance for this attack. (Any other effects that would happen after applying Weakness and Resistance still happen.)"},
 		]
 	},
 	"oddish": {
@@ -835,7 +842,7 @@ const CARDS: Dictionary = {
 		"retreat_cost": 1, "weakness": "FIRE", "resistance": "",
 		"rarity": "COMMON",
 		"attacks": [
-			{"name": "Hide", "cost": {"COLORLESS": 1}, "damage": 0, "effect": "Flip a coin. If heads, during your opponent’s next turn, prevent all effects of attacks, including damage, done to Oddish."},
+			{"name": "Hide", "cost": {"COLORLESS": 1}, "damage": 0, "effect": "Flip a coin. If heads, during your opponent's next turn, prevent all effects of attacks, including damage, done to Oddish."},
 			{"name": "Absorb", "cost": {"GRASS": 2}, "damage": 20, "effect": "Remove a number of damage counters from Oddish equal to half the damage done to the Defending Pokémon after applying Weakness and Resistance ,rounded up to the nearest 10. If Oddish has fewer damage counters than that, remove all of them."},
 		]
 	},
@@ -859,8 +866,8 @@ const CARDS: Dictionary = {
 		"retreat_cost": 1, "weakness": "FIGHTING", "resistance": "",
 		"rarity": "COMMON",
 		"attacks": [
-			{"name": "Quick Attack", "cost": {"COLORLESS": 1}, "damage": 10, "effect": "Flip a coin. If heads, this attack does 10 damage plus 20 more damage; if tails, this attack does 10 damage.Flip a coin. If heads, this attack does 10 damage plus 20 more damage; if tails, this attack does 10 damage."},
-			{"name": "Agility", "cost": {"LIGHTNING": 2, "COLORLESS": 1}, "damage": 20, "effect": "Flip a coin. If heads, during your opponent’s next turn, prevent all effects of attacks, including damage, done to Pikachu."},
+			{"name": "Quick Attack", "cost": {"COLORLESS": 1}, "damage": 10, "effect": "Flip a coin. If heads, this attack does 10 damage plus 20 more damage; if tails, this attack does 10 damage."},
+			{"name": "Agility", "cost": {"LIGHTNING": 2, "COLORLESS": 1}, "damage": 20, "effect": "Flip a coin. If heads, during your opponent's next turn, prevent all effects of attacks, including damage, done to Pikachu."},
 		]
 	},
 	"sentret": {
@@ -882,7 +889,7 @@ const CARDS: Dictionary = {
 		"retreat_cost": 1, "weakness": "GRASS", "resistance": "LIGHTNING",
 		"rarity": "COMMON",
 		"attacks": [
-			{"name": "Withdraw", "cost": {"GRASS": 1}, "damage": 0, "effect": "Flip a coin. If heads, prevent all damage done to Shuckle during your opponent’s next turn. Any other effects of attacks still happen."},
+			{"name": "Withdraw", "cost": {"GRASS": 1}, "damage": 0, "effect": "Flip a coin. If heads, prevent all damage done to Shuckle during your opponent's next turn. Any other effects of attacks still happen."},
 			{"name": "Wrap", "cost": {"GRASS": 2}, "damage": 20, "effect": "Flip a coin. If heads, the Defending Pokémon is now Paralyzed."},
 		]
 	},
@@ -895,7 +902,7 @@ const CARDS: Dictionary = {
 		"rarity": "COMMON",
 		"attacks": [
 			{"name": "Psyshock", "cost": {"PSYCHIC": 1}, "damage": 10, "effect": "Flip a coin. If heads, the Defending Pokémon is now Paralyzed."},
-			{"name": "Water Gun", "cost": {"WATER": 1}, "damage": 10, "effect": "Does 10 damage plus 10 more damage for each {W} Energy attached to Slowpoke but not used to pay for this attack’s Energy cost. You can’t add more than 20 damage in this way."},
+			{"name": "Water Gun", "cost": {"WATER": 1}, "damage": 10, "effect": "Does 10 damage plus 10 more damage for each {W} Energy attached to Slowpoke but not used to pay for this attack's Energy cost. You can't add more than 20 damage in this way."},
 		]
 	},
 	"snubbull": {
@@ -918,7 +925,7 @@ const CARDS: Dictionary = {
 		"retreat_cost": 1, "weakness": "FIRE", "resistance": "",
 		"rarity": "COMMON",
 		"attacks": [
-			{"name": "Scary Face", "cost": {"GRASS": 1}, "damage": 0, "effect": "Flip a coin. If heads, until the end of your opponent’s next turn, the Defending Pokémon can’t attack or retreat."},
+			{"name": "Scary Face", "cost": {"COLORLESS": 1}, "damage": 0, "effect": "Flip a coin. If heads, until the end of your opponent's next turn, the Defending Pokémon can't attack or retreat."},
 			{"name": "String Shot", "cost": {"GRASS": 1}, "damage": 10, "effect": "Flip a coin. If heads, the Defending Pokémon is now Paralyzed."},
 		]
 	},
@@ -989,7 +996,7 @@ const CARDS: Dictionary = {
 		"retreat_cost": 1, "weakness": "LIGHTNING", "resistance": "",
 		"rarity": "COMMON",
 		"attacks": [
-			{"name": "Leer", "cost": {"COLORLESS": 1}, "damage": 0, "effect": "Flip a coin. If heads, the Defending Pokémon can’t attack Totodile during your opponent’s next turn. Benching or evolving either Pokémon ends this effect."},
+			{"name": "Leer", "cost": {"COLORLESS": 1}, "damage": 0, "effect": "Flip a coin. If heads, the Defending Pokémon can't attack Totodile during your opponent's next turn. Benching or evolving either Pokémon ends this effect."},
 			{"name": "Fury Swipes", "cost": {"WATER": 1}, "damage": 10, "effect": "Flip 3 coins. This attack does 10 damage times the number of heads."},
 		]
 	},
@@ -1001,38 +1008,42 @@ const CARDS: Dictionary = {
 		"retreat_cost": 2, "weakness": "GRASS", "resistance": "LIGHTNING",
 		"rarity": "COMMON",
 		"attacks": [
-			{"name": "Amnesia", "cost": {"WATER": 1}, "damage": 10, "effect": "Choose 1 of the Defending Pokémon’s attacks. That Pokémon can’t use that attack during your opponent’s next turn."},
+			{"name": "Amnesia", "cost": {"WATER": 1}, "damage": 10, "effect": "Choose 1 of the Defending Pokémon's attacks. That Pokémon can't use that attack during your opponent's next turn."},
 			{"name": "Slam", "cost": {"COLORLESS": 2}, "damage": 20, "effect": "Flip 2 coins. This attack does 20 damage times the number of heads."},
 		]
 	},
-	# TRAINERS
+	# ═══════════════════════════════════
+	# TRAINERS (#83-103)
+	# ═══════════════════════════════════
 	"arcade_game": {"id": "arcade_game", "name": "Arcade Game", "number": "83/111", "image": "res://assets/cards/Neo Genesis/arcade-game-neo-genesis-83.jpg", "type": "TRAINER", "trainer_type": "ITEM", "rarity": "UNCOMMON", "effect": "Shuffle your deck, then reveal the top 3 cards of it. If at least 2 of those cards share the same name, put all of the ones with that name into your hand and shuffle the rest into your deck. If none of them do, shuffle all 3 into your deck."},
-	"ecogym": {"id": "ecogym", "name": "Ecogym", "number": "84/111", "image": "res://assets/cards/Neo Genesis/ecogym-neo-genesis-84.jpg", "type": "TRAINER", "trainer_type": "STADIUM", "rarity": "UNCOMMON", "effect": "Whenever an attack, Pokémon Power, or Trainer card discards another player’s non- COLORLESS Energy card from a Pokémon, return that Energy card to its owner’s hand. Energy cards that are discarded when that Pokémon is Knocked Out don’t count."},
+	"ecogym": {"id": "ecogym", "name": "Ecogym", "number": "84/111", "image": "res://assets/cards/Neo Genesis/ecogym-neo-genesis-84.jpg", "type": "TRAINER", "trainer_type": "STADIUM", "rarity": "UNCOMMON", "effect": "Whenever an attack, Pokémon Power, or Trainer card discards another player's non- COLORLESS Energy card from a Pokémon, return that Energy card to its owner's hand. Energy cards that are discarded when that Pokémon is Knocked Out don't count."},
 	"energy_charge": {"id": "energy_charge", "name": "Energy Charge", "number": "85/111", "image": "res://assets/cards/Neo Genesis/energy-charge-neo-genesis-85.jpg", "type": "TRAINER", "trainer_type": "ITEM", "rarity": "UNCOMMON", "effect": "Flip a coin. If heads, shuffle up to 2 Energy cards from your discard pile into your deck.."},
-	"focus_band": {"id": "focus_band", "name": "Focus Band", "number": "86/111", "image": "res://assets/cards/Neo Genesis/focus-band-neo-genesis-86.jpg", "type": "TRAINER", "trainer_type": "POKEMON_TOOL", "rarity": "UNCOMMON", "effect": "If the Pokémon Focus Band is attached to would be Knocked Out by your opponent’s attack, flip a coin. If heads, that Pokémon is not Knocked Out and its remaining HP become 10 instead. Then, discard Focus Band."},
+	"focus_band": {"id": "focus_band", "name": "Focus Band", "number": "86/111", "image": "res://assets/cards/Neo Genesis/focus-band-neo-genesis-86.jpg", "type": "TRAINER", "trainer_type": "POKEMON_TOOL", "rarity": "UNCOMMON", "effect": "If the Pokémon Focus Band is attached to would be Knocked Out by your opponent's attack, flip a coin. If heads, that Pokémon is not Knocked Out and its remaining HP become 10 instead. Then, discard Focus Band."},
 	"mary": {"id": "mary", "name": "Mary", "number": "87/111", "image": "res://assets/cards/Neo Genesis/mary-neo-genesis-87.jpg", "type": "TRAINER", "trainer_type": "SUPPORTER", "rarity": "UNCOMMON", "effect": "Draw 2 cards. Then, shuffle 2 cards from your hand into your deck."},
-	"pokegear": {"id": "pokegear", "name": "Pokégear", "number": "88/111", "image": "res://assets/cards/Neo Genesis/pokegear-neo-genesis-88.jpg", "type": "TRAINER", "trainer_type": "ITEM", "rarity": "UNCOMMON", "effect": "Look at the top 7 cards of your deck. If any of them are Trainer cards, you may show 1 of them to your opponent and put it into your hand. Shuffle your deck afterward. You can’t play any more Trainer cards this turn."},
+	"pokegear": {"id": "pokegear", "name": "Pokégear", "number": "88/111", "image": "res://assets/cards/Neo Genesis/pokegear-neo-genesis-88.jpg", "type": "TRAINER", "trainer_type": "ITEM", "rarity": "UNCOMMON", "effect": "Look at the top 7 cards of your deck. If any of them are Trainer cards, you may show 1 of them to your opponent and put it into your hand. Shuffle your deck afterward. You can't play any more Trainer cards this turn."},
 	"super_energy_retrieval": {"id": "super_energy_retrieval", "name": "Super Energy Retrieval", "number": "89/111", "image": "res://assets/cards/Neo Genesis/super-energy-retrieval-neo-genesis-89.jpg", "type": "TRAINER", "trainer_type": "ITEM", "rarity": "UNCOMMON", "effect": "You can use this card only if you discard 1 Basic Energy card from your hand. Choose up to 4 Basic Energy cards from your discard pile and put them into your hand. You cannot choose any cards discarded to pay the cost of using this card."},
-	"time_capsule": {"id": "time_capsule", "name": "Time Capsule", "number": "90/111", "image": "res://assets/cards/Neo Genesis/time-capsule-neo-genesis-90.jpg", "type": "TRAINER", "trainer_type": "ITEM", "rarity": "UNCOMMON", "effect": "Your opponent may choose 5 Basic Pokémon, Evolution, and/or basic Energy cards in his or her discard pile. (If your opponent doesn’t have that many, he or she chooses all or none of them.) If your opponent chooses any cards, he or she shuffles them into his or her deck. Either way, you may do the same, and you can’t play any more Trainer cards this turn."},
-	"bills_teleporter": {"id": "bills_teleporter", "name": "Bill's Teleporter", "number": "91/111", "image": "res://assets/cards/Neo Genesis/bills-teleporter-neo-genesis-91.jpg", "type": "TRAINER", "trainer_type": "ITEM", "rarity": "COMMON", "effect": "Flip a coin. If heads, draw 4 cards."},
-	"card_flip_game": {"id": "card_flip_game", "name": "Card-Flip Game", "number": "92/111", "image": "res://assets/cards/Neo Genesis/card-flip-game-neo-genesis-92.jpg", "type": "TRAINER", "trainer_type": "ITEM", "rarity": "COMMON", "effect": "Choose 1 of your opponent’s face-down Prizes. Guess whether it is an Energy card, a Trainer card, or a Pokémon (Basic or Evolution) card. Flip the card face up (and leave it face up). If you guessed right, draw 2 cards"},
+	"time_capsule": {"id": "time_capsule", "name": "Time Capsule", "number": "90/111", "image": "res://assets/cards/Neo Genesis/time-capsule-neo-genesis-90.jpg", "type": "TRAINER", "trainer_type": "ITEM", "rarity": "UNCOMMON", "effect": "Your opponent may choose 5 Basic Pokémon, Evolution, and/or basic Energy cards in his or her discard pile. (If your opponent doesn't have that many, he or she chooses all or none of them.) If your opponent chooses any cards, he or she shuffles them into his or her deck. Either way, you may do the same, and you can't play any more Trainer cards this turn."},
+	"bills_teleporter": {"id": "bills_teleporter", "name": "Bill's Teleporter", "number": "91/111", "image": "res://assets/cards/Neo Genesis/bills-teleporter-neo-genesis-91.jpg", "type": "TRAINER", "trainer_type": "ITEM", "rarity": "UNCOMMON", "effect": "Flip a coin. If heads, draw 4 cards."},
+	"card_flip_game": {"id": "card_flip_game", "name": "Card-Flip Game", "number": "92/111", "image": "res://assets/cards/Neo Genesis/card-flip-game-neo-genesis-92.jpg", "type": "TRAINER", "trainer_type": "ITEM", "rarity": "UNCOMMON", "effect": "Choose 1 of your opponent's face-down Prizes. Guess whether it is an Energy card, a Trainer card, or a Pokémon (Basic or Evolution) card. Flip the card face up (and leave it face up). If you guessed right, draw 2 cards"},
 	"gold_berry": {"id": "gold_berry", "name": "Gold Berry", "number": "93/111", "image": "res://assets/cards/Neo Genesis/gold-berry-neo-genesis-93.jpg", "type": "TRAINER", "trainer_type": "POKEMON_TOOL", "rarity": "UNCOMMON", "effect": "At any time between turns, if there are at least 4 damage counters on the Pokémon Gold Berry is attached to, you may remove 4 of them and discard Gold Berry. At the start of each turn, if there are at least 4 damage counters on the Pokémon Gold Berry is attached to, remove 4 of them and discard Gold Berry"},
 	"miracle_berry": {"id": "miracle_berry", "name": "Miracle Berry", "number": "94/111", "image": "res://assets/cards/Neo Genesis/miracle-berry-neo-genesis-94.jpg", "type": "TRAINER", "trainer_type": "POKEMON_TOOL", "rarity": "UNCOMMON", "effect": "At any time between turns, if the Pokémon Miracle Berry is attached to is Asleep, Confused, Paralyzed, or Poisoned, you may remove all those effects from that Pokémon and discard Miracle Berry. At the start of each turn, if the Pokémon Miracle Berry is attached to is Asleep, Confused, Paralyzed, or Poisoned, remove all of those effects from that Pokémon and discard Miracle Berry."},
-	"new_pokedex": {"id": "new_pokedex", "name": "New Pokédex", "number": "95/111", "image": "res://assets/cards/Neo Genesis/new-pokedex-neo-genesis-95.jpg", "type": "TRAINER", "trainer_type": "ITEM", "rarity": "COMMON", "effect": "Shuffle your deck. Then, look at up to 5 cards from the top of your deck and rearrange them as you like."},
-	"professor_elm": {"id": "professor_elm", "name": "Professor Elm", "number": "96/111", "image": "res://assets/cards/Neo Genesis/professor-elm-neo-genesis-96.jpg", "type": "TRAINER", "trainer_type": "SUPPORTER", "rarity": "UNCOMMON", "effect": "Shuffle your hand into your deck. Then, draw 7 cards. You can’t play any more Trainer cards this turn."},
-	"sprout_tower": {"id": "sprout_tower", "name": "Sprout Tower", "number": "97/111", "image": "res://assets/cards/Neo Genesis/sprout-tower-neo-genesis-97.jpg", "type": "TRAINER", "trainer_type": "STADIUM", "rarity": "COMMON", "effect": "All damage done by COLORLESS Pokémon’s attacks is reduced by 30 after applying Weakness and Resistance."},
+	"new_pokedex": {"id": "new_pokedex", "name": "New Pokédex", "number": "95/111", "image": "res://assets/cards/Neo Genesis/new-pokedex-neo-genesis-95.jpg", "type": "TRAINER", "trainer_type": "ITEM", "rarity": "UNCOMMON", "effect": "Shuffle your deck. Then, look at up to 5 cards from the top of your deck and rearrange them as you like."},
+	"professor_elm": {"id": "professor_elm", "name": "Professor Elm", "number": "96/111", "image": "res://assets/cards/Neo Genesis/professor-elm-neo-genesis-96.jpg", "type": "TRAINER", "trainer_type": "SUPPORTER", "rarity": "UNCOMMON", "effect": "Shuffle your hand into your deck. Then, draw 7 cards. You can't play any more Trainer cards this turn."},
+	"sprout_tower": {"id": "sprout_tower", "name": "Sprout Tower", "number": "97/111", "image": "res://assets/cards/Neo Genesis/sprout-tower-neo-genesis-97.jpg", "type": "TRAINER", "trainer_type": "STADIUM", "rarity": "UNCOMMON", "effect": "All damage done by COLORLESS Pokémon's attacks is reduced by 30 after applying Weakness and Resistance."},
 	"super_scoop_up": {"id": "super_scoop_up", "name": "Super Scoop Up", "number": "98/111", "image": "res://assets/cards/Neo Genesis/super-scoop-up-neo-genesis-98.jpg", "type": "TRAINER", "trainer_type": "ITEM", "rarity": "UNCOMMON", "effect": "Flip a coin. If heads, return 1 of your Pokémon and all cards attached to it to your hand."},
 	"berry": {"id": "berry", "name": "Berry", "number": "99/111", "image": "res://assets/cards/Neo Genesis/berry-neo-genesis-99.jpg", "type": "TRAINER", "trainer_type": "POKEMON_TOOL", "rarity": "COMMON", "effect": "At any time between turns, if there are at least 2 damage counters on the Pokémon Berry is attached to, you may remove 2 of them and discard Berry. At the start of each turn, if there are at least 2 damage counters on the Pokémon Berry is attached to, remove 2 of them and discard Berry."},
 	"double_gust": {"id": "double_gust", "name": "Double Gust", "number": "100/111", "image": "res://assets/cards/Neo Genesis/double-gust-neo-genesis-100.jpg", "type": "TRAINER", "trainer_type": "ITEM", "rarity": "COMMON", "effect": "If you have any Benched Pokémon, your opponent chooses 1 of them and switches it with your Active Pokémon. Then, if your opponent has any Benched Pokémon, choose 1 of them and switch it with his or her Active Pokémon."},
 	"moo_moo_milk": {"id": "moo_moo_milk", "name": "Moo-Moo Milk", "number": "101/111", "image": "res://assets/cards/Neo Genesis/moo-moo-milk-neo-genesis-101.jpg", "type": "TRAINER", "trainer_type": "ITEM", "rarity": "COMMON", "effect": "Choose 1 of your Pokémon. Flip 2 coins. Remove 2 damage counters times the number of heads from that Pokémon. If the Pokémon has fewer damage counters than that, remove all of them."},
-	"pokemon_march": {"id": "pokemon_march", "name": "Pokémon March", "number": "102/111", "image": "res://assets/cards/Neo Genesis/pokemon-march-neo-genesis-102.jpg", "type": "TRAINER", "trainer_type": "ITEM", "rarity": "COMMON", "effect": "Your opponent may search his or her deck for 1 Basic Pokémon card and put it onto his or her Bench. Then, you may search your deck for 1 Basic Pokémon card and put it onto your Bench. Then, each player shuffles his or her deck. A player can’t do any of this if his or her Bench is full."},
+	"pokemon_march": {"id": "pokemon_march", "name": "Pokémon March", "number": "102/111", "image": "res://assets/cards/Neo Genesis/pokemon-march-neo-genesis-102.jpg", "type": "TRAINER", "trainer_type": "ITEM", "rarity": "COMMON", "effect": "Your opponent may search his or her deck for 1 Basic Pokémon card and put it onto his or her Bench. Then, you may search your deck for 1 Basic Pokémon card and put it onto your Bench. Then, each player shuffles his or her deck. A player can't do any of this if his or her Bench is full."},
 	"super_rod": {"id": "super_rod", "name": "Super Rod", "number": "103/111", "image": "res://assets/cards/Neo Genesis/super-rod-neo-genesis-103.jpg", "type": "TRAINER", "trainer_type": "ITEM", "rarity": "COMMON", "effect": "Flip a coin. If heads, put an Evolution card from your discard pile, if any, into your hand. If tails, put a Basic Pokémon card from your discard pile, if any, into your hand."},
-
-	# ENERGÍAS ESPECIALES
+	# ═══════════════════════════════════
+	# ENERGÍAS ESPECIALES (#104-105)
+	# ═══════════════════════════════════
 	"darkness_energy": {"id": "darkness_energy", "name": "Darkness Energy", "number": "104/111", "image": "res://assets/cards/Neo Genesis/darkness-energy-neo-genesis-104.jpg", "type": "ENERGY", "energy_type": "DARKNESS", "provides": 1, "rarity": "RARE"},
-	"recycle_energy": {"id": "recycle_energy", "name": "Recycle Energy", "number": "105/111", "image": "res://assets/cards/Neo Genesis/recycle-energy-neo-genesis-105.jpg", "type": "ENERGY", "energy_type": "COLORLESS", "provides": 1, "rarity": "UNCOMMON"},
-
-	# ENERGÍAS BÁSICAS
+	"recycle_energy": {"id": "recycle_energy", "name": "Recycle Energy", "number": "105/111", "image": "res://assets/cards/Neo Genesis/recycle-energy-neo-genesis-105.jpg", "type": "ENERGY", "energy_type": "COLORLESS", "provides": 1, "rarity": "RARE"},
+	# ═══════════════════════════════════
+	# ENERGÍAS BÁSICAS (#106-111)
+	# ═══════════════════════════════════
 	"fighting_energy": {"id": "fighting_energy", "name": "Fighting Energy", "number": "106/111", "image": "res://assets/cards/Neo Genesis/fighting-energy-neo-genesis-106.jpg", "type": "ENERGY", "energy_type": "FIGHTING", "provides": 1, "rarity": "COMMON"},
 	"fire_energy": {"id": "fire_energy", "name": "Fire Energy", "number": "107/111", "image": "res://assets/cards/Neo Genesis/fire-energy-neo-genesis-107.jpg", "type": "ENERGY", "energy_type": "FIRE", "provides": 1, "rarity": "COMMON"},
 	"grass_energy": {"id": "grass_energy", "name": "Grass Energy", "number": "108/111", "image": "res://assets/cards/Neo Genesis/grass-energy-neo-genesis-108.jpg", "type": "ENERGY", "energy_type": "GRASS", "provides": 1, "rarity": "COMMON"},
@@ -1047,16 +1058,20 @@ func get_card(card_id: String) -> Dictionary:
 func get_energy_type(card_id: String) -> String:
 	return CARDS.get(card_id, {}).get("energy_type", "COLORLESS")
 
+
+var _card_scene: PackedScene = null
+
 func create_card_instance(card_id: String) -> Node:
-	var card_scene = load("res://scenes/components/Card.tscn")
-	if card_scene == null:
+	if _card_scene == null:
+		_card_scene = load("res://scenes/components/Card.tscn")
+	if _card_scene == null:
 		push_error("CardDatabase: Could not load Card.tscn")
 		return Node.new()
-	var instance = card_scene.instantiate()
+	var card_node = _card_scene.instantiate()
 	var data = get_card(card_id)
 	if not data.is_empty():
-		instance.setup(data)
-	return instance
+		card_node.setup(data)
+	return card_node
 
 func get_cards_by_type(type: String) -> Array:
 	var result = []

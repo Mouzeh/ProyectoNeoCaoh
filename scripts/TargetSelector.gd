@@ -1,7 +1,7 @@
 extends Node
 
 # ============================================================
-# TargetSelector.gd - Versión Optimizada para Godot 4
+# TargetSelector.gd
 # Maneja el flujo: elegir acción → elegir carta de mano → elegir target
 # ============================================================
 
@@ -10,21 +10,27 @@ signal selection_cancelled
 signal state_changed(new_state)
 
 enum State { IDLE, WAITING_HAND, WAITING_TARGET }
-enum Action { NONE, PLAY_BASIC, ATTACH_ENERGY, EVOLVE, RETREAT, ATTACK }
+enum Action { NONE, PLAY_BASIC, ATTACH_ENERGY, EVOLVE, RETREAT, ATTACK, ATTACK_WITH_TARGET }
 
-var current_state: State = State.IDLE
+var current_state:  State  = State.IDLE
 var current_action: Action = Action.NONE
 var selected_hand_index: int = -1
+var _pending_attack_index:   int    = -1  # índice del ataque que necesita target
 var board = null
 
-const COLOR_SELECTABLE  = Color(0.20, 0.85, 0.40, 0.40)
-const COLOR_INVALID     = Color(0.85, 0.20, 0.20, 0.40)
-const COLOR_CLEAR       = Color(0, 0, 0, 0)
+const COLOR_SELECTABLE = Color(0.20, 0.85, 0.40, 0.40)
+const COLOR_OPPONENT   = Color(0.95, 0.35, 0.20, 0.45)  # naranja para objetivos rivales
+const COLOR_INVALID    = Color(0.85, 0.20, 0.20, 0.40)
+const COLOR_CLEAR      = Color(0, 0, 0, 0)
+
+# Ataques que requieren elegir objetivo (activo o banco rival)
+const TARGETED_ATTACKS = ["Mean Look", "Feint Attack", "Telekinesis"]
 
 func _input(event: InputEvent) -> void:
 	if event is InputEventKey and event.pressed and event.keycode == KEY_ESCAPE:
 		if current_state != State.IDLE:
 			cancel()
+
 
 # ============================================================
 # API PÚBLICA
@@ -36,7 +42,7 @@ func begin_play_basic() -> void:
 
 func begin_attach_energy() -> void:
 	if board.current_state.get("my", {}).get("energy_played_this_turn", false):
-		board._add_log("⚠ Ya jugaste una energía este turno")
+		board.battle_log.add_message("⚠ Ya jugaste una energía este turno")
 		cancel()
 		return
 	_set_state(State.WAITING_HAND, Action.ATTACH_ENERGY)
@@ -49,24 +55,38 @@ func begin_evolve() -> void:
 func begin_retreat() -> void:
 	var my_data = board.current_state.get("my", {})
 	if my_data.get("retreat_performed_this_turn", false):
-		board._add_log("⚠ Ya retiraste un Pokémon este turno")
+		board.battle_log.add_message("⚠ Ya retiraste un Pokémon este turno")
 		return
-
 	_set_state(State.WAITING_TARGET, Action.RETREAT)
 	_highlight_my_bench_for_retreat()
+
+# Llamado desde ActionHandler cuando el ataque necesita elegir objetivo rival
+func begin_attack_target(attack_index: int) -> void:
+	_pending_attack_index = attack_index
+	_set_state(State.WAITING_TARGET, Action.ATTACK_WITH_TARGET)
+	board.battle_log.add_message("Elige el Pokémon objetivo del rival (Esc = cancelar)")
+	_highlight_opponent_pokemon_zones()
 
 func cancel() -> void:
 	_clear_all_highlights()
 	_set_state(State.IDLE, Action.NONE)
-	selected_hand_index = -1
+	selected_hand_index   = -1
+	_pending_attack_index = -1
 	emit_signal("selection_cancelled")
+
 
 # ============================================================
 # MANEJO DE SELECCIÓN
 # ============================================================
 
-func on_hand_card_clicked(hand_index: int, card_id: String) -> void:
+func on_hand_card_clicked(hand_index: int, card_id: String = "") -> void:
 	if current_state != State.WAITING_HAND: return
+
+	# Obtener card_id si no se pasó
+	if card_id == "":
+		var hand = board.current_state.get("my", {}).get("hand", [])
+		if hand_index < hand.size():
+			card_id = hand[hand_index].get("card_id", "")
 
 	match current_action:
 		Action.PLAY_BASIC:
@@ -97,13 +117,31 @@ func on_hand_card_clicked(hand_index: int, card_id: String) -> void:
 
 func on_zone_clicked(zone: String, zone_index: int) -> void:
 	if current_state != State.WAITING_TARGET: return
+
+	if current_action == Action.ATTACK_WITH_TARGET:
+		# Convertir zona a _target_pokemon_index para el servidor:
+		# 0 = activo, 1–5 = banco[0..4]
+		var target_index = 0
+		if zone == "bench":
+			target_index = zone_index + 1
+
+		NetworkManager.send_action("ATTACK", {
+			"attackIndex":        _pending_attack_index,
+			"targetPokemonIndex": target_index,
+		})
+		board.battle_log.add_message("Ataque dirigido enviado...")
+		_finish_selection()
+		return
+
 	emit_signal("target_selected", current_action, selected_hand_index, zone, zone_index)
 	_finish_selection()
 
-func _finish_selection():
+func _finish_selection() -> void:
 	_clear_all_highlights()
 	_set_state(State.IDLE, Action.NONE)
-	selected_hand_index = -1
+	selected_hand_index   = -1
+	_pending_attack_index = -1
+
 
 # ============================================================
 # HIGHLIGHTS Y FILTROS
@@ -115,11 +153,8 @@ func _highlight_hand_cards(filter_func: Callable) -> void:
 
 	var i = 0
 	for child in board.my_hand_zone.get_children():
-		# Saltar el fondo ColorRect
-		if child is ColorRect:
-			continue
+		if child is ColorRect: continue
 		var card_id = hand[i].get("card_id", "") if i < hand.size() else ""
-		# Resaltar con overlay en la propia carta (usa set_highlighted si existe)
 		if child.has_method("set_highlighted"):
 			child.set_highlighted(filter_func.call(card_id))
 		else:
@@ -139,13 +174,27 @@ func _highlight_my_pokemon_zones() -> void:
 func _highlight_my_bench_for_retreat() -> void:
 	var bench = board.current_state.get("my", {}).get("bench", [])
 	if bench.size() == 0:
-		board._add_log("⚠ No tienes Pokémon en la banca para retirar")
+		board.battle_log.add_message("⚠ No tienes Pokémon en la banca para retirar")
 		cancel()
 		return
 	for i in range(bench.size()):
 		if bench[i] != null:
 			_set_zone_highlight(board.my_bench_zones[i], COLOR_SELECTABLE)
 			_connect_zone_click(board.my_bench_zones[i], "bench", i)
+
+# Resalta activo + banco del rival como objetivos seleccionables
+func _highlight_opponent_pokemon_zones() -> void:
+	var opp = board.current_state.get("opponent", {})
+
+	if board.opp_active_zone and opp.get("active") != null:
+		_set_zone_highlight(board.opp_active_zone, COLOR_OPPONENT)
+		_connect_zone_click(board.opp_active_zone, "active", 0)
+
+	var bench = opp.get("bench", [])
+	for i in range(bench.size()):
+		if bench[i] != null:
+			_set_zone_highlight(board.opp_bench_zones[i], COLOR_OPPONENT)
+			_connect_zone_click(board.opp_bench_zones[i], "bench", i)
 
 func _highlight_valid_evolution_targets(evolution_card_id: String) -> void:
 	var evolves_from = CardDatabase.get_card(evolution_card_id).get("evolves_from", "").to_lower()
@@ -166,6 +215,7 @@ func _check_evolution_match(p_data: Dictionary, evolves_from_name: String) -> bo
 	var base_card = CardDatabase.get_card(p_data.get("card_id", ""))
 	return base_card.get("name", "").to_lower() == evolves_from_name
 
+
 # ============================================================
 # HELPERS VISUALES
 # ============================================================
@@ -175,7 +225,7 @@ func _set_zone_highlight(zone: Control, color: Color) -> void:
 	var overlay = zone.get_node_or_null("SelectOverlay")
 	if not overlay:
 		overlay = ColorRect.new()
-		overlay.name = "SelectOverlay"
+		overlay.name         = "SelectOverlay"
 		overlay.set_anchors_preset(Control.PRESET_FULL_RECT)
 		overlay.mouse_filter = Control.MOUSE_FILTER_IGNORE
 		zone.add_child(overlay)
@@ -184,7 +234,7 @@ func _set_zone_highlight(zone: Control, color: Color) -> void:
 func _clear_all_highlights() -> void:
 	if not board: return
 
-	# Limpiar highlights en la mano
+	# Limpiar mano
 	if board.my_hand_zone:
 		for child in board.my_hand_zone.get_children():
 			if child is ColorRect: continue
@@ -193,8 +243,9 @@ func _clear_all_highlights() -> void:
 			else:
 				_set_zone_highlight(child, COLOR_CLEAR)
 
-	# Limpiar zonas del campo
-	var all_zones = [board.my_active_zone] + board.my_bench_zones
+	# Limpiar zonas propias y rivales
+	var all_zones = [board.my_active_zone, board.opp_active_zone] \
+		+ board.my_bench_zones + board.opp_bench_zones
 	for z in all_zones:
 		if z:
 			_set_zone_highlight(z, COLOR_CLEAR)
@@ -216,7 +267,7 @@ func _connect_zone_click(zone: Control, zone_name: String, zone_idx: int) -> voi
 	area.pressed.connect(on_zone_clicked.bind(zone_name, zone_idx))
 
 func _flash_invalid_hand(_index: int) -> void:
-	board._add_log("⚠ Esa carta no es válida para esta acción")
+	board.battle_log.add_message("⚠ Esa carta no es válida para esta acción")
 
 func _can_play_basic(card_id: String) -> bool:
 	var d = CardDatabase.get_card(card_id)
@@ -231,7 +282,7 @@ func _is_evolution_card(card_id: String) -> bool:
 	return d.get("type") == "POKEMON" and int(d.get("stage", 0)) > 0
 
 func _set_state(s: State, a: Action) -> void:
-	current_state = s
+	current_state  = s
 	current_action = a
 	emit_signal("state_changed", s)
 

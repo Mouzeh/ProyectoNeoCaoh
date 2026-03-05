@@ -1,0 +1,412 @@
+extends Node
+
+# ============================================================
+# ShopScreen.gd
+# ============================================================
+
+const MiniCard = preload("res://scenes/main_menu/components/MiniCard.gd")
+
+static func build(container: Control, menu) -> void:
+	var C = menu
+
+	var shop_root = Control.new()
+	shop_root.name = "ShopRoot"
+	shop_root.set_anchors_preset(Control.PRESET_FULL_RECT)
+	container.add_child(shop_root)
+
+	var bg_image = TextureRect.new()
+	var bg_tex = load("res://assets/imagen/fondomenu.png")
+	if bg_tex: bg_image.texture = bg_tex
+	bg_image.set_anchors_preset(Control.PRESET_FULL_RECT)
+	bg_image.expand_mode  = TextureRect.EXPAND_IGNORE_SIZE
+	bg_image.stretch_mode = TextureRect.STRETCH_KEEP_ASPECT_COVERED
+	bg_image.modulate = Color(0.15, 0.15, 0.15, 1)
+	shop_root.add_child(bg_image)
+
+	# ── Header ──────────────────────────────────────────────
+	var header = Panel.new()
+	header.anchor_left = 0; header.anchor_right  = 1
+	header.anchor_top  = 0; header.anchor_bottom = 0
+	header.offset_top  = 50; header.offset_bottom = 120
+	var hs = StyleBoxFlat.new()
+	hs.bg_color = Color(C.COLOR_PANEL.r, C.COLOR_PANEL.g, C.COLOR_PANEL.b, 0.85)
+	hs.border_color = Color(C.COLOR_GOLD_DIM.r, C.COLOR_GOLD_DIM.g, C.COLOR_GOLD_DIM.b, 0.3)
+	hs.border_width_bottom = 1
+	header.add_theme_stylebox_override("panel", hs)
+	shop_root.add_child(header)
+
+	var header_hbox = HBoxContainer.new()
+	header_hbox.set_anchors_preset(Control.PRESET_FULL_RECT)
+	header_hbox.add_theme_constant_override("separation", 0)
+	header.add_child(header_hbox)
+
+	var accent = ColorRect.new()
+	accent.color = C.COLOR_GOLD
+	accent.custom_minimum_size = Vector2(6, 0)
+	header_hbox.add_child(accent)
+
+	var title_m = MarginContainer.new()
+	title_m.add_theme_constant_override("margin_left", 20)
+	title_m.size_flags_horizontal = Control.SIZE_EXPAND_FILL
+	header_hbox.add_child(title_m)
+
+	var title_lbl = Label.new()
+	title_lbl.text = "🏪 TIENDA"
+	title_lbl.add_theme_font_size_override("font_size", 20)
+	title_lbl.add_theme_color_override("font_color", C.COLOR_GOLD)
+	title_lbl.vertical_alignment = VERTICAL_ALIGNMENT_CENTER
+	title_m.add_child(title_lbl)
+
+	var coins_m = MarginContainer.new()
+	coins_m.add_theme_constant_override("margin_right", 40)
+	coins_m.size_flags_vertical = Control.SIZE_SHRINK_CENTER
+	header_hbox.add_child(coins_m)
+
+	var coins_lbl = Label.new()
+	coins_lbl.name = "CoinsLabel"
+	coins_lbl.text = "🪙 " + str(PlayerData.coins)
+	coins_lbl.add_theme_font_size_override("font_size", 18)
+	coins_lbl.add_theme_color_override("font_color", C.COLOR_GOLD)
+	coins_m.add_child(coins_lbl)
+
+	# ── Contenido ────────────────────────────────────────────
+	var scroll = ScrollContainer.new()
+	scroll.anchor_left = 0; scroll.anchor_right  = 1
+	scroll.anchor_top  = 0; scroll.anchor_bottom = 1
+	scroll.offset_top  = 130; scroll.offset_bottom = -10
+	scroll.offset_left = 40;  scroll.offset_right  = -40
+	shop_root.add_child(scroll)
+
+	var main_vbox = VBoxContainer.new()
+	main_vbox.size_flags_horizontal = Control.SIZE_EXPAND_FILL
+	main_vbox.add_theme_constant_override("separation", 30)
+	scroll.add_child(main_vbox)
+
+	# ── Sección sobres ───────────────────────────────────────
+	var s1 = Label.new()
+	s1.text = "SOBRES DE EXPANSIÓN · Neo Genesis"
+	s1.add_theme_font_size_override("font_size", 15)
+	s1.add_theme_color_override("font_color", C.COLOR_GOLD_DIM)
+	main_vbox.add_child(s1)
+
+	var packs_hbox = HBoxContainer.new()
+	packs_hbox.add_theme_constant_override("separation", 30)
+	main_vbox.add_child(packs_hbox)
+
+	_create_pack_card(shop_root, menu, packs_hbox, "typhlosion_pack", "Sobre Typhlosion",
+		"res://assets/Sobres/SobreFuego.png",  100, Color(0.8, 0.2, 0.2))
+	_create_pack_card(shop_root, menu, packs_hbox, "feraligatr_pack", "Sobre Feraligatr",
+		"res://assets/Sobres/SobreAgua.png",   100, Color(0.2, 0.4, 0.8))
+	_create_pack_card(shop_root, menu, packs_hbox, "meganium_pack",   "Sobre Meganium",
+		"res://assets/Sobres/SobreHierba.png", 100, Color(0.2, 0.7, 0.3))
+
+	main_vbox.add_child(UITheme.vspace(10))
+
+	# ── Sección mejoras ──────────────────────────────────────
+	var s2 = Label.new()
+	s2.text = "MEJORAS DE CUENTA"
+	s2.add_theme_font_size_override("font_size", 15)
+	s2.add_theme_color_override("font_color", C.COLOR_GOLD_DIM)
+	main_vbox.add_child(s2)
+
+	var upgrades_hbox = HBoxContainer.new()
+	upgrades_hbox.add_theme_constant_override("separation", 30)
+	main_vbox.add_child(upgrades_hbox)
+
+	_create_slot_upgrade_card(shop_root, menu, upgrades_hbox, 500)
+
+
+# ─── CARD DE SOBRE ───────────────────────────────────────────
+static func _create_pack_card(shop_root, menu, parent, pack_id, pack_name, img_path, price, glow_color) -> void:
+	var C   = menu
+	var box = PanelContainer.new()
+	box.custom_minimum_size = Vector2(220, 340)
+
+	var st = StyleBoxFlat.new()
+	st.bg_color = Color(0.1, 0.12, 0.18, 0.95)
+	st.border_width_left = 2; st.border_width_right  = 2
+	st.border_width_top  = 2; st.border_width_bottom = 2
+	st.border_color = glow_color.darkened(0.3)
+	st.corner_radius_top_left    = 12; st.corner_radius_top_right    = 12
+	st.corner_radius_bottom_left = 12; st.corner_radius_bottom_right = 12
+	box.add_theme_stylebox_override("panel", st)
+	parent.add_child(box)
+
+	var vbox = VBoxContainer.new()
+	vbox.alignment = BoxContainer.ALIGNMENT_CENTER
+	vbox.add_theme_constant_override("separation", 8)
+	box.add_child(vbox)
+
+	var img_rect = TextureRect.new()
+	img_rect.custom_minimum_size = Vector2(160, 200)
+	img_rect.expand_mode  = TextureRect.EXPAND_IGNORE_SIZE
+	img_rect.stretch_mode = TextureRect.STRETCH_KEEP_ASPECT_CENTERED
+	if ResourceLoader.exists(img_path):
+		img_rect.texture = load(img_path)
+	vbox.add_child(img_rect)
+
+	var name_lbl = Label.new()
+	name_lbl.text = pack_name
+	name_lbl.horizontal_alignment = HORIZONTAL_ALIGNMENT_CENTER
+	name_lbl.add_theme_font_size_override("font_size", 14)
+	name_lbl.add_theme_color_override("font_color", C.COLOR_TEXT)
+	vbox.add_child(name_lbl)
+
+	var price_lbl = Label.new()
+	price_lbl.text = "🪙 " + str(price) + " monedas"
+	price_lbl.horizontal_alignment = HORIZONTAL_ALIGNMENT_CENTER
+	price_lbl.add_theme_font_size_override("font_size", 12)
+	price_lbl.add_theme_color_override("font_color", C.COLOR_GOLD_DIM)
+	vbox.add_child(price_lbl)
+
+	# Botón COMPRAR — guarda el sobre sin abrirlo
+	var buy_btn = Button.new()
+	buy_btn.text = "Comprar"
+	buy_btn.custom_minimum_size = Vector2(160, 38)
+	buy_btn.size_flags_horizontal = Control.SIZE_SHRINK_CENTER
+	var st_btn = StyleBoxFlat.new()
+	st_btn.bg_color = glow_color.darkened(0.2)
+	st_btn.corner_radius_top_left    = 6; st_btn.corner_radius_top_right    = 6
+	st_btn.corner_radius_bottom_left = 6; st_btn.corner_radius_bottom_right = 6
+	buy_btn.add_theme_stylebox_override("normal", st_btn)
+	buy_btn.add_theme_color_override("font_color", Color.WHITE)
+	buy_btn.add_theme_font_size_override("font_size", 13)
+	buy_btn.pressed.connect(func(): _buy_pack(shop_root, menu, pack_id, price, buy_btn))
+	vbox.add_child(buy_btn)
+
+
+# ─── CARD DE SLOT ────────────────────────────────────────────
+static func _create_slot_upgrade_card(shop_root, menu, parent, price) -> void:
+	var C   = menu
+	var box = PanelContainer.new()
+	box.custom_minimum_size = Vector2(220, 200)
+	var st = StyleBoxFlat.new()
+	st.bg_color = Color(0.15, 0.12, 0.18, 0.95)
+	st.border_width_left = 2; st.border_width_right  = 2
+	st.border_width_top  = 2; st.border_width_bottom = 2
+	st.border_color = C.COLOR_PURPLE
+	st.corner_radius_top_left    = 12; st.corner_radius_top_right    = 12
+	st.corner_radius_bottom_left = 12; st.corner_radius_bottom_right = 12
+	box.add_theme_stylebox_override("panel", st)
+	parent.add_child(box)
+
+	var vbox = VBoxContainer.new()
+	vbox.alignment = BoxContainer.ALIGNMENT_CENTER
+	vbox.add_theme_constant_override("separation", 8)
+	box.add_child(vbox)
+
+	var icon = Label.new()
+	icon.text = "🗃️"
+	icon.horizontal_alignment = HORIZONTAL_ALIGNMENT_CENTER
+	icon.add_theme_font_size_override("font_size", 40)
+	vbox.add_child(icon)
+
+	var n = Label.new()
+	n.text = "Nuevo Slot de Mazo"
+	n.horizontal_alignment = HORIZONTAL_ALIGNMENT_CENTER
+	n.add_theme_font_size_override("font_size", 14)
+	n.add_theme_color_override("font_color", C.COLOR_TEXT)
+	vbox.add_child(n)
+
+	vbox.add_child(UITheme.vspace(8))
+
+	var btn = Button.new()
+	btn.text = "🪙 " + str(price) + " monedas"
+	btn.custom_minimum_size = Vector2(160, 38)
+	btn.size_flags_horizontal = Control.SIZE_SHRINK_CENTER
+	var st_btn = StyleBoxFlat.new()
+	st_btn.bg_color = C.COLOR_PURPLE.darkened(0.2)
+	st_btn.corner_radius_top_left    = 6; st_btn.corner_radius_top_right    = 6
+	st_btn.corner_radius_bottom_left = 6; st_btn.corner_radius_bottom_right = 6
+	btn.add_theme_stylebox_override("normal", st_btn)
+	btn.add_theme_color_override("font_color", Color.WHITE)
+	btn.add_theme_font_size_override("font_size", 13)
+	btn.pressed.connect(func(): _buy_slot(shop_root, menu, price, btn))
+	vbox.add_child(btn)
+
+
+# ─── HTTP: COMPRAR SOBRE (sin abrir) ─────────────────────────
+static func _buy_pack(shop_root: Control, menu, pack_id: String, price: int, btn: Button) -> void:
+	if PlayerData.coins < price:
+		_show_toast(shop_root, "🪙 Monedas insuficientes", Color(0.8, 0.2, 0.2))
+		return
+
+	btn.disabled = true
+	btn.text     = "Comprando..."
+
+	var http = HTTPRequest.new()
+	shop_root.add_child(http)
+
+	http.request_completed.connect(func(result, code, _h, body):
+		http.queue_free()
+		btn.disabled = false
+		btn.text     = "Comprar"
+
+		if result != HTTPRequest.RESULT_SUCCESS or code != 200:
+			_show_toast(shop_root, "⚠ Error al comprar", Color(0.8, 0.2, 0.2))
+			return
+
+		var data = JSON.parse_string(body.get_string_from_utf8())
+		if not data or not data.get("success", false):
+			_show_toast(shop_root, "⚠ " + data.get("error", "Error"), Color(0.8, 0.2, 0.2))
+			return
+
+		# Actualizar monedas locales
+		PlayerData.coins = data.get("coins_left", PlayerData.coins)
+		_update_coins_ui(shop_root)
+
+		var pending = data.get("pending_packs", 0)
+		_show_toast(shop_root,
+			"✓ Sobre guardado · " + str(pending) + " sin abrir en tu colección",
+			Color(0.2, 0.7, 0.3))
+	)
+
+	http.request(
+		"http://localhost:3000/api/shop/buy",
+		["Content-Type: application/json", "Authorization: Bearer " + NetworkManager.token],
+		HTTPClient.METHOD_POST,
+		JSON.stringify({"pack_type": pack_id})
+	)
+
+
+# ─── HTTP: ABRIR SOBRE ────────────────────────────────────────
+static func open_pack_from_collection(shop_root: Control, menu, pack_type: String, on_done: Callable) -> void:
+	var http = HTTPRequest.new()
+	shop_root.add_child(http)
+
+	http.request_completed.connect(func(result, code, _h, body):
+		http.queue_free()
+		if result != HTTPRequest.RESULT_SUCCESS or code != 200:
+			_show_toast(shop_root, "⚠ Error al abrir sobre", Color(0.8, 0.2, 0.2))
+			return
+		var data = JSON.parse_string(body.get_string_from_utf8())
+		if data and data.get("success"):
+			var cards = data.get("cards_received", [])
+			for card in cards:
+				PlayerData.add_card(card)
+			on_done.call(cards)
+	)
+
+	http.request(
+		"http://localhost:3000/api/shop/open-pack",
+		["Content-Type: application/json", "Authorization: Bearer " + NetworkManager.token],
+		HTTPClient.METHOD_POST,
+		JSON.stringify({"pack_type": pack_type})
+	)
+
+
+# ─── HTTP: COMPRAR SLOT ───────────────────────────────────────
+static func _buy_slot(shop_root: Control, menu, price: int, btn: Button) -> void:
+	if PlayerData.coins < price:
+		_show_toast(shop_root, "🪙 Monedas insuficientes", Color(0.8, 0.2, 0.2))
+		return
+
+	btn.disabled = true
+	var http = HTTPRequest.new()
+	shop_root.add_child(http)
+
+	http.request_completed.connect(func(result, code, _h, body):
+		http.queue_free()
+		btn.disabled = false
+		if result != HTTPRequest.RESULT_SUCCESS or code != 200:
+			_show_toast(shop_root, "⚠ Error", Color(0.8, 0.2, 0.2))
+			return
+		var data = JSON.parse_string(body.get_string_from_utf8())
+		if data and data.get("success"):
+			PlayerData.coins = data.get("coins_left", PlayerData.coins)
+			_update_coins_ui(shop_root)
+			_show_toast(shop_root, "✓ Nuevo slot desbloqueado", Color(0.2, 0.7, 0.3))
+	)
+
+	http.request(
+		"http://localhost:3000/api/shop/buy-slot",
+		["Content-Type: application/json", "Authorization: Bearer " + NetworkManager.token],
+		HTTPClient.METHOD_POST, "{}"
+	)
+
+
+# ─── HELPERS ─────────────────────────────────────────────────
+static func _update_coins_ui(shop_root: Control) -> void:
+	var lbl = UITheme.find_node(shop_root, "CoinsLabel") as Label
+	if lbl: lbl.text = "🪙 " + str(PlayerData.coins)
+
+
+static func _show_toast(parent: Control, msg: String, color: Color) -> void:
+	var toast = Label.new()
+	toast.text = msg
+	toast.add_theme_font_size_override("font_size", 14)
+	toast.add_theme_color_override("font_color", Color.WHITE)
+	var st = StyleBoxFlat.new()
+	st.bg_color = Color(color.r * 0.4, color.g * 0.4, color.b * 0.4, 0.95)
+	st.border_color = color
+	st.border_width_left = 1; st.border_width_right  = 1
+	st.border_width_top  = 1; st.border_width_bottom = 1
+	st.corner_radius_top_left    = 8; st.corner_radius_top_right    = 8
+	st.corner_radius_bottom_left = 8; st.corner_radius_bottom_right = 8
+	st.content_margin_left = 16; st.content_margin_right  = 16
+	st.content_margin_top  = 10; st.content_margin_bottom = 10
+	toast.add_theme_stylebox_override("normal", st)
+	toast.set_anchors_preset(Control.PRESET_CENTER_BOTTOM)
+	toast.offset_bottom = -60
+	toast.offset_top    = -100
+	toast.offset_left   = -250
+	toast.offset_right  = 250
+	toast.horizontal_alignment = HORIZONTAL_ALIGNMENT_CENTER
+	toast.z_index = 100
+	parent.add_child(toast)
+	var tw = toast.create_tween()
+	tw.tween_interval(2.0)
+	tw.tween_property(toast, "modulate:a", 0.0, 0.5)
+	tw.tween_callback(toast.queue_free)
+
+
+# ─── RAREZA (usado también por CollectionScreen) ─────────────
+static func rarity_color(rarity: String) -> Color:
+	match rarity:
+		"RARE":       return Color(0.95, 0.85, 0.1,  1.0)
+		"RARE_HOLO":  return Color(0.2,  0.85, 1.0,  1.0)
+		"ULTRA_RARE": return Color(1.0,  0.45, 0.05, 1.0)
+		_:            return Color(0.6,  0.6,  0.6,  1.0)
+
+static func rarity_weight(rarity: String) -> int:
+	match rarity:
+		"COMMON":     return 0
+		"UNCOMMON":   return 1
+		"RARE":       return 2
+		"RARE_HOLO":  return 3
+		"ULTRA_RARE": return 4
+	return 0
+
+static func clicks_needed(rarity: String) -> int:
+	match rarity:
+		"RARE":       return 2
+		"RARE_HOLO":  return 3
+		"ULTRA_RARE": return 6
+		_:            return 1
+
+const ULTRA_RARE_CHARGE_COLORS = [
+	Color(0.3,  0.0,  0.6,  0.8),
+	Color(0.0,  0.2,  0.9,  0.8),
+	Color(0.0,  0.8,  0.4,  0.8),
+	Color(0.95, 0.8,  0.0,  0.8),
+	Color(1.0,  0.3,  0.0,  0.8),
+	Color(1.0,  0.05, 0.05, 0.9),
+]
+
+static func spawn_particles(parent: Control, origin: Vector2, rarity: String) -> void:
+	var base_color = rarity_color(rarity)
+	var count = 12 if rarity == "RARE" else (20 if rarity == "RARE_HOLO" else 35)
+	for i in range(count):
+		var p = ColorRect.new()
+		var size = randf_range(3.0, 8.0)
+		p.custom_minimum_size = Vector2(size, size)
+		p.color = base_color.lightened(randf_range(0.0, 0.4))
+		p.position = origin
+		parent.add_child(p)
+		var angle  = randf_range(0.0, TAU)
+		var speed  = randf_range(60.0, 220.0)
+		var target = origin + Vector2(cos(angle), sin(angle)) * speed
+		var tw = p.create_tween().set_parallel(true)
+		tw.tween_property(p, "position", target, randf_range(0.5, 1.0)).set_trans(Tween.TRANS_CUBIC).set_ease(Tween.EASE_OUT)
+		tw.tween_property(p, "modulate:a", 0.0, randf_range(0.4, 0.9)).set_trans(Tween.TRANS_QUAD).set_ease(Tween.EASE_IN)
+		tw.tween_callback(p.queue_free).set_delay(1.0)

@@ -3,15 +3,15 @@
 importer="texture"
 type="CompressedTexture2D"
 uid="uid://djdepr1vxufmr"
-path="res://.godot/imported/poison.png-2e0e94f617e7ace2a2f6348f4426ecf7.ctex"
+path="res://.godot/imported/poison.png-f6078a296e6d14400b47bc0199c724d7.ctex"
 metadata={
 "vram_texture": false
 }
 
 [deps]
 
-source_file="res://assets/imagen/Tokens/poison.png"
-dest_files=["res://.godot/imported/poison.png-2e0e94f617e7ace2a2f6348f4426ecf7.ctex"]
+source_file="res://assets/imagen/tokens/poison.png"
+dest_files=["res://.godot/imported/poison.png-f6078a296e6d14400b47bc0199c724d7.ctex"]
 
 [params]
 

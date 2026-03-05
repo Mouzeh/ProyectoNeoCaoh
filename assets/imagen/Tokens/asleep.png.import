@@ -3,15 +3,15 @@
 importer="texture"
 type="CompressedTexture2D"
 uid="uid://fipaqfmcsrwt"
-path="res://.godot/imported/asleep.png-381b087ec222924bd7762196f04bf65c.ctex"
+path="res://.godot/imported/asleep.png-6a632d1dedcd03774d17284e6655b66e.ctex"
 metadata={
 "vram_texture": false
 }
 
 [deps]
 
-source_file="res://assets/imagen/Tokens/asleep.png"
-dest_files=["res://.godot/imported/asleep.png-381b087ec222924bd7762196f04bf65c.ctex"]
+source_file="res://assets/imagen/tokens/asleep.png"
+dest_files=["res://.godot/imported/asleep.png-6a632d1dedcd03774d17284e6655b66e.ctex"]
 
 [params]
 

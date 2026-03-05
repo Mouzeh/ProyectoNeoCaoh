@@ -22,6 +22,9 @@ NetworkManager="*uid://cfnskomhsgo3r"
 PlayerData="*uid://bwiueh7h02g2p"
 GameManager="*uid://dgwrecfkc85ft"
 UITheme="*uid://6l1g37rg00c7"
+StarterDecks="*uid://dhqxmffk1lvcq"
+MiniCard="*uid://ectku4e87pnt"
+RoomCard="*uid://c8lkfadjdilel"
 
 [display]
 
