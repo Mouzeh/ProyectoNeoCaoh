@@ -107,6 +107,88 @@ static func build(container: Control, menu) -> void:
 		)
 	, C)
 
+	# ── Sección: Idioma ──
+	_add_section_title(main_v, "🌍  IDIOMA", C)
+
+	var lang_card = _make_panel(C)
+	main_v.add_child(lang_card)
+
+	var lang_v = VBoxContainer.new()
+	lang_v.add_theme_constant_override("separation", 16)
+	lang_card.add_child(lang_v)
+
+	var lang_hb = HBoxContainer.new()
+	lang_hb.add_theme_constant_override("separation", 12)
+	lang_v.add_child(lang_hb)
+
+	var lang_lbl = Label.new()
+	lang_lbl.text = "Idioma de las cartas"
+	lang_lbl.size_flags_horizontal = Control.SIZE_EXPAND_FILL
+	lang_lbl.add_theme_font_size_override("font_size", 13)
+	lang_lbl.add_theme_color_override("font_color", C.COLOR_TEXT_DIM)
+	lang_hb.add_child(lang_lbl)
+
+	var btn_en = Button.new()
+	btn_en.text = "EN"
+	btn_en.custom_minimum_size = Vector2(60, 36)
+	btn_en.add_theme_font_size_override("font_size", 13)
+	lang_hb.add_child(btn_en)
+
+	var btn_es = Button.new()
+	btn_es.text = "ES"
+	btn_es.custom_minimum_size = Vector2(60, 36)
+	btn_es.add_theme_font_size_override("font_size", 13)
+	lang_hb.add_child(btn_es)
+
+	var st_active = func() -> StyleBoxFlat:
+		var s = StyleBoxFlat.new()
+		s.bg_color = Color(C.COLOR_GOLD.r, C.COLOR_GOLD.g, C.COLOR_GOLD.b, 0.25)
+		s.border_color = C.COLOR_GOLD
+		s.border_width_left = 2; s.border_width_right  = 2
+		s.border_width_top  = 2; s.border_width_bottom = 2
+		s.corner_radius_top_left    = 6; s.corner_radius_top_right    = 6
+		s.corner_radius_bottom_left = 6; s.corner_radius_bottom_right = 6
+		return s
+
+	var st_inactive = func() -> StyleBoxFlat:
+		var s = StyleBoxFlat.new()
+		s.bg_color = Color(0, 0, 0, 0)
+		s.border_color = Color(C.COLOR_GOLD_DIM.r, C.COLOR_GOLD_DIM.g, C.COLOR_GOLD_DIM.b, 0.3)
+		s.border_width_left = 1; s.border_width_right  = 1
+		s.border_width_top  = 1; s.border_width_bottom = 1
+		s.corner_radius_top_left    = 6; s.corner_radius_top_right    = 6
+		s.corner_radius_bottom_left = 6; s.corner_radius_bottom_right = 6
+		return s
+
+	var LM = menu.get_node_or_null("/root/LanguageManager")
+	if LM == null:
+		push_error("LanguageManager no encontrado en /root/ — verifica el nombre en Autoload")
+		return
+
+	var refresh_buttons = func():
+		var es = LM.is_spanish()
+		btn_es.add_theme_stylebox_override("normal", st_active.call() if es  else st_inactive.call())
+		btn_en.add_theme_stylebox_override("normal", st_active.call() if !es else st_inactive.call())
+		btn_es.add_theme_color_override("font_color", C.COLOR_GOLD    if es  else C.COLOR_TEXT_DIM)
+		btn_en.add_theme_color_override("font_color", C.COLOR_GOLD    if !es else C.COLOR_TEXT_DIM)
+
+	refresh_buttons.call()
+
+	btn_en.pressed.connect(func():
+		LM.set_language(LM.Language.EN)
+		refresh_buttons.call()
+	)
+	btn_es.pressed.connect(func():
+		LM.set_language(LM.Language.ES)
+		refresh_buttons.call()
+	)
+
+	var lang_note = Label.new()
+	lang_note.text = "Cambia el idioma de las imágenes de las cartas."
+	lang_note.add_theme_font_size_override("font_size", 11)
+	lang_note.add_theme_color_override("font_color", Color(C.COLOR_TEXT_DIM.r, C.COLOR_TEXT_DIM.g, C.COLOR_TEXT_DIM.b, 0.6))
+	lang_v.add_child(lang_note)
+
 	# ── Sección: Red ──
 	_add_section_title(main_v, "🌐  RED", C)
 
@@ -212,10 +294,10 @@ static func build(container: Control, menu) -> void:
 	about_v.add_theme_constant_override("separation", 8)
 	about_card.add_child(about_v)
 
-	_add_info_row(about_v, "Versión",    "v0.1 Alpha",          C)
-	_add_info_row(about_v, "Expansión",  "Neo Genesis (111 cartas)", C)
-	_add_info_row(about_v, "Motor",      "Godot 4",             C)
-	_add_info_row(about_v, "Servidor",   "Node.js + SQLite",    C)
+	_add_info_row(about_v, "Versión",    "v0.1 Alpha",               C)
+	_add_info_row(about_v, "Expansión",  "Neo Genesis (111 cartas)",  C)
+	_add_info_row(about_v, "Motor",      "Godot 4",                   C)
+	_add_info_row(about_v, "Servidor",   "Node.js + SQLite",          C)
 
 
 # ── Helpers ─────────────────────────────────────────────────

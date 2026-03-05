@@ -15,8 +15,8 @@ signal room_created(room_id)
 signal room_left
 
 # ─── CONFIGURACIÓN ──────────────────────────────────────────
-# Cambia SERVER_URL a tu IP/dominio de Hetzner antes de exportar
 const SERVER_URL      = "ws://localhost:3000"
+const BASE_URL        = "http://localhost:3000"
 const RECONNECT_DELAY = 3.0
 const PING_INTERVAL   = 20.0
 const MAX_DECK_SIZE   = 60
@@ -31,8 +31,7 @@ var should_reconnect:   bool          = false
 var ping_timer:         float         = 0.0
 var pending_game_state: Dictionary    = {}
 
-# ─── INTERNO ────────────────────────────────────────────────
-var _was_in_battle: bool = false  # para reconexión mid-game
+var _was_in_battle: bool = false
 
 # ============================================================
 func _ready() -> void:
@@ -52,7 +51,6 @@ func _process(delta: float) -> void:
 				print("[NetworkManager] Connected to server")
 				if player_id != "":
 					authenticate(player_id, token)
-					# Si se reconecta estando en batalla, pide el estado actual
 					if _was_in_battle:
 						_send({"type": "RECONNECT_BATTLE"})
 
@@ -86,16 +84,16 @@ func _process(delta: float) -> void:
 # ─── CONEXIÓN ───────────────────────────────────────────────
 func connect_to_server() -> void:
 	should_reconnect = true
-	socket = WebSocketPeer.new()  # socket fresco en cada intento
+	socket = WebSocketPeer.new()
 	var err = socket.connect_to_url(SERVER_URL)
 	if err != OK:
 		print("[NetworkManager] Failed to connect: ", err)
 		reconnect_timer = RECONNECT_DELAY
 
 func disconnect_from_server() -> void:
-	should_reconnect  = false
-	ws_connected      = false
-	_was_in_battle    = false
+	should_reconnect = false
+	ws_connected     = false
+	_was_in_battle   = false
 	socket.close()
 
 # ─── ENVIAR ─────────────────────────────────────────────────
@@ -104,6 +102,9 @@ func _send(data: Dictionary) -> void:
 		push_warning("[NetworkManager] _send ignorado: no conectado")
 		return
 	socket.send_text(JSON.stringify(data))
+
+func send_ws(data: Dictionary) -> void:
+	_send(data)
 
 func authenticate(pid: String, tok: String = "") -> void:
 	player_id = pid
@@ -125,7 +126,7 @@ func join_room(room_id: String, deck: Array) -> void:
 func leave_room() -> void:
 	_send({"type": "LEAVE_ROOM", "payload": {}})
 
-# ─── CHAT ───────────────────────────────────────────────────
+# ─── CHAT (en partida) ──────────────────────────────────────
 func send_chat(text: String) -> void:
 	if text.strip_edges() == "": return
 	_send({"type": "CHAT", "payload": {"text": text}})
@@ -160,7 +161,6 @@ func play_trainer(hand_index: int, targets: Dictionary = {}) -> void:
 func promote(bench_index: int) -> void:
 	send_action("PROMOTE", {"benchIndex": bench_index})
 
-# ─── SETUP ──────────────────────────────────────────────────
 func setup_place_active(hand_index: int) -> void:
 	send_action("SETUP_ACTIVE", {"handIndex": hand_index})
 
@@ -182,12 +182,21 @@ func _handle_message(text: String) -> void:
 	if json.parse(text) != OK:
 		push_warning("[NetworkManager] Mensaje no parseable: " + text.left(100))
 		return
-	var msg  = json.get_data()
+	var msg = json.get_data()
 	if typeof(msg) != TYPE_DICTIONARY:
 		push_warning("[NetworkManager] Mensaje inesperado (no dict)")
 		return
+
 	var type = msg.get("type", "")
 
+	# ── Mensajes de chat global → redirigir al MainMenu ──
+	if type.begins_with("CHAT_") or type == "BANNED":
+		var main_menu = get_tree().get_first_node_in_group("main_menu")
+		if main_menu and main_menu.has_method("handle_ws_message"):
+			main_menu.handle_ws_message(msg)
+		return
+
+	# ── Lógica de juego ──────────────────────────────────
 	match type:
 		"AUTH_OK":
 			emit_signal("auth_ok", msg.get("player_id", ""))
@@ -217,6 +226,20 @@ func _handle_message(text: String) -> void:
 			pass
 		"CHAT":
 			emit_signal("chat_received", msg.get("player_id", "Rival"), msg.get("text", ""))
+
+		# ── Actualización de datos del jugador en tiempo real ──
+		"PLAYER_DATA_UPDATE":
+			var payload = msg.get("payload", {})
+			if payload.has("coins"):             PlayerData.coins             = payload["coins"]
+			if payload.has("gems"):              PlayerData.gems              = payload["gems"]
+			if payload.has("battle_pass_level"): PlayerData.battle_pass_level = payload["battle_pass_level"]
+			if payload.has("battle_pass_xp"):    PlayerData.battle_pass_xp   = payload["battle_pass_xp"]
+			if payload.has("has_premium_pass"):  PlayerData.has_premium_pass  = payload["has_premium_pass"]
+			# Notificar al MainMenu para que refresque la UI
+			var main_menu = get_tree().get_first_node_in_group("main_menu")
+			if main_menu and main_menu.has_method("handle_ws_message"):
+				main_menu.handle_ws_message(msg)
+
 		_:
 			push_warning("[NetworkManager] Tipo desconocido: " + type)
 

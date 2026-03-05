@@ -403,7 +403,7 @@ static func _build_expansion_grid(grid_area: Control, exp_id: String, content: C
 
 	# Lanzar precarga threaded de TODAS las imágenes del set de una
 	for id in all_ids:
-		var img_path = CardDatabase.get_card(id).get("image","")
+		var img_path = LanguageManager.get_card_image(CardDatabase.get_card(id))
 		_request_texture(img_path)
 
 	var main_h = HBoxContainer.new()
@@ -607,7 +607,7 @@ static func _make_set_card_slot(card_id: String, card: Dictionary, owned: bool, 
 	panel.add_theme_stylebox_override("panel", st)
 	slot.add_child(panel)
 
-	var img_path = card.get("image","")
+	var img_path = LanguageManager.get_card_image(card)
 	var tr = TextureRect.new()
 	tr.set_anchors_preset(Control.PRESET_FULL_RECT)
 	tr.offset_left = 4; tr.offset_top    = 4
@@ -684,7 +684,7 @@ static func _show_set_card_preview(grid_area, card_id, card, owned, qty, menu) -
 	var prev_lbl = UITheme.find_node(grid_area, "PreviewName")   as Label
 	var prev_det = UITheme.find_node(grid_area, "PreviewDetail") as Label
 
-	var img_path = card.get("image","")
+	var img_path = LanguageManager.get_card_image(card)
 	if prev_img:
 		var tex = _get_texture(img_path)
 		if tex == null and img_path != "":

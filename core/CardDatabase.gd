@@ -7,6 +7,7 @@ const CARDS: Dictionary = {
 	"ampharos": {
 		"id": "ampharos", "name": "Ampharos", "number": "1/111",
 		"image": "res://assets/cards/Neo Genesis/ampharos-neo-genesis-1.jpg",
+		"image_es": "res://assets/cards/Neo Genesis ES/ampharos-neo-genesis-es-1.jpg",
 		"type": "POKEMON", "pokemon_type": "LIGHTNING",
 		"hp": 80, "stage": 2, "evolves_from": "flaaffy",
 		"retreat_cost": 2, "weakness": "FIGHTING", "resistance": "",
@@ -18,6 +19,7 @@ const CARDS: Dictionary = {
 	"azumarill": {
 		"id": "azumarill", "name": "Azumarill", "number": "2/111",
 		"image": "res://assets/cards/Neo Genesis/azumarill-neo-genesis-2.jpg",
+		"image_es": "res://assets/cards/Neo Genesis ES/azumarill-neo-genesis-es-2.jpg",
 		"type": "POKEMON", "pokemon_type": "WATER",
 		"hp": 70, "stage": 1, "evolves_from": "marill",
 		"retreat_cost": 1, "weakness": "LIGHTNING", "resistance": "",
@@ -30,6 +32,7 @@ const CARDS: Dictionary = {
 	"bellossom": {
 		"id": "bellossom", "name": "Bellossom", "number": "3/111",
 		"image": "res://assets/cards/Neo Genesis/bellossom-neo-genesis-3.jpg",
+		"image_es": "res://assets/cards/Neo Genesis ES/bellossom-neo-genesis-es-3.jpg",
 		"type": "POKEMON", "pokemon_type": "GRASS",
 		"hp": 70, "stage": 2, "evolves_from": "gloom",
 		"retreat_cost": 1, "weakness": "FIRE", "resistance": "",
@@ -42,6 +45,7 @@ const CARDS: Dictionary = {
 	"feraligatr_1": {
 		"id": "feraligatr_1", "name": "Feraligatr", "number": "4/111",
 		"image": "res://assets/cards/Neo Genesis/feraligatr-neo-genesis-4.jpg",
+		"image_es": "res://assets/cards/Neo Genesis ES/feraligatr-neo-genesis-es-4.jpg",
 		"type": "POKEMON", "pokemon_type": "WATER",
 		"hp": 100, "stage": 2, "evolves_from": "croconaw",
 		"retreat_cost": 3, "weakness": "GRASS", "resistance": "",
@@ -57,6 +61,7 @@ const CARDS: Dictionary = {
 	"feraligatr_2": {
 		"id": "feraligatr_2", "name": "Feraligatr", "number": "5/111",
 		"image": "res://assets/cards/Neo Genesis/feraligatr-neo-genesis-5.jpg",
+		"image_es": "res://assets/cards/Neo Genesis ES/feraligatr-neo-genesis-es-5.jpg",
 		"type": "POKEMON", "pokemon_type": "WATER",
 		"hp": 120, "stage": 2, "evolves_from": "croconaw",
 		"retreat_cost": 3, "weakness": "GRASS", "resistance": "",
@@ -72,6 +77,7 @@ const CARDS: Dictionary = {
 	"heracross": {
 		"id": "heracross", "name": "Heracross", "number": "6/111",
 		"image": "res://assets/cards/Neo Genesis/heracross-neo-genesis-6.jpg",
+		"image_es": "res://assets/cards/Neo Genesis ES/heracross-neo-genesis-es-6.jpg",
 		"type": "POKEMON", "pokemon_type": "GRASS",
 		"hp": 60, "stage": 0, "evolves_from": "",
 		"retreat_cost": 2, "weakness": "FIRE", "resistance": "",
@@ -87,6 +93,7 @@ const CARDS: Dictionary = {
 	"jumpluff": {
 		"id": "jumpluff", "name": "Jumpluff", "number": "7/111",
 		"image": "res://assets/cards/Neo Genesis/jumpluff-neo-genesis-7.jpg",
+		"image_es": "res://assets/cards/Neo Genesis ES/jumpluff-neo-genesis-es-7.jpg",
 		"type": "POKEMON", "pokemon_type": "GRASS",
 		"hp": 70, "stage": 2, "evolves_from": "skiploom",
 		"retreat_cost": 0, "weakness": "FIRE", "resistance": "FIGHTING",
@@ -99,6 +106,7 @@ const CARDS: Dictionary = {
 	"kingdra": {
 		"id": "kingdra", "name": "Kingdra", "number": "8/111",
 		"image": "res://assets/cards/Neo Genesis/kingdra-neo-genesis-8.jpg",
+		"image_es": "res://assets/cards/Neo Genesis ES/kingdra-neo-genesis-es-8.jpg",
 		"type": "POKEMON", "pokemon_type": "WATER",
 		"hp": 90, "stage": 2, "evolves_from": "seadra",
 		"retreat_cost": 2, "weakness": "", "resistance": "",
@@ -111,6 +119,7 @@ const CARDS: Dictionary = {
 	"lugia": {
 		"id": "lugia", "name": "Lugia", "number": "9/111",
 		"image": "res://assets/cards/Neo Genesis/lugia-neo-genesis-9.jpg",
+		"image_es": "res://assets/cards/Neo Genesis ES/lugia-neo-genesis-es-9.jpg",
 		"type": "POKEMON", "pokemon_type": "COLORLESS",
 		"hp": 90, "stage": 0, "evolves_from": "",
 		"retreat_cost": 2, "weakness": "LIGHTNING", "resistance": "FIGHTING",
@@ -122,6 +131,7 @@ const CARDS: Dictionary = {
 	"meganium_1": {
 		"id": "meganium_1", "name": "Meganium", "number": "10/111",
 		"image": "res://assets/cards/Neo Genesis/meganium-neo-genesis-10.jpg",
+		"image_es": "res://assets/cards/Neo Genesis ES/meganium-neo-genesis-es-10.jpg",
 		"type": "POKEMON", "pokemon_type": "GRASS",
 		"hp": 100, "stage": 2, "evolves_from": "bayleef",
 		"retreat_cost": 3, "weakness": "FIRE", "resistance": "",
@@ -137,6 +147,7 @@ const CARDS: Dictionary = {
 	"meganium_2": {
 		"id": "meganium_2", "name": "Meganium", "number": "11/111",
 		"image": "res://assets/cards/Neo Genesis/meganium-neo-genesis-11.jpg",
+		"image_es": "res://assets/cards/Neo Genesis ES/meganium-neo-genesis-es-11.jpg",
 		"type": "POKEMON", "pokemon_type": "GRASS",
 		"hp": 100, "stage": 2, "evolves_from": "bayleef",
 		"retreat_cost": 3, "weakness": "FIRE", "resistance": "",
@@ -152,6 +163,7 @@ const CARDS: Dictionary = {
 	"pichu": {
 		"id": "pichu", "name": "Pichu", "number": "12/111",
 		"image": "res://assets/cards/Neo Genesis/pichu-neo-genesis-12.jpg",
+		"image_es": "res://assets/cards/Neo Genesis ES/pichu-neo-genesis-es-12.jpg",
 		"type": "POKEMON", "pokemon_type": "LIGHTNING",
 		"hp": 30, "stage": "baby", "evolves_from": "",
 		"retreat_cost": 0, "weakness": "", "resistance": "",
@@ -163,6 +175,7 @@ const CARDS: Dictionary = {
 	"skarmory": {
 		"id": "skarmory", "name": "Skarmory", "number": "13/111",
 		"image": "res://assets/cards/Neo Genesis/skarmory-neo-genesis-13.jpg",
+		"image_es": "res://assets/cards/Neo Genesis ES/skarmory-neo-genesis-es-13.jpg",
 		"type": "POKEMON", "pokemon_type": "METAL",
 		"hp": 60, "stage": 0, "evolves_from": "",
 		"retreat_cost": 1, "weakness": "FIRE", "resistance": "GRASS",
@@ -175,6 +188,7 @@ const CARDS: Dictionary = {
 	"slowking": {
 		"id": "slowking", "name": "Slowking", "number": "14/111",
 		"image": "res://assets/cards/Neo Genesis/slowking-neo-genesis-14.jpg",
+		"image_es": "res://assets/cards/Neo Genesis ES/slowking-neo-genesis-es-14.jpg",
 		"type": "POKEMON", "pokemon_type": "PSYCHIC",
 		"hp": 80, "stage": 1, "evolves_from": "slowpoke",
 		"retreat_cost": 3, "weakness": "PSYCHIC", "resistance": "",
@@ -190,6 +204,7 @@ const CARDS: Dictionary = {
 	"steelix": {
 		"id": "steelix", "name": "Steelix", "number": "15/111",
 		"image": "res://assets/cards/Neo Genesis/steelix-neo-genesis-15.jpg",
+		"image_es": "res://assets/cards/Neo Genesis ES/steelix-neo-genesis-es-15.jpg",
 		"type": "POKEMON", "pokemon_type": "METAL",
 		"hp": 110, "stage": 1, "evolves_from": "onix",
 		"retreat_cost": 4, "weakness": "FIRE", "resistance": "GRASS",
@@ -202,6 +217,7 @@ const CARDS: Dictionary = {
 	"togetic": {
 		"id": "togetic", "name": "Togetic", "number": "16/111",
 		"image": "res://assets/cards/Neo Genesis/togetic-neo-genesis-16.jpg",
+		"image_es": "res://assets/cards/Neo Genesis ES/togetic-neo-genesis-es-16.jpg",
 		"type": "POKEMON", "pokemon_type": "COLORLESS",
 		"hp": 60, "stage": 1, "evolves_from": "togepi",
 		"retreat_cost": 1, "weakness": "", "resistance": "FIGHTING",
@@ -214,6 +230,7 @@ const CARDS: Dictionary = {
 	"typhlosion_1": {
 		"id": "typhlosion_1", "name": "Typhlosion", "number": "17/111",
 		"image": "res://assets/cards/Neo Genesis/typhlosion-neo-genesis-17.jpg",
+		"image_es": "res://assets/cards/Neo Genesis ES/typhlosion-neo-genesis-es-17.jpg",
 		"type": "POKEMON", "pokemon_type": "FIRE",
 		"hp": 100, "stage": 2, "evolves_from": "quilava",
 		"retreat_cost": 2, "weakness": "WATER", "resistance": "",
@@ -229,6 +246,7 @@ const CARDS: Dictionary = {
 	"typhlosion_2": {
 		"id": "typhlosion_2", "name": "Typhlosion", "number": "18/111",
 		"image": "res://assets/cards/Neo Genesis/typhlosion-neo-genesis-18.jpg",
+		"image_es": "res://assets/cards/Neo Genesis ES/typhlosion-neo-genesis-es-18.jpg",
 		"type": "POKEMON", "pokemon_type": "FIRE",
 		"hp": 100, "stage": 2, "evolves_from": "quilava",
 		"retreat_cost": 2, "weakness": "WATER", "resistance": "",
@@ -247,6 +265,7 @@ const CARDS: Dictionary = {
 	"metal_energy": {
 		"id": "metal_energy", "name": "Metal Energy", "number": "19/111",
 		"image": "res://assets/cards/Neo Genesis/metal-energy-neo-genesis-19.jpg",
+		"image_es": "res://assets/cards/Neo Genesis ES/energia-metal-neo-genesis-es-19.jpg",
 		"type": "ENERGY", "energy_type": "METAL", "provides": 1, "rarity": "RARE"
 	},
 	# ═══════════════════════════════════
@@ -255,6 +274,7 @@ const CARDS: Dictionary = {
 	"cleffa": {
 		"id": "cleffa", "name": "Cleffa", "number": "20/111",
 		"image": "res://assets/cards/Neo Genesis/cleffa-neo-genesis-20.jpg",
+		"image_es": "res://assets/cards/Neo Genesis ES/cleffa-neo-genesis-es-20.jpg",
 		"type": "POKEMON", "pokemon_type": "COLORLESS",
 		"hp": 30, "stage": "baby", "evolves_from": "",
 		"retreat_cost": 0, "weakness": "", "resistance": "",
@@ -266,6 +286,7 @@ const CARDS: Dictionary = {
 	"donphan": {
 		"id": "donphan", "name": "Donphan", "number": "21/111",
 		"image": "res://assets/cards/Neo Genesis/donphan-neo-genesis-21.jpg",
+		"image_es": "res://assets/cards/Neo Genesis ES/donphan-neo-genesis-es-21.jpg",
 		"type": "POKEMON", "pokemon_type": "FIGHTING",
 		"hp": 70, "stage": 1, "evolves_from": "phanpy",
 		"retreat_cost": 3, "weakness": "GRASS", "resistance": "LIGHTNING",
@@ -278,6 +299,7 @@ const CARDS: Dictionary = {
 	"elekid": {
 		"id": "elekid", "name": "Elekid", "number": "22/111",
 		"image": "res://assets/cards/Neo Genesis/elekid-neo-genesis-22.jpg",
+		"image_es": "res://assets/cards/Neo Genesis ES/elekid-neo-genesis-es-22.jpg",
 		"type": "POKEMON", "pokemon_type": "LIGHTNING",
 		"hp": 30, "stage": "baby", "evolves_from": "",
 		"retreat_cost": 0, "weakness": "", "resistance": "",
@@ -291,6 +313,7 @@ const CARDS: Dictionary = {
 	"magby": {
 		"id": "magby", "name": "Magby", "number": "23/111",
 		"image": "res://assets/cards/Neo Genesis/magby-neo-genesis-23.jpg",
+		"image_es": "res://assets/cards/Neo Genesis ES/magby-neo-genesis-es-23.jpg",
 		"type": "POKEMON", "pokemon_type": "FIRE",
 		"hp": 30, "stage": "baby", "evolves_from": "",
 		"retreat_cost": 0, "weakness": "", "resistance": "",
@@ -302,6 +325,7 @@ const CARDS: Dictionary = {
 	"murkrow": {
 		"id": "murkrow", "name": "Murkrow", "number": "24/111",
 		"image": "res://assets/cards/Neo Genesis/murkrow-neo-genesis-24.jpg",
+		"image_es": "res://assets/cards/Neo Genesis ES/murkrow-neo-genesis-es-24.jpg",
 		"type": "POKEMON", "pokemon_type": "DARKNESS",
 		"hp": 50, "stage": 0, "evolves_from": "",
 		"retreat_cost": 1, "weakness": "", "resistance": "FIGHTING",
@@ -314,6 +338,20 @@ const CARDS: Dictionary = {
 	"sneasel": {
 		"id": "sneasel", "name": "Sneasel", "number": "25/111",
 		"image": "res://assets/cards/Neo Genesis/sneasel-neo-genesis-25.jpg",
+		"image_es": "res://assets/cards/Neo Genesis ES/sneasel-neo-genesis-es-25.jpg",
+		"type": "POKEMON", "pokemon_type": "DARKNESS",
+		"hp": 60, "stage": 0, "evolves_from": "",
+		"retreat_cost": 1, "weakness": "", "resistance": "PSYCHIC",
+		"rarity": "ULTRA_RARE",
+		"attacks": [
+			{"name": "Fury Swipes", "cost": {"COLORLESS": 1}, "damage": 10, "effect": "Flip 3 coins. This attack does 10 damage times the number of heads."},
+			{"name": "Beat Up", "cost": {"DARKNESS": 2}, "damage": 20, "effect": "Flip a coin for each of your Pokémon in play including this one. This attack does 20 damage times the number of heads."},
+		]
+	},
+	"sneasel_alt": {
+		"id": "sneasel", "name": "Sneasel", "number": "PROMO/01",
+		"image": "res://assets/cards/Neo Genesis/sneasel-alt.png",
+		"image_es": "res://assets/cards/Neo Genesis ES/sneasel-alt-es.png",
 		"type": "POKEMON", "pokemon_type": "DARKNESS",
 		"hp": 60, "stage": 0, "evolves_from": "",
 		"retreat_cost": 1, "weakness": "", "resistance": "PSYCHIC",
@@ -329,6 +367,7 @@ const CARDS: Dictionary = {
 	"aipom": {
 		"id": "aipom", "name": "Aipom", "number": "26/111",
 		"image": "res://assets/cards/Neo Genesis/aipom-neo-genesis-26.jpg",
+		"image_es": "res://assets/cards/Neo Genesis ES/aipom-neo-genesis-es-26.jpg",
 		"type": "POKEMON", "pokemon_type": "COLORLESS",
 		"hp": 40, "stage": 0, "evolves_from": "",
 		"retreat_cost": 1, "weakness": "FIGHTING", "resistance": "PSYCHIC",
@@ -341,6 +380,7 @@ const CARDS: Dictionary = {
 	"ariados": {
 		"id": "ariados", "name": "Ariados", "number": "27/111",
 		"image": "res://assets/cards/Neo Genesis/ariados-neo-genesis-27.jpg",
+		"image_es": "res://assets/cards/Neo Genesis ES/ariados-neo-genesis-es-27.jpg",
 		"type": "POKEMON", "pokemon_type": "GRASS",
 		"hp": 60, "stage": 1, "evolves_from": "spinarak",
 		"retreat_cost": 2, "weakness": "FIRE", "resistance": "",
@@ -353,6 +393,7 @@ const CARDS: Dictionary = {
 	"bayleef_1": {
 		"id": "bayleef_1", "name": "Bayleef", "number": "28/111",
 		"image": "res://assets/cards/Neo Genesis/bayleef-neo-genesis-28.jpg",
+		"image_es": "res://assets/cards/Neo Genesis ES/bayleef-neo-genesis-es-28.jpg",
 		"type": "POKEMON", "pokemon_type": "GRASS",
 		"hp": 70, "stage": 1, "evolves_from": "chikorita",
 		"retreat_cost": 1, "weakness": "FIRE", "resistance": "",
@@ -365,6 +406,7 @@ const CARDS: Dictionary = {
 	"bayleef_2": {
 		"id": "bayleef_2", "name": "Bayleef", "number": "29/111",
 		"image": "res://assets/cards/Neo Genesis/bayleef-neo-genesis-29.jpg",
+		"image_es": "res://assets/cards/Neo Genesis ES/bayleef-neo-genesis-es-29.jpg",
 		"type": "POKEMON", "pokemon_type": "GRASS",
 		"hp": 80, "stage": 1, "evolves_from": "chikorita",
 		"retreat_cost": 2, "weakness": "FIRE", "resistance": "",
@@ -377,6 +419,7 @@ const CARDS: Dictionary = {
 	"clefairy": {
 		"id": "clefairy", "name": "Clefairy", "number": "30/111",
 		"image": "res://assets/cards/Neo Genesis/clefairy-neo-genesis-30.jpg",
+		"image_es": "res://assets/cards/Neo Genesis ES/clefairy-neo-genesis-es-30.jpg",
 		"type": "POKEMON", "pokemon_type": "COLORLESS",
 		"hp": 50, "stage": 0, "evolves_from": "",
 		"retreat_cost": 1, "weakness": "FIGHTING", "resistance": "PSYCHIC",
@@ -389,6 +432,7 @@ const CARDS: Dictionary = {
 	"croconaw_1": {
 		"id": "croconaw_1", "name": "Croconaw", "number": "31/111",
 		"image": "res://assets/cards/Neo Genesis/croconaw-neo-genesis-31.jpg",
+		"image_es": "res://assets/cards/Neo Genesis ES/croconaw-neo-genesis-es-31.jpg",
 		"type": "POKEMON", "pokemon_type": "WATER",
 		"hp": 70, "stage": 1, "evolves_from": "totodile",
 		"retreat_cost": 2, "weakness": "GRASS", "resistance": "",
@@ -401,6 +445,7 @@ const CARDS: Dictionary = {
 	"croconaw_2": {
 		"id": "croconaw_2", "name": "Croconaw", "number": "32/111",
 		"image": "res://assets/cards/Neo Genesis/croconaw-neo-genesis-32.jpg",
+		"image_es": "res://assets/cards/Neo Genesis ES/croconaw-neo-genesis-es-32.jpg",
 		"type": "POKEMON", "pokemon_type": "WATER",
 		"hp": 80, "stage": 1, "evolves_from": "totodile",
 		"retreat_cost": 2, "weakness": "GRASS", "resistance": "",
@@ -413,6 +458,7 @@ const CARDS: Dictionary = {
 	"electabuzz": {
 		"id": "electabuzz", "name": "Electabuzz", "number": "33/111",
 		"image": "res://assets/cards/Neo Genesis/electabuzz-neo-genesis-33.jpg",
+		"image_es": "res://assets/cards/Neo Genesis ES/electabuzz-neo-genesis-es-33.jpg",
 		"type": "POKEMON", "pokemon_type": "LIGHTNING",
 		"hp": 70, "stage": 0, "evolves_from": "",
 		"retreat_cost": 1, "weakness": "FIGHTING", "resistance": "",
@@ -425,6 +471,7 @@ const CARDS: Dictionary = {
 	"flaaffy": {
 		"id": "flaaffy", "name": "Flaaffy", "number": "34/111",
 		"image": "res://assets/cards/Neo Genesis/flaaffy-neo-genesis-34.jpg",
+		"image_es": "res://assets/cards/Neo Genesis ES/flaaffy-neo-genesis-es-34.jpg",
 		"type": "POKEMON", "pokemon_type": "LIGHTNING",
 		"hp": 60, "stage": 1, "evolves_from": "mareep",
 		"retreat_cost": 1, "weakness": "FIGHTING", "resistance": "",
@@ -437,6 +484,7 @@ const CARDS: Dictionary = {
 	"furret": {
 		"id": "furret", "name": "Furret", "number": "35/111",
 		"image": "res://assets/cards/Neo Genesis/furret-neo-genesis-35.jpg",
+		"image_es": "res://assets/cards/Neo Genesis ES/furret-neo-genesis-es-35.jpg",
 		"type": "POKEMON", "pokemon_type": "COLORLESS",
 		"hp": 60, "stage": 1, "evolves_from": "sentret",
 		"retreat_cost": 1, "weakness": "FIGHTING", "resistance": "PSYCHIC",
@@ -449,6 +497,7 @@ const CARDS: Dictionary = {
 	"gloom": {
 		"id": "gloom", "name": "Gloom", "number": "36/111",
 		"image": "res://assets/cards/Neo Genesis/gloom-neo-genesis-36.jpg",
+		"image_es": "res://assets/cards/Neo Genesis ES/gloom-neo-genesis-es-36.jpg",
 		"type": "POKEMON", "pokemon_type": "GRASS",
 		"hp": 60, "stage": 1, "evolves_from": "oddish",
 		"retreat_cost": 2, "weakness": "FIRE", "resistance": "",
@@ -461,6 +510,7 @@ const CARDS: Dictionary = {
 	"granbull": {
 		"id": "granbull", "name": "Granbull", "number": "37/111",
 		"image": "res://assets/cards/Neo Genesis/granbull-neo-genesis-37.jpg",
+		"image_es": "res://assets/cards/Neo Genesis ES/granbull-neo-genesis-es-37.jpg",
 		"type": "POKEMON", "pokemon_type": "COLORLESS",
 		"hp": 70, "stage": 1, "evolves_from": "snubbull",
 		"retreat_cost": 2, "weakness": "FIGHTING", "resistance": "PSYCHIC",
@@ -473,6 +523,7 @@ const CARDS: Dictionary = {
 	"lanturn": {
 		"id": "lanturn", "name": "Lanturn", "number": "38/111",
 		"image": "res://assets/cards/Neo Genesis/lanturn-neo-genesis-38.jpg",
+		"image_es": "res://assets/cards/Neo Genesis ES/lanturn-neo-genesis-es-38.jpg",
 		"type": "POKEMON", "pokemon_type": "LIGHTNING",
 		"hp": 70, "stage": 1, "evolves_from": "chinchou",
 		"retreat_cost": 2, "weakness": "FIGHTING", "resistance": "",
@@ -488,6 +539,7 @@ const CARDS: Dictionary = {
 	"ledian": {
 		"id": "ledian", "name": "Ledian", "number": "39/111",
 		"image": "res://assets/cards/Neo Genesis/ledian-neo-genesis-39.jpg",
+		"image_es": "res://assets/cards/Neo Genesis ES/ledian-neo-genesis-es-39.jpg",
 		"type": "POKEMON", "pokemon_type": "GRASS",
 		"hp": 60, "stage": 1, "evolves_from": "ledyba",
 		"retreat_cost": 1, "weakness": "FIRE", "resistance": "FIGHTING",
@@ -499,6 +551,7 @@ const CARDS: Dictionary = {
 	"magmar": {
 		"id": "magmar", "name": "Magmar", "number": "40/111",
 		"image": "res://assets/cards/Neo Genesis/magmar-neo-genesis-40.jpg",
+		"image_es": "res://assets/cards/Neo Genesis ES/magmar-neo-genesis-es-40.jpg",
 		"type": "POKEMON", "pokemon_type": "FIRE",
 		"hp": 70, "stage": 0, "evolves_from": "",
 		"retreat_cost": 2, "weakness": "WATER", "resistance": "",
@@ -511,6 +564,7 @@ const CARDS: Dictionary = {
 	"miltank": {
 		"id": "miltank", "name": "Miltank", "number": "41/111",
 		"image": "res://assets/cards/Neo Genesis/miltank-neo-genesis-41.jpg",
+		"image_es": "res://assets/cards/Neo Genesis ES/miltank-neo-genesis-es-41.jpg",
 		"type": "POKEMON", "pokemon_type": "COLORLESS",
 		"hp": 70, "stage": 0, "evolves_from": "",
 		"retreat_cost": 2, "weakness": "FIGHTING", "resistance": "PSYCHIC",
@@ -523,6 +577,7 @@ const CARDS: Dictionary = {
 	"noctowl": {
 		"id": "noctowl", "name": "Noctowl", "number": "42/111",
 		"image": "res://assets/cards/Neo Genesis/noctowl-neo-genesis-42.jpg",
+		"image_es": "res://assets/cards/Neo Genesis ES/noctowl-neo-genesis-es-42.jpg",
 		"type": "POKEMON", "pokemon_type": "COLORLESS",
 		"hp": 60, "stage": 1, "evolves_from": "hoothoot",
 		"retreat_cost": 0, "weakness": "LIGHTNING", "resistance": "FIGHTING",
@@ -538,6 +593,7 @@ const CARDS: Dictionary = {
 	"phanpy": {
 		"id": "phanpy", "name": "Phanpy", "number": "43/111",
 		"image": "res://assets/cards/Neo Genesis/phanpy-neo-genesis-43.jpg",
+		"image_es": "res://assets/cards/Neo Genesis ES/phanpy-neo-genesis-es-43.jpg",
 		"type": "POKEMON", "pokemon_type": "FIGHTING",
 		"hp": 40, "stage": 0, "evolves_from": "",
 		"retreat_cost": 1, "weakness": "GRASS", "resistance": "LIGHTNING",
@@ -550,6 +606,7 @@ const CARDS: Dictionary = {
 	"piloswine": {
 		"id": "piloswine", "name": "Piloswine", "number": "44/111",
 		"image": "res://assets/cards/Neo Genesis/piloswine-neo-genesis-44.jpg",
+		"image_es": "res://assets/cards/Neo Genesis ES/piloswine-neo-genesis-es-44.jpg",
 		"type": "POKEMON", "pokemon_type": "WATER",
 		"hp": 80, "stage": 1, "evolves_from": "swinub",
 		"retreat_cost": 3, "weakness": "GRASS", "resistance": "LIGHTNING",
@@ -562,6 +619,7 @@ const CARDS: Dictionary = {
 	"quagsire": {
 		"id": "quagsire", "name": "Quagsire", "number": "45/111",
 		"image": "res://assets/cards/Neo Genesis/quagsire-neo-genesis-45.jpg",
+		"image_es": "res://assets/cards/Neo Genesis ES/quagsire-neo-genesis-es-45.jpg",
 		"type": "POKEMON", "pokemon_type": "WATER",
 		"hp": 70, "stage": 1, "evolves_from": "wooper",
 		"retreat_cost": 2, "weakness": "GRASS", "resistance": "LIGHTNING",
@@ -574,6 +632,7 @@ const CARDS: Dictionary = {
 	"quilava_1": {
 		"id": "quilava_1", "name": "Quilava", "number": "46/111",
 		"image": "res://assets/cards/Neo Genesis/quilava-neo-genesis-46.jpg",
+		"image_es": "res://assets/cards/Neo Genesis ES/quilava-neo-genesis-es-46.jpg",
 		"type": "POKEMON", "pokemon_type": "FIRE",
 		"hp": 60, "stage": 1, "evolves_from": "cyndaquil",
 		"retreat_cost": 1, "weakness": "WATER", "resistance": "",
@@ -586,6 +645,7 @@ const CARDS: Dictionary = {
 	"quilava_2": {
 		"id": "quilava_2", "name": "Quilava", "number": "47/111",
 		"image": "res://assets/cards/Neo Genesis/quilava-neo-genesis-47.jpg",
+		"image_es": "res://assets/cards/Neo Genesis ES/quilava-neo-genesis-es-47.jpg",
 		"type": "POKEMON", "pokemon_type": "FIRE",
 		"hp": 70, "stage": 1, "evolves_from": "cyndaquil",
 		"retreat_cost": 1, "weakness": "WATER", "resistance": "",
@@ -598,6 +658,7 @@ const CARDS: Dictionary = {
 	"seadra": {
 		"id": "seadra", "name": "Seadra", "number": "48/111",
 		"image": "res://assets/cards/Neo Genesis/seadra-neo-genesis-48.jpg",
+		"image_es": "res://assets/cards/Neo Genesis ES/seadra-neo-genesis-es-48.jpg",
 		"type": "POKEMON", "pokemon_type": "WATER",
 		"hp": 70, "stage": 1, "evolves_from": "horsea",
 		"retreat_cost": 1, "weakness": "LIGHTNING", "resistance": "",
@@ -610,6 +671,7 @@ const CARDS: Dictionary = {
 	"skiploom": {
 		"id": "skiploom", "name": "Skiploom", "number": "49/111",
 		"image": "res://assets/cards/Neo Genesis/skiploom-neo-genesis-49.jpg",
+		"image_es": "res://assets/cards/Neo Genesis ES/skiploom-neo-genesis-es-49.jpg",
 		"type": "POKEMON", "pokemon_type": "GRASS",
 		"hp": 60, "stage": 1, "evolves_from": "hoppip",
 		"retreat_cost": 0, "weakness": "FIRE", "resistance": "FIGHTING",
@@ -622,6 +684,7 @@ const CARDS: Dictionary = {
 	"sunflora": {
 		"id": "sunflora", "name": "Sunflora", "number": "50/111",
 		"image": "res://assets/cards/Neo Genesis/sunflora-neo-genesis-50.jpg",
+		"image_es": "res://assets/cards/Neo Genesis ES/sunflora-neo-genesis-es-50.jpg",
 		"type": "POKEMON", "pokemon_type": "GRASS",
 		"hp": 70, "stage": 1, "evolves_from": "sunkern",
 		"retreat_cost": 1, "weakness": "FIRE", "resistance": "",
@@ -633,6 +696,7 @@ const CARDS: Dictionary = {
 	"togepi": {
 		"id": "togepi", "name": "Togepi", "number": "51/111",
 		"image": "res://assets/cards/Neo Genesis/togepi-neo-genesis-51.jpg",
+		"image_es": "res://assets/cards/Neo Genesis ES/togepi-neo-genesis-es-51.jpg",
 		"type": "POKEMON", "pokemon_type": "COLORLESS",
 		"hp": 40, "stage": 0, "evolves_from": "",
 		"retreat_cost": 1, "weakness": "", "resistance": "PSYCHIC",
@@ -644,6 +708,7 @@ const CARDS: Dictionary = {
 	"xatu": {
 		"id": "xatu", "name": "Xatu", "number": "52/111",
 		"image": "res://assets/cards/Neo Genesis/xatu-neo-genesis-52.jpg",
+		"image_es": "res://assets/cards/Neo Genesis ES/xatu-neo-genesis-es-52.jpg",
 		"type": "POKEMON", "pokemon_type": "PSYCHIC",
 		"hp": 80, "stage": 1, "evolves_from": "natu",
 		"retreat_cost": 1, "weakness": "PSYCHIC", "resistance": "FIGHTING",
@@ -659,6 +724,7 @@ const CARDS: Dictionary = {
 	"chikorita_1": {
 		"id": "chikorita_1", "name": "Chikorita", "number": "53/111",
 		"image": "res://assets/cards/Neo Genesis/chikorita-neo-genesis-53.jpg",
+		"image_es": "res://assets/cards/Neo Genesis ES/chikorita-neo-genesis-es-53.jpg",
 		"type": "POKEMON", "pokemon_type": "GRASS",
 		"hp": 40, "stage": 0, "evolves_from": "",
 		"retreat_cost": 1, "weakness": "FIRE", "resistance": "",
@@ -671,18 +737,20 @@ const CARDS: Dictionary = {
 	"chikorita_2": {
 		"id": "chikorita_2", "name": "Chikorita", "number": "54/111",
 		"image": "res://assets/cards/Neo Genesis/chikorita-neo-genesis-54.jpg",
+		"image_es": "res://assets/cards/Neo Genesis ES/chikorita-neo-genesis-es-54.jpg",
 		"type": "POKEMON", "pokemon_type": "GRASS",
 		"hp": 50, "stage": 0, "evolves_from": "",
 		"retreat_cost": 1, "weakness": "FIRE", "resistance": "",
 		"rarity": "COMMON",
 		"attacks": [
-			{"name": "Growl", "cost": {"GRASS": 1}, "damage": 0, "effect": "If the Defending Pokémon attacks Chikorita during your opponent's next turn, any damage done to Chikorita is reduced by 10 before applying Weakness and Resistance. Benching or evolving either Pokémon ends this effect."},
+			{"name": "Growl", "cost": {"COLORLESS": 1}, "damage": 0, "effect": "If the Defending Pokémon attacks Chikorita during your opponent's next turn, any damage done to Chikorita is reduced by 10 before applying Weakness and Resistance. Benching or evolving either Pokémon ends this effect."},
 			{"name": "Poisonpowder", "cost": {"GRASS": 1, "COLORLESS": 1}, "damage": 20, "effect": ""},
 		]
 	},
 	"chinchou": {
 		"id": "chinchou", "name": "Chinchou", "number": "55/111",
 		"image": "res://assets/cards/Neo Genesis/chinchou-neo-genesis-55.jpg",
+		"image_es": "res://assets/cards/Neo Genesis ES/chinchou-neo-genesis-es-55.jpg",
 		"type": "POKEMON", "pokemon_type": "LIGHTNING",
 		"hp": 50, "stage": 0, "evolves_from": "",
 		"retreat_cost": 1, "weakness": "FIGHTING", "resistance": "",
@@ -695,6 +763,7 @@ const CARDS: Dictionary = {
 	"cyndaquil_1": {
 		"id": "cyndaquil_1", "name": "Cyndaquil", "number": "56/111",
 		"image": "res://assets/cards/Neo Genesis/cyndaquil-neo-genesis-56.jpg",
+		"image_es": "res://assets/cards/Neo Genesis ES/cyndaquil-neo-genesis-es-56.jpg",
 		"type": "POKEMON", "pokemon_type": "FIRE",
 		"hp": 40, "stage": 0, "evolves_from": "",
 		"retreat_cost": 1, "weakness": "WATER", "resistance": "",
@@ -707,6 +776,7 @@ const CARDS: Dictionary = {
 	"cyndaquil_2": {
 		"id": "cyndaquil_2", "name": "Cyndaquil", "number": "57/111",
 		"image": "res://assets/cards/Neo Genesis/cyndaquil-neo-genesis-57.jpg",
+		"image_es": "res://assets/cards/Neo Genesis ES/cyndaquil-neo-genesis-es-57.jpg",
 		"type": "POKEMON", "pokemon_type": "FIRE",
 		"hp": 50, "stage": 0, "evolves_from": "",
 		"retreat_cost": 1, "weakness": "WATER", "resistance": "",
@@ -719,6 +789,7 @@ const CARDS: Dictionary = {
 	"girafarig": {
 		"id": "girafarig", "name": "Girafarig", "number": "58/111",
 		"image": "res://assets/cards/Neo Genesis/girafarig-neo-genesis-58.jpg",
+		"image_es": "res://assets/cards/Neo Genesis ES/girafarig-neo-genesis-es-58.jpg",
 		"type": "POKEMON", "pokemon_type": "PSYCHIC",
 		"hp": 60, "stage": 0, "evolves_from": "",
 		"retreat_cost": 1, "weakness": "", "resistance": "",
@@ -731,6 +802,7 @@ const CARDS: Dictionary = {
 	"gligar": {
 		"id": "gligar", "name": "Gligar", "number": "59/111",
 		"image": "res://assets/cards/Neo Genesis/gligar-neo-genesis-59.jpg",
+		"image_es": "res://assets/cards/Neo Genesis ES/gligar-neo-genesis-es-59.jpg",
 		"type": "POKEMON", "pokemon_type": "FIGHTING",
 		"hp": 60, "stage": 0, "evolves_from": "",
 		"retreat_cost": 1, "weakness": "GRASS", "resistance": "FIGHTING",
@@ -743,6 +815,7 @@ const CARDS: Dictionary = {
 	"hoothoot": {
 		"id": "hoothoot", "name": "Hoothoot", "number": "60/111",
 		"image": "res://assets/cards/Neo Genesis/hoothoot-neo-genesis-60.jpg",
+		"image_es": "res://assets/cards/Neo Genesis ES/hoothoot-neo-genesis-es-60.jpg",
 		"type": "POKEMON", "pokemon_type": "COLORLESS",
 		"hp": 50, "stage": 0, "evolves_from": "",
 		"retreat_cost": 1, "weakness": "LIGHTNING", "resistance": "FIGHTING",
@@ -755,6 +828,7 @@ const CARDS: Dictionary = {
 	"hoppip": {
 		"id": "hoppip", "name": "Hoppip", "number": "61/111",
 		"image": "res://assets/cards/Neo Genesis/hoppip-neo-genesis-61.jpg",
+		"image_es": "res://assets/cards/Neo Genesis ES/hoppip-neo-genesis-es-61.jpg",
 		"type": "POKEMON", "pokemon_type": "GRASS",
 		"hp": 50, "stage": 0, "evolves_from": "",
 		"retreat_cost": 0, "weakness": "FIRE", "resistance": "FIGHTING",
@@ -767,6 +841,7 @@ const CARDS: Dictionary = {
 	"horsea": {
 		"id": "horsea", "name": "Horsea", "number": "62/111",
 		"image": "res://assets/cards/Neo Genesis/horsea-neo-genesis-62.jpg",
+		"image_es": "res://assets/cards/Neo Genesis ES/horsea-neo-genesis-es-62.jpg",
 		"type": "POKEMON", "pokemon_type": "WATER",
 		"hp": 50, "stage": 0, "evolves_from": "",
 		"retreat_cost": 0, "weakness": "LIGHTNING", "resistance": "",
@@ -778,6 +853,7 @@ const CARDS: Dictionary = {
 	"ledyba": {
 		"id": "ledyba", "name": "Ledyba", "number": "63/111",
 		"image": "res://assets/cards/Neo Genesis/ledyba-neo-genesis-63.jpg",
+		"image_es": "res://assets/cards/Neo Genesis ES/ledyba-neo-genesis-es-63.jpg",
 		"type": "POKEMON", "pokemon_type": "GRASS",
 		"hp": 40, "stage": 0, "evolves_from": "",
 		"retreat_cost": 0, "weakness": "FIRE", "resistance": "FIGHTING",
@@ -790,6 +866,7 @@ const CARDS: Dictionary = {
 	"mantine": {
 		"id": "mantine", "name": "Mantine", "number": "64/111",
 		"image": "res://assets/cards/Neo Genesis/mantine-neo-genesis-64.jpg",
+		"image_es": "res://assets/cards/Neo Genesis ES/mantine-neo-genesis-es-64.jpg",
 		"type": "POKEMON", "pokemon_type": "WATER",
 		"hp": 60, "stage": 0, "evolves_from": "",
 		"retreat_cost": 1, "weakness": "LIGHTNING", "resistance": "FIGHTING",
@@ -801,6 +878,7 @@ const CARDS: Dictionary = {
 	"mareep": {
 		"id": "mareep", "name": "Mareep", "number": "65/111",
 		"image": "res://assets/cards/Neo Genesis/mareep-neo-genesis-65.jpg",
+		"image_es": "res://assets/cards/Neo Genesis ES/mareep-neo-genesis-es-65.jpg",
 		"type": "POKEMON", "pokemon_type": "LIGHTNING",
 		"hp": 50, "stage": 0, "evolves_from": "",
 		"retreat_cost": 1, "weakness": "FIGHTING", "resistance": "",
@@ -813,6 +891,7 @@ const CARDS: Dictionary = {
 	"marill": {
 		"id": "marill", "name": "Marill", "number": "66/111",
 		"image": "res://assets/cards/Neo Genesis/marill-neo-genesis-66.jpg",
+		"image_es": "res://assets/cards/Neo Genesis ES/marill-neo-genesis-es-66.jpg",
 		"type": "POKEMON", "pokemon_type": "WATER",
 		"hp": 40, "stage": 0, "evolves_from": "",
 		"retreat_cost": 1, "weakness": "LIGHTNING", "resistance": "",
@@ -825,6 +904,7 @@ const CARDS: Dictionary = {
 	"natu": {
 		"id": "natu", "name": "Natu", "number": "67/111",
 		"image": "res://assets/cards/Neo Genesis/natu-neo-genesis-67.jpg",
+		"image_es": "res://assets/cards/Neo Genesis ES/natu-neo-genesis-es-67.jpg",
 		"type": "POKEMON", "pokemon_type": "PSYCHIC",
 		"hp": 30, "stage": 0, "evolves_from": "",
 		"retreat_cost": 0, "weakness": "PSYCHIC", "resistance": "FIGHTING",
@@ -837,6 +917,7 @@ const CARDS: Dictionary = {
 	"oddish": {
 		"id": "oddish", "name": "Oddish", "number": "68/111",
 		"image": "res://assets/cards/Neo Genesis/oddish-neo-genesis-68.jpg",
+		"image_es": "res://assets/cards/Neo Genesis ES/oddish-neo-genesis-es-68.jpg",
 		"type": "POKEMON", "pokemon_type": "GRASS",
 		"hp": 40, "stage": 0, "evolves_from": "",
 		"retreat_cost": 1, "weakness": "FIRE", "resistance": "",
@@ -849,6 +930,7 @@ const CARDS: Dictionary = {
 	"onix": {
 		"id": "onix", "name": "Onix", "number": "69/111",
 		"image": "res://assets/cards/Neo Genesis/onix-neo-genesis-69.jpg",
+		"image_es": "res://assets/cards/Neo Genesis ES/onix-neo-genesis-es-69.jpg",
 		"type": "POKEMON", "pokemon_type": "FIGHTING",
 		"hp": 60, "stage": 0, "evolves_from": "",
 		"retreat_cost": 2, "weakness": "GRASS", "resistance": "",
@@ -861,6 +943,7 @@ const CARDS: Dictionary = {
 	"pikachu": {
 		"id": "pikachu", "name": "Pikachu", "number": "70/111",
 		"image": "res://assets/cards/Neo Genesis/pikachu-neo-genesis-70.jpg",
+		"image_es": "res://assets/cards/Neo Genesis ES/pikachu-neo-genesis-es-70.jpg",
 		"type": "POKEMON", "pokemon_type": "LIGHTNING",
 		"hp": 50, "stage": 0, "evolves_from": "",
 		"retreat_cost": 1, "weakness": "FIGHTING", "resistance": "",
@@ -873,6 +956,7 @@ const CARDS: Dictionary = {
 	"sentret": {
 		"id": "sentret", "name": "Sentret", "number": "71/111",
 		"image": "res://assets/cards/Neo Genesis/sentret-neo-genesis-71.jpg",
+		"image_es": "res://assets/cards/Neo Genesis ES/sentret-neo-genesis-es-71.jpg",
 		"type": "POKEMON", "pokemon_type": "COLORLESS",
 		"hp": 40, "stage": 0, "evolves_from": "",
 		"retreat_cost": 1, "weakness": "FIGHTING", "resistance": "PSYCHIC",
@@ -884,6 +968,7 @@ const CARDS: Dictionary = {
 	"shuckle": {
 		"id": "shuckle", "name": "Shuckle", "number": "72/111",
 		"image": "res://assets/cards/Neo Genesis/shuckle-neo-genesis-72.jpg",
+		"image_es": "res://assets/cards/Neo Genesis ES/shuckle-neo-genesis-es-72.jpg",
 		"type": "POKEMON", "pokemon_type": "GRASS",
 		"hp": 30, "stage": 0, "evolves_from": "",
 		"retreat_cost": 1, "weakness": "GRASS", "resistance": "LIGHTNING",
@@ -896,6 +981,7 @@ const CARDS: Dictionary = {
 	"slowpoke": {
 		"id": "slowpoke", "name": "Slowpoke", "number": "73/111",
 		"image": "res://assets/cards/Neo Genesis/slowpoke-neo-genesis-73.jpg",
+		"image_es": "res://assets/cards/Neo Genesis ES/slowpoke-neo-genesis-es-73.jpg",
 		"type": "POKEMON", "pokemon_type": "PSYCHIC",
 		"hp": 50, "stage": 0, "evolves_from": "",
 		"retreat_cost": 1, "weakness": "PSYCHIC", "resistance": "",
@@ -908,6 +994,7 @@ const CARDS: Dictionary = {
 	"snubbull": {
 		"id": "snubbull", "name": "Snubbull", "number": "74/111",
 		"image": "res://assets/cards/Neo Genesis/snubbull-neo-genesis-74.jpg",
+		"image_es": "res://assets/cards/Neo Genesis ES/snubbull-neo-genesis-es-74.jpg",
 		"type": "POKEMON", "pokemon_type": "COLORLESS",
 		"hp": 50, "stage": 0, "evolves_from": "",
 		"retreat_cost": 1, "weakness": "FIGHTING", "resistance": "PSYCHIC",
@@ -920,6 +1007,7 @@ const CARDS: Dictionary = {
 	"spinarak": {
 		"id": "spinarak", "name": "Spinarak", "number": "75/111",
 		"image": "res://assets/cards/Neo Genesis/spinarak-neo-genesis-75.jpg",
+		"image_es": "res://assets/cards/Neo Genesis ES/spinarak-neo-genesis-es-75.jpg",
 		"type": "POKEMON", "pokemon_type": "GRASS",
 		"hp": 40, "stage": 0, "evolves_from": "",
 		"retreat_cost": 1, "weakness": "FIRE", "resistance": "",
@@ -932,6 +1020,7 @@ const CARDS: Dictionary = {
 	"stantler": {
 		"id": "stantler", "name": "Stantler", "number": "76/111",
 		"image": "res://assets/cards/Neo Genesis/stantler-neo-genesis-76.jpg",
+		"image_es": "res://assets/cards/Neo Genesis ES/stantler-neo-genesis-es-76.jpg",
 		"type": "POKEMON", "pokemon_type": "COLORLESS",
 		"hp": 60, "stage": 0, "evolves_from": "",
 		"retreat_cost": 2, "weakness": "FIGHTING", "resistance": "PSYCHIC",
@@ -944,6 +1033,7 @@ const CARDS: Dictionary = {
 	"sudowoodo": {
 		"id": "sudowoodo", "name": "Sudowoodo", "number": "77/111",
 		"image": "res://assets/cards/Neo Genesis/sudowoodo-neo-genesis-77.jpg",
+		"image_es": "res://assets/cards/Neo Genesis ES/sudowoodo-neo-genesis-es-77.jpg",
 		"type": "POKEMON", "pokemon_type": "FIGHTING",
 		"hp": 60, "stage": 0, "evolves_from": "",
 		"retreat_cost": 3, "weakness": "GRASS", "resistance": "LIGHTNING",
@@ -956,6 +1046,7 @@ const CARDS: Dictionary = {
 	"sunkern": {
 		"id": "sunkern", "name": "Sunkern", "number": "78/111",
 		"image": "res://assets/cards/Neo Genesis/sunkern-neo-genesis-78.jpg",
+		"image_es": "res://assets/cards/Neo Genesis ES/sunkern-neo-genesis-es-78.jpg",
 		"type": "POKEMON", "pokemon_type": "GRASS",
 		"hp": 40, "stage": 0, "evolves_from": "",
 		"retreat_cost": 2, "weakness": "FIRE", "resistance": "",
@@ -968,6 +1059,7 @@ const CARDS: Dictionary = {
 	"swinub": {
 		"id": "swinub", "name": "Swinub", "number": "79/111",
 		"image": "res://assets/cards/Neo Genesis/swinub-neo-genesis-79.jpg",
+		"image_es": "res://assets/cards/Neo Genesis ES/swinub-neo-genesis-es-79.jpg",
 		"type": "POKEMON", "pokemon_type": "WATER",
 		"hp": 40, "stage": 0, "evolves_from": "",
 		"retreat_cost": 1, "weakness": "GRASS", "resistance": "LIGHTNING",
@@ -979,6 +1071,7 @@ const CARDS: Dictionary = {
 	"totodile_1": {
 		"id": "totodile_1", "name": "Totodile", "number": "80/111",
 		"image": "res://assets/cards/Neo Genesis/totodile-neo-genesis-80.jpg",
+		"image_es": "res://assets/cards/Neo Genesis ES/totodile-neo-genesis-es-80.jpg",
 		"type": "POKEMON", "pokemon_type": "WATER",
 		"hp": 40, "stage": 0, "evolves_from": "",
 		"retreat_cost": 1, "weakness": "GRASS", "resistance": "",
@@ -991,6 +1084,7 @@ const CARDS: Dictionary = {
 	"totodile_2": {
 		"id": "totodile_2", "name": "Totodile", "number": "81/111",
 		"image": "res://assets/cards/Neo Genesis/totodile-neo-genesis-81.jpg",
+		"image_es": "res://assets/cards/Neo Genesis ES/totodile-neo-genesis-es-81.jpg",
 		"type": "POKEMON", "pokemon_type": "WATER",
 		"hp": 50, "stage": 0, "evolves_from": "",
 		"retreat_cost": 1, "weakness": "LIGHTNING", "resistance": "",
@@ -1003,6 +1097,7 @@ const CARDS: Dictionary = {
 	"wooper": {
 		"id": "wooper", "name": "Wooper", "number": "82/111",
 		"image": "res://assets/cards/Neo Genesis/wooper-neo-genesis-82.jpg",
+		"image_es": "res://assets/cards/Neo Genesis ES/wooper-neo-genesis-es-82.jpg",
 		"type": "POKEMON", "pokemon_type": "WATER",
 		"hp": 50, "stage": 0, "evolves_from": "",
 		"retreat_cost": 2, "weakness": "GRASS", "resistance": "LIGHTNING",
@@ -1015,41 +1110,41 @@ const CARDS: Dictionary = {
 	# ═══════════════════════════════════
 	# TRAINERS (#83-103)
 	# ═══════════════════════════════════
-	"arcade_game": {"id": "arcade_game", "name": "Arcade Game", "number": "83/111", "image": "res://assets/cards/Neo Genesis/arcade-game-neo-genesis-83.jpg", "type": "TRAINER", "trainer_type": "ITEM", "rarity": "UNCOMMON", "effect": "Shuffle your deck, then reveal the top 3 cards of it. If at least 2 of those cards share the same name, put all of the ones with that name into your hand and shuffle the rest into your deck. If none of them do, shuffle all 3 into your deck."},
-	"ecogym": {"id": "ecogym", "name": "Ecogym", "number": "84/111", "image": "res://assets/cards/Neo Genesis/ecogym-neo-genesis-84.jpg", "type": "TRAINER", "trainer_type": "STADIUM", "rarity": "UNCOMMON", "effect": "Whenever an attack, Pokémon Power, or Trainer card discards another player's non- COLORLESS Energy card from a Pokémon, return that Energy card to its owner's hand. Energy cards that are discarded when that Pokémon is Knocked Out don't count."},
-	"energy_charge": {"id": "energy_charge", "name": "Energy Charge", "number": "85/111", "image": "res://assets/cards/Neo Genesis/energy-charge-neo-genesis-85.jpg", "type": "TRAINER", "trainer_type": "ITEM", "rarity": "UNCOMMON", "effect": "Flip a coin. If heads, shuffle up to 2 Energy cards from your discard pile into your deck.."},
-	"focus_band": {"id": "focus_band", "name": "Focus Band", "number": "86/111", "image": "res://assets/cards/Neo Genesis/focus-band-neo-genesis-86.jpg", "type": "TRAINER", "trainer_type": "POKEMON_TOOL", "rarity": "UNCOMMON", "effect": "If the Pokémon Focus Band is attached to would be Knocked Out by your opponent's attack, flip a coin. If heads, that Pokémon is not Knocked Out and its remaining HP become 10 instead. Then, discard Focus Band."},
-	"mary": {"id": "mary", "name": "Mary", "number": "87/111", "image": "res://assets/cards/Neo Genesis/mary-neo-genesis-87.jpg", "type": "TRAINER", "trainer_type": "SUPPORTER", "rarity": "UNCOMMON", "effect": "Draw 2 cards. Then, shuffle 2 cards from your hand into your deck."},
-	"pokegear": {"id": "pokegear", "name": "Pokégear", "number": "88/111", "image": "res://assets/cards/Neo Genesis/pokegear-neo-genesis-88.jpg", "type": "TRAINER", "trainer_type": "ITEM", "rarity": "UNCOMMON", "effect": "Look at the top 7 cards of your deck. If any of them are Trainer cards, you may show 1 of them to your opponent and put it into your hand. Shuffle your deck afterward. You can't play any more Trainer cards this turn."},
-	"super_energy_retrieval": {"id": "super_energy_retrieval", "name": "Super Energy Retrieval", "number": "89/111", "image": "res://assets/cards/Neo Genesis/super-energy-retrieval-neo-genesis-89.jpg", "type": "TRAINER", "trainer_type": "ITEM", "rarity": "UNCOMMON", "effect": "You can use this card only if you discard 1 Basic Energy card from your hand. Choose up to 4 Basic Energy cards from your discard pile and put them into your hand. You cannot choose any cards discarded to pay the cost of using this card."},
-	"time_capsule": {"id": "time_capsule", "name": "Time Capsule", "number": "90/111", "image": "res://assets/cards/Neo Genesis/time-capsule-neo-genesis-90.jpg", "type": "TRAINER", "trainer_type": "ITEM", "rarity": "UNCOMMON", "effect": "Your opponent may choose 5 Basic Pokémon, Evolution, and/or basic Energy cards in his or her discard pile. (If your opponent doesn't have that many, he or she chooses all or none of them.) If your opponent chooses any cards, he or she shuffles them into his or her deck. Either way, you may do the same, and you can't play any more Trainer cards this turn."},
-	"bills_teleporter": {"id": "bills_teleporter", "name": "Bill's Teleporter", "number": "91/111", "image": "res://assets/cards/Neo Genesis/bills-teleporter-neo-genesis-91.jpg", "type": "TRAINER", "trainer_type": "ITEM", "rarity": "UNCOMMON", "effect": "Flip a coin. If heads, draw 4 cards."},
-	"card_flip_game": {"id": "card_flip_game", "name": "Card-Flip Game", "number": "92/111", "image": "res://assets/cards/Neo Genesis/card-flip-game-neo-genesis-92.jpg", "type": "TRAINER", "trainer_type": "ITEM", "rarity": "UNCOMMON", "effect": "Choose 1 of your opponent's face-down Prizes. Guess whether it is an Energy card, a Trainer card, or a Pokémon (Basic or Evolution) card. Flip the card face up (and leave it face up). If you guessed right, draw 2 cards"},
-	"gold_berry": {"id": "gold_berry", "name": "Gold Berry", "number": "93/111", "image": "res://assets/cards/Neo Genesis/gold-berry-neo-genesis-93.jpg", "type": "TRAINER", "trainer_type": "POKEMON_TOOL", "rarity": "UNCOMMON", "effect": "At any time between turns, if there are at least 4 damage counters on the Pokémon Gold Berry is attached to, you may remove 4 of them and discard Gold Berry. At the start of each turn, if there are at least 4 damage counters on the Pokémon Gold Berry is attached to, remove 4 of them and discard Gold Berry"},
-	"miracle_berry": {"id": "miracle_berry", "name": "Miracle Berry", "number": "94/111", "image": "res://assets/cards/Neo Genesis/miracle-berry-neo-genesis-94.jpg", "type": "TRAINER", "trainer_type": "POKEMON_TOOL", "rarity": "UNCOMMON", "effect": "At any time between turns, if the Pokémon Miracle Berry is attached to is Asleep, Confused, Paralyzed, or Poisoned, you may remove all those effects from that Pokémon and discard Miracle Berry. At the start of each turn, if the Pokémon Miracle Berry is attached to is Asleep, Confused, Paralyzed, or Poisoned, remove all of those effects from that Pokémon and discard Miracle Berry."},
-	"new_pokedex": {"id": "new_pokedex", "name": "New Pokédex", "number": "95/111", "image": "res://assets/cards/Neo Genesis/new-pokedex-neo-genesis-95.jpg", "type": "TRAINER", "trainer_type": "ITEM", "rarity": "UNCOMMON", "effect": "Shuffle your deck. Then, look at up to 5 cards from the top of your deck and rearrange them as you like."},
-	"professor_elm": {"id": "professor_elm", "name": "Professor Elm", "number": "96/111", "image": "res://assets/cards/Neo Genesis/professor-elm-neo-genesis-96.jpg", "type": "TRAINER", "trainer_type": "SUPPORTER", "rarity": "UNCOMMON", "effect": "Shuffle your hand into your deck. Then, draw 7 cards. You can't play any more Trainer cards this turn."},
-	"sprout_tower": {"id": "sprout_tower", "name": "Sprout Tower", "number": "97/111", "image": "res://assets/cards/Neo Genesis/sprout-tower-neo-genesis-97.jpg", "type": "TRAINER", "trainer_type": "STADIUM", "rarity": "UNCOMMON", "effect": "All damage done by COLORLESS Pokémon's attacks is reduced by 30 after applying Weakness and Resistance."},
-	"super_scoop_up": {"id": "super_scoop_up", "name": "Super Scoop Up", "number": "98/111", "image": "res://assets/cards/Neo Genesis/super-scoop-up-neo-genesis-98.jpg", "type": "TRAINER", "trainer_type": "ITEM", "rarity": "UNCOMMON", "effect": "Flip a coin. If heads, return 1 of your Pokémon and all cards attached to it to your hand."},
-	"berry": {"id": "berry", "name": "Berry", "number": "99/111", "image": "res://assets/cards/Neo Genesis/berry-neo-genesis-99.jpg", "type": "TRAINER", "trainer_type": "POKEMON_TOOL", "rarity": "COMMON", "effect": "At any time between turns, if there are at least 2 damage counters on the Pokémon Berry is attached to, you may remove 2 of them and discard Berry. At the start of each turn, if there are at least 2 damage counters on the Pokémon Berry is attached to, remove 2 of them and discard Berry."},
-	"double_gust": {"id": "double_gust", "name": "Double Gust", "number": "100/111", "image": "res://assets/cards/Neo Genesis/double-gust-neo-genesis-100.jpg", "type": "TRAINER", "trainer_type": "ITEM", "rarity": "COMMON", "effect": "If you have any Benched Pokémon, your opponent chooses 1 of them and switches it with your Active Pokémon. Then, if your opponent has any Benched Pokémon, choose 1 of them and switch it with his or her Active Pokémon."},
-	"moo_moo_milk": {"id": "moo_moo_milk", "name": "Moo-Moo Milk", "number": "101/111", "image": "res://assets/cards/Neo Genesis/moo-moo-milk-neo-genesis-101.jpg", "type": "TRAINER", "trainer_type": "ITEM", "rarity": "COMMON", "effect": "Choose 1 of your Pokémon. Flip 2 coins. Remove 2 damage counters times the number of heads from that Pokémon. If the Pokémon has fewer damage counters than that, remove all of them."},
-	"pokemon_march": {"id": "pokemon_march", "name": "Pokémon March", "number": "102/111", "image": "res://assets/cards/Neo Genesis/pokemon-march-neo-genesis-102.jpg", "type": "TRAINER", "trainer_type": "ITEM", "rarity": "COMMON", "effect": "Your opponent may search his or her deck for 1 Basic Pokémon card and put it onto his or her Bench. Then, you may search your deck for 1 Basic Pokémon card and put it onto your Bench. Then, each player shuffles his or her deck. A player can't do any of this if his or her Bench is full."},
-	"super_rod": {"id": "super_rod", "name": "Super Rod", "number": "103/111", "image": "res://assets/cards/Neo Genesis/super-rod-neo-genesis-103.jpg", "type": "TRAINER", "trainer_type": "ITEM", "rarity": "COMMON", "effect": "Flip a coin. If heads, put an Evolution card from your discard pile, if any, into your hand. If tails, put a Basic Pokémon card from your discard pile, if any, into your hand."},
+	"arcade_game": {"id": "arcade_game", "name": "Arcade Game", "number": "83/111", "image": "res://assets/cards/Neo Genesis/arcade-game-neo-genesis-83.jpg", "image_es": "res://assets/cards/Neo Genesis ES/juego-electronico-neo-genesis-es-83.jpg", "type": "TRAINER", "trainer_type": "ITEM", "rarity": "UNCOMMON", "effect": "Shuffle your deck, then reveal the top 3 cards of it. If at least 2 of those cards share the same name, put all of the ones with that name into your hand and shuffle the rest into your deck. If none of them do, shuffle all 3 into your deck."},
+	"ecogym": {"id": "ecogym", "name": "Ecogym", "number": "84/111", "image": "res://assets/cards/Neo Genesis/ecogym-neo-genesis-84.jpg", "image_es": "res://assets/cards/Neo Genesis ES/eco-gimnasio-neo-genesis-es-84.jpg", "type": "TRAINER", "trainer_type": "STADIUM", "rarity": "UNCOMMON", "effect": "Whenever an attack, Pokémon Power, or Trainer card discards another player's non- COLORLESS Energy card from a Pokémon, return that Energy card to its owner's hand. Energy cards that are discarded when that Pokémon is Knocked Out don't count."},
+	"energy_charge": {"id": "energy_charge", "name": "Energy Charge", "number": "85/111", "image": "res://assets/cards/Neo Genesis/energy-charge-neo-genesis-85.jpg", "image_es": "res://assets/cards/Neo Genesis ES/carga-de-energia-neo-genesis-es-85.jpg", "type": "TRAINER", "trainer_type": "ITEM", "rarity": "UNCOMMON", "effect": "Flip a coin. If heads, shuffle up to 2 Energy cards from your discard pile into your deck.."},
+	"focus_band": {"id": "focus_band", "name": "Focus Band", "number": "86/111", "image": "res://assets/cards/Neo Genesis/focus-band-neo-genesis-86.jpg", "image_es": "res://assets/cards/Neo Genesis ES/banda-de-foco-neo-genesis-es-86.jpg", "type": "TRAINER", "trainer_type": "POKEMON_TOOL", "rarity": "UNCOMMON", "effect": "If the Pokémon Focus Band is attached to would be Knocked Out by your opponent's attack, flip a coin. If heads, that Pokémon is not Knocked Out and its remaining HP become 10 instead. Then, discard Focus Band."},
+	"mary": {"id": "mary", "name": "Mary", "number": "87/111", "image": "res://assets/cards/Neo Genesis/mary-neo-genesis-87.jpg", "image_es": "res://assets/cards/Neo Genesis ES/maria-neo-genesis-es-87.jpg", "type": "TRAINER", "trainer_type": "SUPPORTER", "rarity": "UNCOMMON", "effect": "Draw 2 cards. Then, shuffle 2 cards from your hand into your deck."},
+	"pokegear": {"id": "pokegear", "name": "Pokégear", "number": "88/111", "image": "res://assets/cards/Neo Genesis/pokegear-neo-genesis-88.jpg", "image_es": "res://assets/cards/Neo Genesis ES/vestimenta-poke-neo-genesis-es-88.jpg", "type": "TRAINER", "trainer_type": "ITEM", "rarity": "UNCOMMON", "effect": "Look at the top 7 cards of your deck. If any of them are Trainer cards, you may show 1 of them to your opponent and put it into your hand. Shuffle your deck afterward. You can't play any more Trainer cards this turn."},
+	"super_energy_retrieval": {"id": "super_energy_retrieval", "name": "Super Energy Retrieval", "number": "89/111", "image": "res://assets/cards/Neo Genesis/super-energy-retrieval-neo-genesis-89.jpg", "image_es": "res://assets/cards/Neo Genesis ES/super-recuperacion-de-energia-neo-genesis-es-89.jpg", "type": "TRAINER", "trainer_type": "ITEM", "rarity": "UNCOMMON", "effect": "You can use this card only if you discard 1 Basic Energy card from your hand. Choose up to 4 Basic Energy cards from your discard pile and put them into your hand. You cannot choose any cards discarded to pay the cost of using this card."},
+	"time_capsule": {"id": "time_capsule", "name": "Time Capsule", "number": "90/111", "image": "res://assets/cards/Neo Genesis/time-capsule-neo-genesis-90.jpg", "image_es": "res://assets/cards/Neo Genesis ES/capsula-de-tiempo-neo-genesis-es-90.jpg", "type": "TRAINER", "trainer_type": "ITEM", "rarity": "UNCOMMON", "effect": "Your opponent may choose 5 Basic Pokémon, Evolution, and/or basic Energy cards in his or her discard pile. (If your opponent doesn't have that many, he or she chooses all or none of them.) If your opponent chooses any cards, he or she shuffles them into his or her deck. Either way, you may do the same, and you can't play any more Trainer cards this turn."},
+	"bills_teleporter": {"id": "bills_teleporter", "name": "Bill's Teleporter", "number": "91/111", "image": "res://assets/cards/Neo Genesis/bills-teleporter-neo-genesis-91.jpg", "image_es": "res://assets/cards/Neo Genesis ES/teletransportador-de-bill-neo-genesis-es-91.jpg", "type": "TRAINER", "trainer_type": "ITEM", "rarity": "UNCOMMON", "effect": "Flip a coin. If heads, draw 4 cards."},
+	"card_flip_game": {"id": "card_flip_game", "name": "Card-Flip Game", "number": "92/111", "image": "res://assets/cards/Neo Genesis/card-flip-game-neo-genesis-92.jpg", "image_es": "res://assets/cards/Neo Genesis ES/juego-de-dar-la-vuelta-a-las-cartas-neo-genesis-es-92.jpg", "type": "TRAINER", "trainer_type": "ITEM", "rarity": "UNCOMMON", "effect": "Choose 1 of your opponent's face-down Prizes. Guess whether it is an Energy card, a Trainer card, or a Pokémon (Basic or Evolution) card. Flip the card face up (and leave it face up). If you guessed right, draw 2 cards"},
+	"gold_berry": {"id": "gold_berry", "name": "Gold Berry", "number": "93/111", "image": "res://assets/cards/Neo Genesis/gold-berry-neo-genesis-93.jpg", "image_es": "res://assets/cards/Neo Genesis ES/fresa-de-oro-neo-genesis-es-93.jpg", "type": "TRAINER", "trainer_type": "POKEMON_TOOL", "rarity": "UNCOMMON", "effect": "At any time between turns, if there are at least 4 damage counters on the Pokémon Gold Berry is attached to, you may remove 4 of them and discard Gold Berry. At the start of each turn, if there are at least 4 damage counters on the Pokémon Gold Berry is attached to, remove 4 of them and discard Gold Berry"},
+	"miracle_berry": {"id": "miracle_berry", "name": "Miracle Berry", "number": "94/111", "image": "res://assets/cards/Neo Genesis/miracle-berry-neo-genesis-94.jpg", "image_es": "res://assets/cards/Neo Genesis ES/fresa-milagrosa-neo-genesis-es-94.jpg", "type": "TRAINER", "trainer_type": "POKEMON_TOOL", "rarity": "UNCOMMON", "effect": "At any time between turns, if the Pokémon Miracle Berry is attached to is Asleep, Confused, Paralyzed, or Poisoned, you may remove all those effects from that Pokémon and discard Miracle Berry. At the start of each turn, if the Pokémon Miracle Berry is attached to is Asleep, Confused, Paralyzed, or Poisoned, remove all of those effects from that Pokémon and discard Miracle Berry."},
+	"new_pokedex": {"id": "new_pokedex", "name": "New Pokédex", "number": "95/111", "image": "res://assets/cards/Neo Genesis/new-pokedex-neo-genesis-95.jpg", "image_es": "res://assets/cards/Neo Genesis ES/nuevo-pokedex-neo-genesis-es-95.jpg", "type": "TRAINER", "trainer_type": "ITEM", "rarity": "UNCOMMON", "effect": "Shuffle your deck. Then, look at up to 5 cards from the top of your deck and rearrange them as you like."},
+	"professor_elm": {"id": "professor_elm", "name": "Professor Elm", "number": "96/111", "image": "res://assets/cards/Neo Genesis/professor-elm-neo-genesis-96.jpg", "image_es": "res://assets/cards/Neo Genesis ES/profesor-elm-neo-genesis-es-96.jpg", "type": "TRAINER", "trainer_type": "SUPPORTER", "rarity": "UNCOMMON", "effect": "Shuffle your hand into your deck. Then, draw 7 cards. You can't play any more Trainer cards this turn."},
+	"sprout_tower": {"id": "sprout_tower", "name": "Sprout Tower", "number": "97/111", "image": "res://assets/cards/Neo Genesis/sprout-tower-neo-genesis-97.jpg", "image_es": "res://assets/cards/Neo Genesis ES/torre-de-brotes-neo-genesis-es-97.jpg", "type": "TRAINER", "trainer_type": "STADIUM", "rarity": "UNCOMMON", "effect": "All damage done by COLORLESS Pokémon's attacks is reduced by 30 after applying Weakness and Resistance."},
+	"super_scoop_up": {"id": "super_scoop_up", "name": "Super Scoop Up", "number": "98/111", "image": "res://assets/cards/Neo Genesis/super-scoop-up-neo-genesis-98.jpg", "image_es": "res://assets/cards/Neo Genesis ES/super-levante-neo-genesis-es-98.jpg", "type": "TRAINER", "trainer_type": "ITEM", "rarity": "UNCOMMON", "effect": "Flip a coin. If heads, return 1 of your Pokémon and all cards attached to it to your hand."},
+	"berry": {"id": "berry", "name": "Berry", "number": "99/111", "image": "res://assets/cards/Neo Genesis/berry-neo-genesis-99.jpg", "image_es": "res://assets/cards/Neo Genesis ES/fresa-neo-genesis-es-99.jpg", "type": "TRAINER", "trainer_type": "POKEMON_TOOL", "rarity": "COMMON", "effect": "At any time between turns, if there are at least 2 damage counters on the Pokémon Berry is attached to, you may remove 2 of them and discard Berry. At the start of each turn, if there are at least 2 damage counters on the Pokémon Berry is attached to, remove 2 of them and discard Berry."},
+	"double_gust": {"id": "double_gust", "name": "Double Gust", "number": "100/111", "image": "res://assets/cards/Neo Genesis/double-gust-neo-genesis-100.jpg", "image_es": "res://assets/cards/Neo Genesis ES/doble-golpe-de-viento-neo-genesis-es-100.jpg", "type": "TRAINER", "trainer_type": "ITEM", "rarity": "COMMON", "effect": "If you have any Benched Pokémon, your opponent chooses 1 of them and switches it with your Active Pokémon. Then, if your opponent has any Benched Pokémon, choose 1 of them and switch it with his or her Active Pokémon."},
+	"moo_moo_milk": {"id": "moo_moo_milk", "name": "Moo-Moo Milk", "number": "101/111", "image": "res://assets/cards/Neo Genesis/moo-moo-milk-neo-genesis-101.jpg", "image_es": "res://assets/cards/Neo Genesis ES/leche-mu-mu-neo-genesis-es-101.jpg", "type": "TRAINER", "trainer_type": "ITEM", "rarity": "COMMON", "effect": "Choose 1 of your Pokémon. Flip 2 coins. Remove 2 damage counters times the number of heads from that Pokémon. If the Pokémon has fewer damage counters than that, remove all of them."},
+	"pokemon_march": {"id": "pokemon_march", "name": "Pokémon March", "number": "102/111", "image": "res://assets/cards/Neo Genesis/pokemon-march-neo-genesis-102.jpg", "image_es": "res://assets/cards/Neo Genesis ES/marcha-de-pokemon-neo-genesis-es-102.jpg", "type": "TRAINER", "trainer_type": "ITEM", "rarity": "COMMON", "effect": "Your opponent may search his or her deck for 1 Basic Pokémon card and put it onto his or her Bench. Then, you may search your deck for 1 Basic Pokémon card and put it onto your Bench. Then, each player shuffles his or her deck. A player can't do any of this if his or her Bench is full."},
+	"super_rod": {"id": "super_rod", "name": "Super Rod", "number": "103/111", "image": "res://assets/cards/Neo Genesis/super-rod-neo-genesis-103.jpg", "image_es": "res://assets/cards/Neo Genesis ES/super-cana-neo-genesis-es-103.jpg", "type": "TRAINER", "trainer_type": "ITEM", "rarity": "COMMON", "effect": "Flip a coin. If heads, put an Evolution card from your discard pile, if any, into your hand. If tails, put a Basic Pokémon card from your discard pile, if any, into your hand."},
 	# ═══════════════════════════════════
 	# ENERGÍAS ESPECIALES (#104-105)
 	# ═══════════════════════════════════
-	"darkness_energy": {"id": "darkness_energy", "name": "Darkness Energy", "number": "104/111", "image": "res://assets/cards/Neo Genesis/darkness-energy-neo-genesis-104.jpg", "type": "ENERGY", "energy_type": "DARKNESS", "provides": 1, "rarity": "RARE"},
-	"recycle_energy": {"id": "recycle_energy", "name": "Recycle Energy", "number": "105/111", "image": "res://assets/cards/Neo Genesis/recycle-energy-neo-genesis-105.jpg", "type": "ENERGY", "energy_type": "COLORLESS", "provides": 1, "rarity": "RARE"},
+	"darkness_energy": {"id": "darkness_energy", "name": "Darkness Energy", "number": "104/111", "image": "res://assets/cards/Neo Genesis/darkness-energy-neo-genesis-104.jpg", "image_es": "res://assets/cards/Neo Genesis ES/energia-oscuridad-neo-genesis-es-104.jpg", "type": "ENERGY", "energy_type": "DARKNESS", "provides": 1, "rarity": "RARE"},
+	"recycle_energy": {"id": "recycle_energy", "name": "Recycle Energy", "number": "105/111", "image": "res://assets/cards/Neo Genesis/recycle-energy-neo-genesis-105.jpg", "image_es": "res://assets/cards/Neo Genesis ES/energia-reciclada-neo-genesis-es-105.jpg", "type": "ENERGY", "energy_type": "COLORLESS", "provides": 1, "rarity": "RARE"},
 	# ═══════════════════════════════════
 	# ENERGÍAS BÁSICAS (#106-111)
 	# ═══════════════════════════════════
-	"fighting_energy": {"id": "fighting_energy", "name": "Fighting Energy", "number": "106/111", "image": "res://assets/cards/Neo Genesis/fighting-energy-neo-genesis-106.jpg", "type": "ENERGY", "energy_type": "FIGHTING", "provides": 1, "rarity": "COMMON"},
-	"fire_energy": {"id": "fire_energy", "name": "Fire Energy", "number": "107/111", "image": "res://assets/cards/Neo Genesis/fire-energy-neo-genesis-107.jpg", "type": "ENERGY", "energy_type": "FIRE", "provides": 1, "rarity": "COMMON"},
-	"grass_energy": {"id": "grass_energy", "name": "Grass Energy", "number": "108/111", "image": "res://assets/cards/Neo Genesis/grass-energy-neo-genesis-108.jpg", "type": "ENERGY", "energy_type": "GRASS", "provides": 1, "rarity": "COMMON"},
-	"lightning_energy": {"id": "lightning_energy", "name": "Lightning Energy", "number": "109/111", "image": "res://assets/cards/Neo Genesis/lightning-energy-neo-genesis-109.jpg", "type": "ENERGY", "energy_type": "LIGHTNING", "provides": 1, "rarity": "COMMON"},
-	"psychic_energy": {"id": "psychic_energy", "name": "Psychic Energy", "number": "110/111", "image": "res://assets/cards/Neo Genesis/psychic-energy-neo-genesis-110.jpg", "type": "ENERGY", "energy_type": "PSYCHIC", "provides": 1, "rarity": "COMMON"},
-	"water_energy": {"id": "water_energy", "name": "Water Energy", "number": "111/111", "image": "res://assets/cards/Neo Genesis/water-energy-neo-genesis-111.jpg", "type": "ENERGY", "energy_type": "WATER", "provides": 1, "rarity": "COMMON"},
+	"fighting_energy": {"id": "fighting_energy", "name": "Fighting Energy", "number": "106/111", "image": "res://assets/cards/Neo Genesis/fighting-energy-neo-genesis-106.jpg", "image_es": "res://assets/cards/Neo Genesis/fighting-energy-neo-genesis-106.jpg", "type": "ENERGY", "energy_type": "FIGHTING", "provides": 1, "rarity": "COMMON"},
+	"fire_energy": {"id": "fire_energy", "name": "Fire Energy", "number": "107/111", "image": "res://assets/cards/Neo Genesis/fire-energy-neo-genesis-107.jpg", "image_es": "res://assets/cards/Neo Genesis/fire-energy-neo-genesis-107.jpg", "type": "ENERGY", "energy_type": "FIRE", "provides": 1, "rarity": "COMMON"},
+	"grass_energy": {"id": "grass_energy", "name": "Grass Energy", "number": "108/111", "image": "res://assets/cards/Neo Genesis/grass-energy-neo-genesis-108.jpg", "image_es": "res://assets/cards/Neo Genesis/grass-energy-neo-genesis-108.jpg", "type": "ENERGY", "energy_type": "GRASS", "provides": 1, "rarity": "COMMON"},
+	"lightning_energy": {"id": "lightning_energy", "name": "Lightning Energy", "number": "109/111", "image": "res://assets/cards/Neo Genesis/lightning-energy-neo-genesis-109.jpg", "image_es": "res://assets/cards/Neo Genesis/lightning-energy-neo-genesis-109.jpg", "type": "ENERGY", "energy_type": "LIGHTNING", "provides": 1, "rarity": "COMMON"},
+	"psychic_energy": {"id": "psychic_energy", "name": "Psychic Energy", "number": "110/111", "image": "res://assets/cards/Neo Genesis/psychic-energy-neo-genesis-110.jpg", "image_es": "res://assets/cards/Neo Genesis/psychic-energy-neo-genesis-110.jpg", "type": "ENERGY", "energy_type": "PSYCHIC", "provides": 1, "rarity": "COMMON"},
+	"water_energy": {"id": "water_energy", "name": "Water Energy", "number": "111/111", "image": "res://assets/cards/Neo Genesis/water-energy-neo-genesis-111.jpg", "image_es": "res://assets/cards/Neo Genesis/water-energy-neo-genesis-111.jpg", "type": "ENERGY", "energy_type": "WATER", "provides": 1, "rarity": "COMMON"},
 }
 
 func get_card(card_id: String) -> Dictionary:
@@ -1070,7 +1165,12 @@ func create_card_instance(card_id: String) -> Node:
 	var card_node = _card_scene.instantiate()
 	var data = get_card(card_id)
 	if not data.is_empty():
-		card_node.setup(data)
+		# Inyectar imagen según idioma antes de hacer setup
+		var localized_data = data.duplicate()
+		var img_path = LanguageManager.get_card_image(data)
+		if img_path != "":
+			localized_data["image"] = img_path
+		card_node.setup(localized_data)
 	return card_node
 
 func get_cards_by_type(type: String) -> Array:

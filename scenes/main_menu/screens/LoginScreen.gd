@@ -543,6 +543,7 @@ static func _do_login_request(
 			var token  = data.get("token", "")
 			var player = data.get("player", {})
 			PlayerData.load_from_server(player)
+			PlayerData.token     = token
 			NetworkManager.token     = token
 			menu.player_id           = PlayerData.player_id
 			NetworkManager.player_id = PlayerData.player_id

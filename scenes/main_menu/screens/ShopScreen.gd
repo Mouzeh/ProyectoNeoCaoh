@@ -57,17 +57,28 @@ static func build(container: Control, menu) -> void:
 	title_lbl.vertical_alignment = VERTICAL_ALIGNMENT_CENTER
 	title_m.add_child(title_lbl)
 
-	var coins_m = MarginContainer.new()
-	coins_m.add_theme_constant_override("margin_right", 40)
-	coins_m.size_flags_vertical = Control.SIZE_SHRINK_CENTER
-	header_hbox.add_child(coins_m)
+	# ── Monedas + Gemas en el header ──
+	var currency_hbox = HBoxContainer.new()
+	currency_hbox.add_theme_constant_override("separation", 20)
+	currency_hbox.size_flags_vertical = Control.SIZE_SHRINK_CENTER
+	var currency_m = MarginContainer.new()
+	currency_m.add_theme_constant_override("margin_right", 40)
+	currency_m.add_child(currency_hbox)
+	header_hbox.add_child(currency_m)
 
 	var coins_lbl = Label.new()
 	coins_lbl.name = "CoinsLabel"
 	coins_lbl.text = "🪙 " + str(PlayerData.coins)
-	coins_lbl.add_theme_font_size_override("font_size", 18)
+	coins_lbl.add_theme_font_size_override("font_size", 17)
 	coins_lbl.add_theme_color_override("font_color", C.COLOR_GOLD)
-	coins_m.add_child(coins_lbl)
+	currency_hbox.add_child(coins_lbl)
+
+	var gems_lbl = Label.new()
+	gems_lbl.name = "GemsLabel"
+	gems_lbl.text = "💎 " + str(PlayerData.gems)
+	gems_lbl.add_theme_font_size_override("font_size", 17)
+	gems_lbl.add_theme_color_override("font_color", Color(0.5, 0.8, 1.0))
+	currency_hbox.add_child(gems_lbl)
 
 	# ── Contenido ────────────────────────────────────────────
 	var scroll = ScrollContainer.new()
@@ -75,6 +86,7 @@ static func build(container: Control, menu) -> void:
 	scroll.anchor_top  = 0; scroll.anchor_bottom = 1
 	scroll.offset_top  = 130; scroll.offset_bottom = -10
 	scroll.offset_left = 40;  scroll.offset_right  = -40
+	UITheme.apply_scrollbar_theme(scroll)
 	shop_root.add_child(scroll)
 
 	var main_vbox = VBoxContainer.new()
@@ -94,11 +106,33 @@ static func build(container: Control, menu) -> void:
 	main_vbox.add_child(packs_hbox)
 
 	_create_pack_card(shop_root, menu, packs_hbox, "typhlosion_pack", "Sobre Typhlosion",
-		"res://assets/Sobres/SobreFuego.png",  100, Color(0.8, 0.2, 0.2))
+		"res://assets/Sobres/SobreFuego.png",  100, Color(0.8, 0.2, 0.2), "coins")
 	_create_pack_card(shop_root, menu, packs_hbox, "feraligatr_pack", "Sobre Feraligatr",
-		"res://assets/Sobres/SobreAgua.png",   100, Color(0.2, 0.4, 0.8))
+		"res://assets/Sobres/SobreAgua.png",   100, Color(0.2, 0.4, 0.8), "coins")
 	_create_pack_card(shop_root, menu, packs_hbox, "meganium_pack",   "Sobre Meganium",
-		"res://assets/Sobres/SobreHierba.png", 100, Color(0.2, 0.7, 0.3))
+		"res://assets/Sobres/SobreHierba.png", 100, Color(0.2, 0.7, 0.3), "coins")
+
+	main_vbox.add_child(UITheme.vspace(10))
+
+	# ── Sección cartas promo ─────────────────────────────────
+	var s_promo = Label.new()
+	s_promo.text = "✨ CARTAS PROMO · Edición Especial"
+	s_promo.add_theme_font_size_override("font_size", 15)
+	s_promo.add_theme_color_override("font_color", Color(0.5, 0.8, 1.0))
+	main_vbox.add_child(s_promo)
+
+	var promo_hbox = HBoxContainer.new()
+	promo_hbox.add_theme_constant_override("separation", 30)
+	main_vbox.add_child(promo_hbox)
+
+	# ← Agrega aquí tus cartas promo. Ejemplo con sneasel_alt:
+	_create_promo_card(shop_root, menu, promo_hbox,
+		"sneasel_alt",          # card_id (debe existir en cards_dict y shop_stock)
+		"Sneasel Full Art",   # nombre visible
+		"res://assets/cards/Neo Genesis/sneasel-alt.png",  # imagen
+		100,                    # precio en gemas
+		Color(0.3, 0.0, 0.5)   # color del borde
+	)
 
 	main_vbox.add_child(UITheme.vspace(10))
 
@@ -115,9 +149,11 @@ static func build(container: Control, menu) -> void:
 
 	_create_slot_upgrade_card(shop_root, menu, upgrades_hbox, 500)
 
+	main_vbox.add_child(UITheme.vspace(40))
+
 
 # ─── CARD DE SOBRE ───────────────────────────────────────────
-static func _create_pack_card(shop_root, menu, parent, pack_id, pack_name, img_path, price, glow_color) -> void:
+static func _create_pack_card(shop_root, menu, parent, pack_id, pack_name, img_path, price, glow_color, currency := "coins") -> void:
 	var C   = menu
 	var box = PanelContainer.new()
 	box.custom_minimum_size = Vector2(220, 340)
@@ -153,13 +189,12 @@ static func _create_pack_card(shop_root, menu, parent, pack_id, pack_name, img_p
 	vbox.add_child(name_lbl)
 
 	var price_lbl = Label.new()
-	price_lbl.text = "🪙 " + str(price) + " monedas"
+	price_lbl.text = ("💎 " if currency == "gems" else "🪙 ") + str(price) + (" gemas" if currency == "gems" else " monedas")
 	price_lbl.horizontal_alignment = HORIZONTAL_ALIGNMENT_CENTER
 	price_lbl.add_theme_font_size_override("font_size", 12)
-	price_lbl.add_theme_color_override("font_color", C.COLOR_GOLD_DIM)
+	price_lbl.add_theme_color_override("font_color", Color(0.5, 0.8, 1.0) if currency == "gems" else C.COLOR_GOLD_DIM)
 	vbox.add_child(price_lbl)
 
-	# Botón COMPRAR — guarda el sobre sin abrirlo
 	var buy_btn = Button.new()
 	buy_btn.text = "Comprar"
 	buy_btn.custom_minimum_size = Vector2(160, 38)
@@ -171,7 +206,82 @@ static func _create_pack_card(shop_root, menu, parent, pack_id, pack_name, img_p
 	buy_btn.add_theme_stylebox_override("normal", st_btn)
 	buy_btn.add_theme_color_override("font_color", Color.WHITE)
 	buy_btn.add_theme_font_size_override("font_size", 13)
-	buy_btn.pressed.connect(func(): _buy_pack(shop_root, menu, pack_id, price, buy_btn))
+	buy_btn.pressed.connect(func(): _buy_pack(shop_root, menu, pack_id, price, buy_btn, currency))
+	vbox.add_child(buy_btn)
+
+
+# ─── CARD DE CARTA PROMO ─────────────────────────────────────
+static func _create_promo_card(shop_root, menu, parent, card_id, card_name, img_path, price_gems, glow_color) -> void:
+	var C   = menu
+	var box = PanelContainer.new()
+	box.custom_minimum_size = Vector2(220, 360)
+
+	var st = StyleBoxFlat.new()
+	st.bg_color = Color(0.08, 0.06, 0.14, 0.97)
+	st.border_width_left = 2; st.border_width_right  = 2
+	st.border_width_top  = 2; st.border_width_bottom = 2
+	st.border_color = glow_color.lightened(0.2)
+	st.corner_radius_top_left    = 12; st.corner_radius_top_right    = 12
+	st.corner_radius_bottom_left = 12; st.corner_radius_bottom_right = 12
+	# Brillo especial para promos
+	st.shadow_color = Color(glow_color.r, glow_color.g, glow_color.b, 0.4)
+	st.shadow_size  = 12
+	box.add_theme_stylebox_override("panel", st)
+	parent.add_child(box)
+
+	var vbox = VBoxContainer.new()
+	vbox.alignment = BoxContainer.ALIGNMENT_CENTER
+	vbox.add_theme_constant_override("separation", 8)
+	box.add_child(vbox)
+
+	# Badge PROMO
+	var badge = Label.new()
+	badge.text = "✨ PROMO"
+	badge.horizontal_alignment = HORIZONTAL_ALIGNMENT_CENTER
+	badge.add_theme_font_size_override("font_size", 11)
+	badge.add_theme_color_override("font_color", Color(0.5, 0.9, 1.0))
+	vbox.add_child(badge)
+
+	var img_rect = TextureRect.new()
+	img_rect.custom_minimum_size = Vector2(150, 210)
+	img_rect.expand_mode  = TextureRect.EXPAND_IGNORE_SIZE
+	img_rect.stretch_mode = TextureRect.STRETCH_KEEP_ASPECT_CENTERED
+	if ResourceLoader.exists(img_path):
+		img_rect.texture = load(img_path)
+	vbox.add_child(img_rect)
+
+	var name_lbl = Label.new()
+	name_lbl.text = card_name
+	name_lbl.horizontal_alignment = HORIZONTAL_ALIGNMENT_CENTER
+	name_lbl.add_theme_font_size_override("font_size", 13)
+	name_lbl.add_theme_color_override("font_color", C.COLOR_TEXT)
+	vbox.add_child(name_lbl)
+
+	var price_lbl = Label.new()
+	price_lbl.text = "💎 " + str(price_gems) + " gemas"
+	price_lbl.horizontal_alignment = HORIZONTAL_ALIGNMENT_CENTER
+	price_lbl.add_theme_font_size_override("font_size", 13)
+	price_lbl.add_theme_color_override("font_color", Color(0.5, 0.8, 1.0))
+	vbox.add_child(price_lbl)
+
+	var buy_btn = Button.new()
+	buy_btn.text = "💎 Comprar"
+	buy_btn.custom_minimum_size = Vector2(160, 38)
+	buy_btn.size_flags_horizontal = Control.SIZE_SHRINK_CENTER
+	buy_btn.add_theme_font_size_override("font_size", 13)
+	var st_btn = StyleBoxFlat.new()
+	st_btn.bg_color = Color(0.2, 0.05, 0.45, 0.95)
+	st_btn.border_color = Color(0.5, 0.4, 1.0, 0.6)
+	st_btn.border_width_left = 1; st_btn.border_width_right  = 1
+	st_btn.border_width_top  = 1; st_btn.border_width_bottom = 1
+	st_btn.corner_radius_top_left    = 6; st_btn.corner_radius_top_right    = 6
+	st_btn.corner_radius_bottom_left = 6; st_btn.corner_radius_bottom_right = 6
+	var st_btn_hover = st_btn.duplicate()
+	st_btn_hover.bg_color = Color(0.3, 0.1, 0.6, 0.95)
+	buy_btn.add_theme_stylebox_override("normal", st_btn)
+	buy_btn.add_theme_stylebox_override("hover",  st_btn_hover)
+	buy_btn.add_theme_color_override("font_color", Color.WHITE)
+	buy_btn.pressed.connect(func(): _buy_promo_card(shop_root, menu, card_id, price_gems, buy_btn))
 	vbox.add_child(buy_btn)
 
 
@@ -225,10 +335,11 @@ static func _create_slot_upgrade_card(shop_root, menu, parent, price) -> void:
 	vbox.add_child(btn)
 
 
-# ─── HTTP: COMPRAR SOBRE (sin abrir) ─────────────────────────
-static func _buy_pack(shop_root: Control, menu, pack_id: String, price: int, btn: Button) -> void:
-	if PlayerData.coins < price:
-		_show_toast(shop_root, "🪙 Monedas insuficientes", Color(0.8, 0.2, 0.2))
+# ─── HTTP: COMPRAR SOBRE ─────────────────────────────────────
+static func _buy_pack(shop_root: Control, menu, pack_id: String, price: int, btn: Button, currency := "coins") -> void:
+	var balance = PlayerData.gems if currency == "gems" else PlayerData.coins
+	if balance < price:
+		_show_toast(shop_root, ("💎" if currency == "gems" else "🪙") + " Saldo insuficiente", Color(0.8, 0.2, 0.2))
 		return
 
 	btn.disabled = true
@@ -251,9 +362,9 @@ static func _buy_pack(shop_root: Control, menu, pack_id: String, price: int, btn
 			_show_toast(shop_root, "⚠ " + data.get("error", "Error"), Color(0.8, 0.2, 0.2))
 			return
 
-		# Actualizar monedas locales
-		PlayerData.coins = data.get("coins_left", PlayerData.coins)
-		_update_coins_ui(shop_root)
+		if data.has("coins_left"): PlayerData.coins = data["coins_left"]
+		if data.has("gems_left"):  PlayerData.gems  = data["gems_left"]
+		_update_currency_ui(shop_root)
 
 		var pending = data.get("pending_packs", 0)
 		_show_toast(shop_root,
@@ -265,7 +376,53 @@ static func _buy_pack(shop_root: Control, menu, pack_id: String, price: int, btn
 		"http://localhost:3000/api/shop/buy",
 		["Content-Type: application/json", "Authorization: Bearer " + NetworkManager.token],
 		HTTPClient.METHOD_POST,
-		JSON.stringify({"pack_type": pack_id})
+		JSON.stringify({"pack_type": pack_id, "currency": currency})
+	)
+
+
+# ─── HTTP: COMPRAR CARTA PROMO ───────────────────────────────
+static func _buy_promo_card(shop_root: Control, menu, card_id: String, price_gems: int, btn: Button) -> void:
+	if PlayerData.gems < price_gems:
+		_show_toast(shop_root, "💎 Gemas insuficientes", Color(0.8, 0.2, 0.2))
+		return
+
+	btn.disabled = true
+	btn.text     = "Comprando..."
+
+	var http = HTTPRequest.new()
+	shop_root.add_child(http)
+
+	http.request_completed.connect(func(result, code, _h, body):
+		http.queue_free()
+		btn.disabled = false
+		btn.text     = "💎 Comprar"
+
+		if result != HTTPRequest.RESULT_SUCCESS or code != 200:
+			_show_toast(shop_root, "⚠ Error al comprar", Color(0.8, 0.2, 0.2))
+			return
+
+		var data = JSON.parse_string(body.get_string_from_utf8())
+		if not data or not data.get("success", false):
+			_show_toast(shop_root, "⚠ " + data.get("error", "Error"), Color(0.8, 0.2, 0.2))
+			return
+
+		if data.has("coins_left"): PlayerData.coins = data["coins_left"]
+		if data.has("gems_left"):  PlayerData.gems  = data["gems_left"]
+		_update_currency_ui(shop_root)
+
+		# Agregar carta a PlayerData local
+		PlayerData.add_card(data.get("card_id", card_id))
+
+		btn.text     = "✅ Obtenida"
+		btn.disabled = true
+		_show_toast(shop_root, "✨ ¡Carta promo obtenida!", Color(0.4, 0.2, 0.9))
+	)
+
+	http.request(
+		"http://localhost:3000/api/shop/buy-card",
+		["Content-Type: application/json", "Authorization: Bearer " + NetworkManager.token],
+		HTTPClient.METHOD_POST,
+		JSON.stringify({"card_id": card_id, "currency": "gems"})
 	)
 
 
@@ -314,7 +471,7 @@ static func _buy_slot(shop_root: Control, menu, price: int, btn: Button) -> void
 		var data = JSON.parse_string(body.get_string_from_utf8())
 		if data and data.get("success"):
 			PlayerData.coins = data.get("coins_left", PlayerData.coins)
-			_update_coins_ui(shop_root)
+			_update_currency_ui(shop_root)
 			_show_toast(shop_root, "✓ Nuevo slot desbloqueado", Color(0.2, 0.7, 0.3))
 	)
 
@@ -326,9 +483,15 @@ static func _buy_slot(shop_root: Control, menu, price: int, btn: Button) -> void
 
 
 # ─── HELPERS ─────────────────────────────────────────────────
+static func _update_currency_ui(shop_root: Control) -> void:
+	var coins_lbl = UITheme.find_node(shop_root, "CoinsLabel") as Label
+	if coins_lbl: coins_lbl.text = "🪙 " + str(PlayerData.coins)
+	var gems_lbl = UITheme.find_node(shop_root, "GemsLabel") as Label
+	if gems_lbl: gems_lbl.text = "💎 " + str(PlayerData.gems)
+
+# Mantener compatibilidad con llamadas antiguas
 static func _update_coins_ui(shop_root: Control) -> void:
-	var lbl = UITheme.find_node(shop_root, "CoinsLabel") as Label
-	if lbl: lbl.text = "🪙 " + str(PlayerData.coins)
+	_update_currency_ui(shop_root)
 
 
 static func _show_toast(parent: Control, msg: String, color: Color) -> void:
@@ -360,7 +523,7 @@ static func _show_toast(parent: Control, msg: String, color: Color) -> void:
 	tw.tween_callback(toast.queue_free)
 
 
-# ─── RAREZA (usado también por CollectionScreen) ─────────────
+# ─── RAREZA ──────────────────────────────────────────────────
 static func rarity_color(rarity: String) -> Color:
 	match rarity:
 		"RARE":       return Color(0.95, 0.85, 0.1,  1.0)

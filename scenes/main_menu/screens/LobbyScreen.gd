@@ -69,7 +69,7 @@ static func build(container: Control, menu) -> void:
 	var pill_m = MarginContainer.new()
 	pill_m.add_theme_constant_override("margin_right", 24)
 	pill_m.size_flags_vertical = Control.SIZE_SHRINK_CENTER
-	var pp = UITheme.pill("👤  Trainer: " + C.player_id, Color(0,0,0,0.5), C.COLOR_GOLD, 36)
+	var pp = UITheme.pill("👤  [" + PlayerData.rank + "] " + PlayerData.username, Color(0,0,0,0.5), C.COLOR_GOLD, 36)
 	pp.custom_minimum_size = Vector2(180, 36)
 	pill_m.add_child(pp)
 	hbox.add_child(pill_m)

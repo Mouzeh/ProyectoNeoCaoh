@@ -81,8 +81,10 @@ func _ready() -> void:
 		NetworkManager.resolve_glaring_gaze(idx)
 	)
 	overlays.action_zoom_selected.connect(_handle_action_zoom_choice)
+	
+	# Aquí enviamos la señal de salir de la sala antes de ir al menú
 	overlays.game_over_closed.connect(func():
-		NetworkManager.disconnect_from_server()
+		NetworkManager.leave_room()
 		get_tree().change_scene_to_file("res://scenes/main_menu/MainMenu.tscn")
 	)
 
@@ -102,7 +104,7 @@ func _ready() -> void:
 	trainer_handler.trainer_highlight_zones.connect(_on_trainer_highlight_zones)
 
 	action_handler = load("res://scripts/Battle/ActionHandler.gd").new()
-	action_handler.board           = self
+	action_handler.board = self
 	action_handler.trainer_handler = trainer_handler
 	add_child(action_handler)
 	action_handler.setup()
@@ -110,8 +112,7 @@ func _ready() -> void:
 	action_handler.action_buttons_update_needed.connect(_update_action_buttons)
 
 	_connect_network()
-
-
+	
 # ============================================================
 # CONSTRUIR TABLERO VISUAL
 # ============================================================

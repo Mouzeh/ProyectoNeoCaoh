@@ -36,7 +36,7 @@ static func make(card_id: String, container: Control, menu, qty: int = -1, avail
 	c.add_child(panel)
 
 	# ── Imagen ──
-	var img_path = data.get("image","")
+	var img_path = LanguageManager.get_card_image(data)
 	if img_path != "":
 		var tex = load(img_path)
 		if tex:
@@ -136,8 +136,9 @@ static func show_preview(container: Control, card_id: String) -> void:
 	var data        = CardDatabase.get_card(card_id)
 	var preview_img = UITheme.find_node(container, "PreviewImage") as TextureRect
 	var preview_lbl = UITheme.find_node(container, "PreviewName")  as Label
-	if preview_img and data.get("image","") != "":
-		preview_img.texture = load(data.get("image",""))
+	var _img_path = LanguageManager.get_card_image(data)
+	if preview_img and _img_path != "":
+		preview_img.texture = load(_img_path)
 	if preview_lbl:
 		var qty_text = ""
 		if PlayerData.is_logged_in:

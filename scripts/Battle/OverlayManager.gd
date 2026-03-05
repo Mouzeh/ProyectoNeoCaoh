@@ -35,7 +35,7 @@ func setup(parent_board: Node2D) -> void:
 
 
 # ============================================================
-# SETUP OVERLAY
+# SETUP OVERLAY — Rediseñado: más visual, más claro
 # ============================================================
 func show_setup_overlay(state: Dictionary, my_player_id: String) -> void:
 	var setup_ready = state.get("setup_ready", {})
@@ -47,6 +47,8 @@ func show_setup_overlay(state: Dictionary, my_player_id: String) -> void:
 			if btn: btn.disabled = true
 			var lbl = setup_overlay.get_node_or_null("SetupPanel/SetupLabel")
 			if lbl: lbl.text = "⏳ Esperando que el rival elija..."
+			var step_lbl = setup_overlay.get_node_or_null("SetupPanel/StepLabel")
+			if step_lbl: step_lbl.text = ""
 		return
 
 	if setup_overlay: return
@@ -57,51 +59,210 @@ func show_setup_overlay(state: Dictionary, my_player_id: String) -> void:
 	setup_overlay.z_index = 50
 	board.add_child(setup_overlay)
 
-	var panel_w = min(700.0, vp_size.x - 40)
-	var panel_h = 200.0
+	# ── Panel principal ──────────────────────────────────────
+	var panel_w = min(760.0, vp_size.x - 32)
+	var panel_h = 220.0
 	var panel   = Panel.new()
 	panel.name     = "SetupPanel"
-	panel.position = Vector2((vp_size.x - panel_w) / 2.0, vp_size.y - panel_h - 160)
+	panel.position = Vector2((vp_size.x - panel_w) / 2.0, vp_size.y - panel_h - 140)
 	panel.size     = Vector2(panel_w, panel_h)
 
 	var pstyle = StyleBoxFlat.new()
-	pstyle.bg_color = Color(0.05, 0.10, 0.08, 0.95)
+	pstyle.bg_color = Color(0.04, 0.08, 0.06, 0.97)
 	pstyle.border_color = COLOR_GOLD
 	pstyle.border_width_left = 2; pstyle.border_width_right  = 2
 	pstyle.border_width_top  = 2; pstyle.border_width_bottom = 2
-	pstyle.corner_radius_top_left    = 10; pstyle.corner_radius_top_right    = 10
-	pstyle.corner_radius_bottom_left = 10; pstyle.corner_radius_bottom_right = 10
+	pstyle.corner_radius_top_left    = 14; pstyle.corner_radius_top_right    = 14
+	pstyle.corner_radius_bottom_left = 14; pstyle.corner_radius_bottom_right = 14
+	pstyle.shadow_color = Color(0.85, 0.72, 0.30, 0.25)
+	pstyle.shadow_size  = 14
 	panel.add_theme_stylebox_override("panel", pstyle)
 	setup_overlay.add_child(panel)
 
-	var lbl = Label.new()
-	lbl.name = "SetupLabel"
-	lbl.text = "FASE DE SETUP — Haz clic en una carta básica de tu mano para elegir tu Activo\nLuego puedes agregar más básicos al banco. Confirma cuando estés listo."
-	lbl.position = Vector2(12, 10)
-	lbl.size     = Vector2(panel_w - 24, 50)
-	lbl.add_theme_font_size_override("font_size", 12)
-	lbl.add_theme_color_override("font_color", COLOR_GOLD)
-	lbl.horizontal_alignment = HORIZONTAL_ALIGNMENT_CENTER
-	panel.add_child(lbl)
+	# ── Título con ícono ──────────────────────────────────────
+	var title_lbl = Label.new()
+	title_lbl.name = "SetupLabel"
+	title_lbl.text = "⚔  FASE DE PREPARACIÓN"
+	title_lbl.position = Vector2(0, 14)
+	title_lbl.size     = Vector2(panel_w, 28)
+	title_lbl.add_theme_font_size_override("font_size", 17)
+	title_lbl.add_theme_color_override("font_color", COLOR_GOLD)
+	title_lbl.horizontal_alignment = HORIZONTAL_ALIGNMENT_CENTER
+	panel.add_child(title_lbl)
 
+	# ── Separador ────────────────────────────────────────────
+	var sep = ColorRect.new()
+	sep.color    = Color(0.85, 0.72, 0.30, 0.35)
+	sep.position = Vector2(panel_w * 0.15, 48)
+	sep.size     = Vector2(panel_w * 0.70, 1)
+	panel.add_child(sep)
+
+	# ── Pasos visuales ───────────────────────────────────────
+	var steps_container = HBoxContainer.new()
+	steps_container.position = Vector2(20, 58)
+	steps_container.size     = Vector2(panel_w - 40, 60)
+	steps_container.alignment = BoxContainer.ALIGNMENT_CENTER
+	steps_container.add_theme_constant_override("separation", 0)
+	panel.add_child(steps_container)
+
+	# Paso 1
+	var step1 = _build_setup_step(
+		"1",
+		"Elige tu Pokémon Activo",
+		"Haz clic en un Básico de tu mano",
+		false
+	)
+	step1.name = "Step1"
+	steps_container.add_child(step1)
+
+	# Flecha
+	var arrow = Label.new()
+	arrow.text = "  →  "
+	arrow.add_theme_font_size_override("font_size", 22)
+	arrow.add_theme_color_override("font_color", Color(0.5, 0.5, 0.4, 0.6))
+	arrow.vertical_alignment = VERTICAL_ALIGNMENT_CENTER
+	arrow.custom_minimum_size = Vector2(60, 60)
+	steps_container.add_child(arrow)
+
+	# Paso 2
+	var step2 = _build_setup_step(
+		"2",
+		"Agrega al Banco (opcional)",
+		"Haz clic en más Básicos de tu mano",
+		true
+	)
+	step2.name = "Step2"
+	steps_container.add_child(step2)
+
+	# Flecha
+	var arrow2 = Label.new()
+	arrow2.text = "  →  "
+	arrow2.add_theme_font_size_override("font_size", 22)
+	arrow2.add_theme_color_override("font_color", Color(0.5, 0.5, 0.4, 0.6))
+	arrow2.vertical_alignment = VERTICAL_ALIGNMENT_CENTER
+	arrow2.custom_minimum_size = Vector2(60, 60)
+	steps_container.add_child(arrow2)
+
+	# Paso 3
+	var step3 = _build_setup_step(
+		"3",
+		"Confirma",
+		"Cuando estés listo, confirma",
+		true
+	)
+	step3.name = "Step3"
+	steps_container.add_child(step3)
+
+	# ── Estado dinámico ──────────────────────────────────────
+	var step_lbl = Label.new()
+	step_lbl.name = "StepLabel"
+	step_lbl.text = "▶  Selecciona un Pokémon Básico de tu mano para comenzar"
+	step_lbl.position = Vector2(0, 126)
+	step_lbl.size     = Vector2(panel_w, 22)
+	step_lbl.horizontal_alignment = HORIZONTAL_ALIGNMENT_CENTER
+	step_lbl.add_theme_font_size_override("font_size", 11)
+	step_lbl.add_theme_color_override("font_color", Color(0.75, 0.65, 0.35, 0.9))
+	panel.add_child(step_lbl)
+
+	# ── Barra de estado ──────────────────────────────────────
 	var status_lbl = Label.new()
 	status_lbl.name = "StatusLabel"
 	status_lbl.text = "Sin activo elegido"
-	status_lbl.position = Vector2(12, 64)
-	status_lbl.size     = Vector2(panel_w - 24, 24)
-	status_lbl.add_theme_font_size_override("font_size", 11)
-	status_lbl.add_theme_color_override("font_color", Color(0.7, 0.7, 0.5))
-	status_lbl.horizontal_alignment = HORIZONTAL_ALIGNMENT_CENTER
+	status_lbl.position = Vector2(20, 152)
+	status_lbl.size     = Vector2(panel_w - 240, 26)
+	status_lbl.add_theme_font_size_override("font_size", 12)
+	status_lbl.add_theme_color_override("font_color", Color(0.55, 0.55, 0.45, 0.8))
+	status_lbl.vertical_alignment = VERTICAL_ALIGNMENT_CENTER
 	panel.add_child(status_lbl)
 
-	var confirm_btn = Button.new()
+	# ── Botón Confirmar ──────────────────────────────────────
+	var confirm_btn = _build_confirm_button(panel_w)
 	confirm_btn.name     = "ConfirmBtn"
-	confirm_btn.text     = "✓ Confirmar selección"
-	confirm_btn.position = Vector2(panel_w / 2.0 - 110, panel_h - 50)
-	confirm_btn.size     = Vector2(220, 36)
 	confirm_btn.disabled = true
 	confirm_btn.pressed.connect(func(): emit_signal("setup_confirmed"))
 	panel.add_child(confirm_btn)
+
+	# ── Animación de entrada ─────────────────────────────────
+	panel.position.y += 30
+	panel.modulate.a  = 0.0
+	var tw = board.create_tween()
+	tw.set_parallel(true)
+	tw.tween_property(panel, "modulate:a",  1.0,                        0.22)
+	tw.tween_property(panel, "position:y",  panel.position.y - 30,     0.22).set_trans(Tween.TRANS_BACK).set_ease(Tween.EASE_OUT)
+
+func _build_setup_step(number: String, title: String, subtitle: String, dimmed: bool) -> Control:
+	var container = VBoxContainer.new()
+	container.custom_minimum_size = Vector2(180, 60)
+	container.alignment = BoxContainer.ALIGNMENT_CENTER
+	container.add_theme_constant_override("separation", 3)
+
+	var alpha = 0.4 if dimmed else 1.0
+
+	var num_lbl = Label.new()
+	num_lbl.text = number
+	num_lbl.horizontal_alignment = HORIZONTAL_ALIGNMENT_CENTER
+	num_lbl.add_theme_font_size_override("font_size", 20)
+	num_lbl.add_theme_color_override("font_color", Color(COLOR_GOLD.r, COLOR_GOLD.g, COLOR_GOLD.b, alpha))
+	container.add_child(num_lbl)
+
+	var title_lbl = Label.new()
+	title_lbl.text = title
+	title_lbl.horizontal_alignment = HORIZONTAL_ALIGNMENT_CENTER
+	title_lbl.add_theme_font_size_override("font_size", 12)
+	title_lbl.add_theme_color_override("font_color", Color(0.92, 0.88, 0.75, alpha))
+	container.add_child(title_lbl)
+
+	var sub_lbl = Label.new()
+	sub_lbl.text = subtitle
+	sub_lbl.horizontal_alignment = HORIZONTAL_ALIGNMENT_CENTER
+	sub_lbl.add_theme_font_size_override("font_size", 9)
+	sub_lbl.add_theme_color_override("font_color", Color(0.6, 0.6, 0.5, alpha * 0.75))
+	container.add_child(sub_lbl)
+
+	return container
+
+func _build_confirm_button(panel_w: float) -> Button:
+	var btn = Button.new()
+	btn.text     = "✓  Confirmar selección"
+	btn.position = Vector2(panel_w - 224, 148)
+	btn.size     = Vector2(208, 38)
+	btn.mouse_default_cursor_shape = Control.CURSOR_POINTING_HAND
+
+	var s_normal = StyleBoxFlat.new()
+	s_normal.bg_color                  = Color(0.08, 0.20, 0.10, 0.95)
+	s_normal.border_color              = COLOR_GOLD
+	s_normal.border_width_left         = 2; s_normal.border_width_right  = 2
+	s_normal.border_width_top          = 2; s_normal.border_width_bottom = 2
+	s_normal.corner_radius_top_left    = 8; s_normal.corner_radius_top_right    = 8
+	s_normal.corner_radius_bottom_left = 8; s_normal.corner_radius_bottom_right = 8
+	s_normal.shadow_color = Color(0.85, 0.72, 0.30, 0.3)
+	s_normal.shadow_size  = 6
+	btn.add_theme_stylebox_override("normal", s_normal)
+
+	var s_hover = StyleBoxFlat.new()
+	s_hover.bg_color                  = Color(0.15, 0.38, 0.18, 0.98)
+	s_hover.border_color              = COLOR_GOLD
+	s_hover.border_width_left         = 2; s_hover.border_width_right  = 2
+	s_hover.border_width_top          = 2; s_hover.border_width_bottom = 2
+	s_hover.corner_radius_top_left    = 8; s_hover.corner_radius_top_right    = 8
+	s_hover.corner_radius_bottom_left = 8; s_hover.corner_radius_bottom_right = 8
+	s_hover.shadow_color = Color(0.85, 0.72, 0.30, 0.55)
+	s_hover.shadow_size  = 10
+	btn.add_theme_stylebox_override("hover", s_hover)
+
+	var s_disabled = StyleBoxFlat.new()
+	s_disabled.bg_color                  = Color(0.06, 0.06, 0.06, 0.40)
+	s_disabled.border_color              = Color(0.28, 0.25, 0.15, 0.35)
+	s_disabled.border_width_left         = 2; s_disabled.border_width_right  = 2
+	s_disabled.border_width_top          = 2; s_disabled.border_width_bottom = 2
+	s_disabled.corner_radius_top_left    = 8; s_disabled.corner_radius_top_right    = 8
+	s_disabled.corner_radius_bottom_left = 8; s_disabled.corner_radius_bottom_right = 8
+	btn.add_theme_stylebox_override("disabled", s_disabled)
+
+	btn.add_theme_color_override("font_color",          COLOR_GOLD)
+	btn.add_theme_color_override("font_disabled_color", Color(0.38, 0.35, 0.22, 0.40))
+	btn.add_theme_font_size_override("font_size", 13)
+	return btn
 
 func hide_setup_overlay() -> void:
 	if setup_overlay:
@@ -112,20 +273,66 @@ func update_setup_status(state: Dictionary) -> void:
 	if not setup_overlay: return
 	var my_data     = state.get("my", {})
 	var has_active  = my_data.get("active") != null
-	var bench_count = my_data.get("bench", []).size()
+	var bench_list  = my_data.get("bench", [])
+	var bench_count = bench_list.filter(func(p): return p != null).size()
 
+	# ── Actualizar etiqueta de estado ────────────────────────
 	var status_lbl = setup_overlay.get_node_or_null("SetupPanel/StatusLabel")
 	if status_lbl:
 		if has_active:
-			status_lbl.text = "✓ Activo elegido | Banco: %d Pokémon | (clic en mano para agregar más al banco)" % bench_count
-			status_lbl.add_theme_color_override("font_color", Color(0.4, 0.9, 0.4))
+			status_lbl.text = "✓ Activo elegido   |   Banco: %d / 5 Pokémon" % bench_count
+			status_lbl.add_theme_color_override("font_color", Color(0.40, 0.88, 0.45))
 		else:
-			status_lbl.text = "Haz clic en un Pokémon Básico de tu mano para elegir el Activo"
-			status_lbl.add_theme_color_override("font_color", Color(0.9, 0.7, 0.3))
+			status_lbl.text = "Sin activo elegido"
+			status_lbl.add_theme_color_override("font_color", Color(0.55, 0.55, 0.45, 0.8))
 
+	# ── Actualizar hint de paso actual ───────────────────────
+	var step_lbl = setup_overlay.get_node_or_null("SetupPanel/StepLabel")
+	if step_lbl:
+		if not has_active:
+			step_lbl.text = "▶  Selecciona un Pokémon Básico de tu mano para el Activo"
+			step_lbl.add_theme_color_override("font_color", Color(0.95, 0.72, 0.20, 0.9))
+		elif bench_count == 0:
+			step_lbl.text = "✓ Activo listo — puedes agregar hasta 5 Pokémon al Banco, o Confirmar"
+			step_lbl.add_theme_color_override("font_color", Color(0.40, 0.88, 0.45, 0.85))
+		else:
+			step_lbl.text = "✓ Todo listo — confirma cuando quieras o agrega más al Banco (%d/5)" % bench_count
+			step_lbl.add_theme_color_override("font_color", Color(0.40, 0.88, 0.45, 0.85))
+
+	# ── Iluminar pasos completados ───────────────────────────
+	var steps_container = setup_overlay.get_node_or_null("SetupPanel")
+	if steps_container:
+		var step1 = steps_container.get_node_or_null("Step1")
+		var step2 = steps_container.get_node_or_null("Step2")
+		var step3 = steps_container.get_node_or_null("Step3")
+		if step1: _set_step_active(step1, has_active, true)
+		if step2: _set_step_active(step2, bench_count > 0, has_active)
+		if step3: _set_step_active(step3, false, has_active)
+
+	# ── Botón confirmar ──────────────────────────────────────
 	var confirm_btn = setup_overlay.get_node_or_null("SetupPanel/ConfirmBtn")
 	if confirm_btn:
 		confirm_btn.disabled = not has_active
+		if has_active and not confirm_btn.disabled:
+			# Pulso suave para llamar la atención
+			if not confirm_btn.get_node_or_null("PulseTween"):
+				var pulse_marker = Node.new()
+				pulse_marker.name = "PulseTween"
+				confirm_btn.add_child(pulse_marker)
+				var tw = confirm_btn.create_tween().set_loops()
+				tw.tween_property(confirm_btn, "modulate:a", 0.75, 0.6).set_trans(Tween.TRANS_SINE)
+				tw.tween_property(confirm_btn, "modulate:a", 1.0,  0.6).set_trans(Tween.TRANS_SINE)
+
+func _set_step_active(step_container: Control, is_done: bool, is_enabled: bool) -> void:
+	var alpha     = 1.0 if is_enabled else 0.35
+	var num_color = Color(0.40, 0.88, 0.45) if is_done else Color(COLOR_GOLD.r, COLOR_GOLD.g, COLOR_GOLD.b, alpha)
+	for child in step_container.get_children():
+		if child is Label:
+			var idx = step_container.get_children().find(child)
+			if idx == 0:
+				child.add_theme_color_override("font_color", num_color)
+			else:
+				child.add_theme_color_override("font_color", Color(0.92, 0.88, 0.75, alpha))
 
 
 # ============================================================
@@ -406,11 +613,10 @@ func _add_zoom_tokens(card_node: Control, pokemon_data: Dictionary, zoom_scale: 
 	var energies: Array = pokemon_data.get("attached_energy", [])
 	if energies.is_empty(): return
 
-	# Configuración de tamaño y posición
-	var icon_size = 24.0 
+	var icon_size = 24.0
 	var gap       = 4.0
-	var start_x   = -15.0 # Margen izquierdo
-	var start_y   = 10.0 # Margen superior (empezamos desde arriba)
+	var start_x   = -15.0
+	var start_y   = 10.0
 
 	for i in range(energies.size()):
 		var e_type  = str(CardDatabase.get_energy_type(energies[i]))
@@ -427,7 +633,6 @@ func _add_zoom_tokens(card_node: Control, pokemon_data: Dictionary, zoom_scale: 
 			icon.size         = Vector2(icon_size, icon_size)
 			energy_node = icon
 		else:
-			# Fallback
 			var dot = Panel.new()
 			dot.size = Vector2(icon_size, icon_size)
 			var dot_s = StyleBoxFlat.new()
@@ -438,26 +643,17 @@ func _add_zoom_tokens(card_node: Control, pokemon_data: Dictionary, zoom_scale: 
 			energy_node = dot
 
 		overlay.add_child(energy_node)
-		
-		# ── ANIMACIÓN MAGISTRAL ──
-		# 1. Estado inicial: transparentes y más arriba de su posición final
+
 		energy_node.position = Vector2(start_x, target_y - 25.0)
 		energy_node.modulate.a = 0.0
 
-		# 2. Creamos la animación (Tween)
 		var tw = overlay.create_tween()
 		tw.set_parallel(true)
-		
-		# Efecto cascada: cada energía espera un poquito más que la anterior
-		var cascade_delay = i * 0.08 
-		
-		# Caen rebotando suavemente
+		var cascade_delay = i * 0.08
 		tw.tween_property(energy_node, "position:y", target_y, 0.3) \
 			.set_delay(cascade_delay) \
 			.set_trans(Tween.TRANS_BACK) \
 			.set_ease(Tween.EASE_OUT)
-			
-		# Aparecen (Fade In)
 		tw.tween_property(energy_node, "modulate:a", 1.0, 0.2) \
 			.set_delay(cascade_delay)
 
@@ -473,7 +669,6 @@ func _spawn_zoom_token(overlay: Control, path: String, fallback: String, pos: Ve
 			icon.position     = pos
 			overlay.add_child(icon)
 			return
-	# Fallback emoji
 	var lbl = Label.new()
 	lbl.text     = fallback
 	lbl.position = pos
@@ -518,7 +713,6 @@ func show_action_zoom(pokemon_data: Dictionary) -> void:
 	card_inst.mouse_filter = Control.MOUSE_FILTER_IGNORE
 	action_zoom_overlay.add_child(card_inst)
 
-	# Tokens en el action zoom también
 	_add_zoom_tokens(card_inst, pokemon_data, zoom_scale)
 
 	var btn_x = card_pos_x + card_w + 40.0
@@ -932,31 +1126,136 @@ func _build_glaring_gaze(revealed_trainers: Array) -> void:
 
 
 # ============================================================
-# GAME OVER
+# GAME OVER — Con botón explícito de volver al menú
 # ============================================================
 func show_game_over_screen(message: String, won: bool) -> void:
 	var overlay = Control.new()
+	overlay.name = "GameOverOverlay"
 	overlay.set_anchors_preset(Control.PRESET_FULL_RECT)
 	overlay.z_index = 500
 	board.add_child(overlay)
 
+	# ── Fondo oscuro con tinte según resultado ───────────────
 	var bg = ColorRect.new()
 	bg.set_anchors_preset(Control.PRESET_FULL_RECT)
-	bg.color = Color(0, 0, 0, 0.75)
+	bg.color = Color(0.0, 0.0, 0.0, 0.0)
 	overlay.add_child(bg)
 
+	# ── Panel central ────────────────────────────────────────
+	var panel_w = min(520.0, vp_size.x - 60)
+	var panel_h = 260.0
+	var panel   = Panel.new()
+	panel.name     = "GameOverPanel"
+	panel.position = Vector2((vp_size.x - panel_w) / 2.0, (vp_size.y - panel_h) / 2.0)
+	panel.size     = Vector2(panel_w, panel_h)
+	panel.z_index  = 1
+
+	var pstyle = StyleBoxFlat.new()
+	pstyle.bg_color = Color(0.04, 0.06, 0.05, 0.98)
+	if won:
+		pstyle.border_color = COLOR_GOLD
+		pstyle.shadow_color = Color(0.85, 0.72, 0.30, 0.45)
+	else:
+		pstyle.border_color = Color(0.75, 0.22, 0.22)
+		pstyle.shadow_color = Color(0.75, 0.20, 0.20, 0.40)
+	pstyle.border_width_left = 3; pstyle.border_width_right  = 3
+	pstyle.border_width_top  = 3; pstyle.border_width_bottom = 3
+	pstyle.corner_radius_top_left    = 18; pstyle.corner_radius_top_right    = 18
+	pstyle.corner_radius_bottom_left = 18; pstyle.corner_radius_bottom_right = 18
+	pstyle.shadow_size = 28
+	panel.add_theme_stylebox_override("panel", pstyle)
+	overlay.add_child(panel)
+
+	# ── Emoji grande ─────────────────────────────────────────
+	var emoji_lbl = Label.new()
+	emoji_lbl.text = "🏆" if won else "💀"
+	emoji_lbl.horizontal_alignment = HORIZONTAL_ALIGNMENT_CENTER
+	emoji_lbl.position = Vector2(0, 28)
+	emoji_lbl.size     = Vector2(panel_w, 56)
+	emoji_lbl.add_theme_font_size_override("font_size", 48)
+	panel.add_child(emoji_lbl)
+
+	# ── Mensaje principal ─────────────────────────────────────
 	var over_lbl = Label.new()
 	over_lbl.text = message
 	over_lbl.horizontal_alignment = HORIZONTAL_ALIGNMENT_CENTER
-	over_lbl.vertical_alignment   = VERTICAL_ALIGNMENT_CENTER
-	over_lbl.set_anchors_preset(Control.PRESET_FULL_RECT)
-	over_lbl.add_theme_font_size_override("font_size", 48)
+	over_lbl.position = Vector2(0, 90)
+	over_lbl.size     = Vector2(panel_w, 52)
+	over_lbl.add_theme_font_size_override("font_size", 36)
 	over_lbl.add_theme_color_override("font_color",
-		COLOR_GOLD if won else Color(0.8, 0.3, 0.3))
-	overlay.add_child(over_lbl)
+		COLOR_GOLD if won else Color(0.90, 0.32, 0.32))
+	panel.add_child(over_lbl)
 
+	# ── Separador ─────────────────────────────────────────────
+	var sep = ColorRect.new()
+	sep.color    = (COLOR_GOLD if won else Color(0.75, 0.22, 0.22)) * Color(1,1,1,0.35)
+	sep.position = Vector2(panel_w * 0.15, 150)
+	sep.size     = Vector2(panel_w * 0.70, 1)
+	panel.add_child(sep)
+
+	# ── Botón principal: Volver al Menú ──────────────────────
+	var menu_btn = Button.new()
+	menu_btn.text     = "🏠  Volver al Menú Principal"
+	menu_btn.position = Vector2((panel_w - 280) / 2.0, 168)
+	menu_btn.size     = Vector2(280, 50)
+	menu_btn.mouse_default_cursor_shape = Control.CURSOR_POINTING_HAND
+
+	var s_normal = StyleBoxFlat.new()
+	s_normal.bg_color = Color(0.08, 0.18, 0.10, 0.95) if won else Color(0.18, 0.06, 0.06, 0.95)
+	s_normal.border_color = COLOR_GOLD if won else Color(0.75, 0.22, 0.22)
+	s_normal.border_width_left = 2; s_normal.border_width_right  = 2
+	s_normal.border_width_top  = 2; s_normal.border_width_bottom = 2
+	s_normal.corner_radius_top_left    = 10; s_normal.corner_radius_top_right    = 10
+	s_normal.corner_radius_bottom_left = 10; s_normal.corner_radius_bottom_right = 10
+	s_normal.shadow_color = Color(0,0,0,0.4)
+	s_normal.shadow_size  = 6
+	menu_btn.add_theme_stylebox_override("normal", s_normal)
+
+	var s_hover = StyleBoxFlat.new()
+	s_hover.bg_color = Color(0.15, 0.35, 0.18, 0.98) if won else Color(0.32, 0.10, 0.10, 0.98)
+	s_hover.border_color = COLOR_GOLD if won else Color(0.95, 0.35, 0.35)
+	s_hover.border_width_left = 2; s_hover.border_width_right  = 2
+	s_hover.border_width_top  = 2; s_hover.border_width_bottom = 2
+	s_hover.corner_radius_top_left    = 10; s_hover.corner_radius_top_right    = 10
+	s_hover.corner_radius_bottom_left = 10; s_hover.corner_radius_bottom_right = 10
+	s_hover.shadow_color = (COLOR_GOLD if won else Color(0.9, 0.3, 0.3)) * Color(1,1,1,0.5)
+	s_hover.shadow_size  = 12
+	menu_btn.add_theme_stylebox_override("hover", s_hover)
+
+	menu_btn.add_theme_color_override("font_color", COLOR_GOLD if won else Color(0.95, 0.65, 0.65))
+	menu_btn.add_theme_font_size_override("font_size", 15)
+	menu_btn.pressed.connect(func(): emit_signal("game_over_closed"))
+	panel.add_child(menu_btn)
+
+	# ── Hint secundario ───────────────────────────────────────
+	var hint_lbl = Label.new()
+	hint_lbl.text = "o haz clic en cualquier parte"
+	hint_lbl.horizontal_alignment = HORIZONTAL_ALIGNMENT_CENTER
+	hint_lbl.position = Vector2(0, 225)
+	hint_lbl.size     = Vector2(panel_w, 18)
+	hint_lbl.add_theme_font_size_override("font_size", 10)
+	hint_lbl.add_theme_color_override("font_color", Color(0.45, 0.45, 0.40, 0.7))
+	panel.add_child(hint_lbl)
+
+	# ── Click en fondo también cierra ────────────────────────
 	var click_catcher = Button.new()
 	click_catcher.set_anchors_preset(Control.PRESET_FULL_RECT)
 	click_catcher.flat = true
+	click_catcher.z_index = 0
 	click_catcher.pressed.connect(func(): emit_signal("game_over_closed"))
 	overlay.add_child(click_catcher)
+
+	# ── Animación de entrada ──────────────────────────────────
+	bg.color        = Color(0, 0, 0, 0)
+	panel.scale     = Vector2(0.80, 0.80)
+	panel.modulate  = Color(1, 1, 1, 0.0)
+	var tw = board.create_tween()
+	tw.set_parallel(true)
+	tw.tween_property(bg,    "color",       Color(0, 0, 0, 0.78), 0.30)
+	tw.tween_property(panel, "scale",       Vector2.ONE,          0.30).set_trans(Tween.TRANS_BACK).set_ease(Tween.EASE_OUT)
+	tw.tween_property(panel, "modulate:a",  1.0,                  0.22)
+
+	# ── Pulso en botón para llamar atención ───────────────────
+	var pulse_tw = menu_btn.create_tween().set_loops()
+	pulse_tw.tween_property(menu_btn, "modulate:a", 0.78, 0.7).set_trans(Tween.TRANS_SINE).set_delay(0.5)
+	pulse_tw.tween_property(menu_btn, "modulate:a", 1.0,  0.7).set_trans(Tween.TRANS_SINE)

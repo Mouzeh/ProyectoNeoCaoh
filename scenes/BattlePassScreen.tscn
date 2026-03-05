@@ -1,0 +1,6 @@
+[gd_scene format=3 uid="uid://cl10s53okv2al"]
+
+[ext_resource type="Script" uid="uid://0tuky83wl10h" path="res://scenes/main_menu/screens/BattlePassScreen.gd" id="1_ameaq"]
+
+[node name="BattlePassScreen" type="Node2D" unique_id=844675891]
+script = ExtResource("1_ameaq")
