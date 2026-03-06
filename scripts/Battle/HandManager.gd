@@ -42,25 +42,35 @@ func setup(my_hand_zone: Control, viewport_width: float) -> void:
 func update_hand(hand_cards: Array) -> void:
 	if not hand_zone: return
 
-	# Esperar un frame si la zona aún no tiene tamaño real
 	if hand_zone.get_rect().size.y == 0:
-		await hand_zone.resized
+		await get_tree().process_frame
+		await get_tree().process_frame
 
 	var count:   int   = hand_cards.size()
 	var new_ids: Array = []
 	for c in hand_cards:
 		new_ids.append(str(c.get("card_id", "")))
 
-	# Eliminar los que cambiaron o sobran
-	var to_remove: Array = []
-	for idx in _card_cache.keys():
-		if idx >= count or _card_cache[idx]["card_id"] != new_ids[idx]:
-			to_remove.append(idx)
-	for idx in to_remove:
-		var n = _card_cache[idx]["node"]
-		if is_instance_valid(n) and not n.get("is_dragging"):
-			n.queue_free()
-		_card_cache.erase(idx)
+	# Si el tamaño de la mano cambió, limpiar todo el cache para evitar
+	# desfase de índices (ej: cuando el servidor devuelve una carta con unshift)
+	var cached_count = _card_cache.size()
+	if cached_count != count:
+		for idx in _card_cache.keys():
+			var n = _card_cache[idx]["node"]
+			if is_instance_valid(n) and not n.get("is_dragging"):
+				n.queue_free()
+		_card_cache.clear()
+	else:
+		# Mismo tamaño: eliminar solo los que cambiaron
+		var to_remove: Array = []
+		for idx in _card_cache.keys():
+			if idx >= count or _card_cache[idx]["card_id"] != new_ids[idx]:
+				to_remove.append(idx)
+		for idx in to_remove:
+			var n = _card_cache[idx]["node"]
+			if is_instance_valid(n) and not n.get("is_dragging"):
+				n.queue_free()
+			_card_cache.erase(idx)
 
 	if count == 0: return
 
@@ -118,7 +128,6 @@ func update_hand(hand_cards: Array) -> void:
 			hand_zone.add_child(card)
 			_card_cache[i] = { "card_id": card_id, "node": card }
 
-	# Aplicar máscara de jugabilidad si existe
 	if not _playable_mask.is_empty():
 		_apply_playable_mask()
 

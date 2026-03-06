@@ -319,7 +319,7 @@ const CARDS: Dictionary = {
 		"retreat_cost": 0, "weakness": "", "resistance": "",
 		"rarity": "RARE",
 		"attacks": [
-			{"name": "Sputter", "cost": {"FIRE": 1}, "damage": 10, "effect": "All Pokémon Powers stop working until the end of your next turn."},
+			{"name": "Sputter", "cost": {"COLORLESS": 1}, "damage": 10, "effect": "All Pokémon Powers stop working until the end of your next turn."},
 		]
 	},
 	"murkrow": {
@@ -331,8 +331,8 @@ const CARDS: Dictionary = {
 		"retreat_cost": 1, "weakness": "", "resistance": "FIGHTING",
 		"rarity": "RARE",
 		"attacks": [
-			{"name": "Mean Look", "cost": {"DARKNESS": 1}, "damage": 0, "effect": "Choose 1 of your opponent's Pokémon. This attack does 20 damage to that Pokémon. This attack's damage isn't affected by Weakness, Resistance, Pokémon Powers, or any other effects on the Defending Pokémon."},
-			{"name": "Feint Attack", "cost": {"DARKNESS": 1, "COLORLESS": 1}, "damage": 0, "effect": "Choose 1 of your opponent's Pokémon. This attack does 20 damage to that Pokémon. This attack's damage isn't affected by Weakness, Resistance, Pokémon Powers, or any other effects on the Defending Pokémon."},
+			{"name": "Mean Look", "cost": {"DARKNESS": 1}, "damage": 0, "effect": "The Defending Pokémon can’t retreat as long as Murkrow remains your Active Pokémon. Benching or evolving either Pokémon ends this effect."},
+			{"name": "Feint Attack", "cost": {"DARKNESS": 1, "COLORLESS": 1}, "damage": 20, "effect": "Choose 1 of your opponent's Pokémon. This attack does 20 damage to that Pokémon. This attack's damage isn't affected by Weakness, Resistance, Pokémon Powers, or any other effects on the Defending Pokémon."},
 		]
 	},
 	"sneasel": {
@@ -374,7 +374,7 @@ const CARDS: Dictionary = {
 		"rarity": "UNCOMMON",
 		"attacks": [
 			{"name": "Pilfer", "cost": {"COLORLESS": 1}, "damage": 0, "effect": "Shuffle Aipom and all cards attached to it into your deck. Flip a coin. If heads, shuffle a card from your discard pile into your deck."},
-			{"name": "Tail Rap", "cost": {"COLORLESS": 2}, "damage": 10, "effect": "Flip 2 coins. This attack does 10 damage times the number of heads."},
+			{"name": "Tail Rap", "cost": {"COLORLESS": 1}, "damage": 10, "effect": "Flip 2 coins. This attack does 10 damage times the number of heads."},
 		]
 	},
 	"ariados": {
@@ -911,7 +911,7 @@ const CARDS: Dictionary = {
 		"rarity": "COMMON",
 		"attacks": [
 			{"name": "Peck", "cost": {"COLORLESS": 1}, "damage": 10, "effect": ""},
-			{"name": "Telekinesis", "cost": {"PSYCHIC": 1}, "damage": 0, "effect": "Choose 1 of your opponent's Pokémon. This attack does 20 damage to that Pokémon. Don't apply Weakness and Resistance for this attack. (Any other effects that would happen after applying Weakness and Resistance still happen.)"},
+			{"name": "Telekinesis", "cost": {"PSYCHIC": 1}, "damage":20, "effect": "Choose 1 of your opponent's Pokémon. This attack does 20 damage to that Pokémon. Don't apply Weakness and Resistance for this attack. (Any other effects that would happen after applying Weakness and Resistance still happen.)"},
 		]
 	},
 	"oddish": {
@@ -937,7 +937,7 @@ const CARDS: Dictionary = {
 		"rarity": "COMMON",
 		"attacks": [
 			{"name": "Screech", "cost": {"COLORLESS": 1}, "damage": 0, "effect": "Until the end of your next turn, if an attack damages the Defending Pokémon after applying Weakness and Resistance, that attack does 20 more damage to the Defending Pokémon."},
-			{"name": "Rage", "cost": {"FIGHTING": 2}, "damage": 20, "effect": "Does 10 damage plus 10 more damage for each damage counter on Onix."},
+			{"name": "Rage", "cost": {"FIGHTING": 2}, "damage": 10, "effect": "Does 10 damage plus 10 more damage for each damage counter on Onix."},
 		]
 	},
 	"pikachu": {
@@ -1078,7 +1078,7 @@ const CARDS: Dictionary = {
 		"rarity": "COMMON",
 		"attacks": [
 			{"name": "Bite", "cost": {"COLORLESS": 1}, "damage": 10, "effect": ""},
-			{"name": "Rage", "cost": {"WATER": 1, "COLORLESS": 1}, "damage": 20, "effect": "Does 10 damage plus 10 more damage for each damage counter on Totodile."},
+			{"name": "Rage", "cost": {"WATER": 1, "COLORLESS": 1}, "damage": 10, "effect": "Does 10 damage plus 10 more damage for each damage counter on Totodile."},
 		]
 	},
 	"totodile_2": {
