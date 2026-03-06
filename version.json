@@ -1,0 +1,14 @@
+{
+  "version": "0.1.0",
+  "release_date": "2026-03-06",
+  "changelog": [
+    "Pre-alpha inicial para testing",
+    "Implementación básica del tablero Neo Genesis",
+    "Sistema de cartas y mazos iniciales"
+  ],
+  "downloads": {
+    "windows": "https://github.com/Mouzeh/ProyectoNeoCaoh/releases/download/v0.1.0/PokemonTCG-windows-v0.1.0.zip",
+    "macos":   "https://github.com/Mouzeh/ProyectoNeoCaoh/releases/download/v0.1.0/PokemonTCG-macos-v0.1.0.zip",
+    "linux":   "https://github.com/Mouzeh/ProyectoNeoCaoh/releases/download/v0.1.0/PokemonTCG-linux-v0.1.0.zip"
+  }
+}
