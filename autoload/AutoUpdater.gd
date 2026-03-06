@@ -9,8 +9,8 @@ extends Node
 const CURRENT_VERSION := "0.1.0"
 
 # Cambia esto por tu usuario/repo de GitHub
-const GITHUB_USER    := "TU_USUARIO"
-const GITHUB_REPO    := "pokemon-tcg"
+const GITHUB_USER    := "Mouzeh"
+const GITHUB_REPO    := "ProyectoNeoCaoh"
 
 const VERSION_URL    := "https://raw.githubusercontent.com/{user}/{repo}/main/version.json"
 const DOWNLOAD_BASE  := "https://github.com/{user}/{repo}/releases/download/{tag}/{file}"
