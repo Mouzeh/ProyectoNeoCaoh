@@ -3,18 +3,19 @@ class_name OverlayManager
 
 # ─── SEÑALES ────────────────────────────────────────────────
 signal setup_confirmed()
+signal setup_reselect_active()
 signal promote_selected(bench_index)
 signal action_zoom_selected(action_type, index)
 signal glaring_gaze_resolved(hand_index)
 signal game_over_closed()
 
 # ─── CONSTANTES ─────────────────────────────────────────────
-const CARD_W     = 130
-const CARD_H     = 182
-const COLOR_GOLD     = Color(0.85, 0.72, 0.30)
-const COLOR_GOLD_DIM = Color(0.55, 0.45, 0.18)
-const COLOR_TEXT     = Color(0.92, 0.88, 0.75)
-const PATH_TYPES = "res://assets/imagen/TypesIcons/"
+const CARD_W      = 130
+const CARD_H      = 182
+const COLOR_GOLD      = Color(0.85, 0.72, 0.30)
+const COLOR_GOLD_DIM  = Color(0.55, 0.45, 0.18)
+const COLOR_TEXT      = Color(0.92, 0.88, 0.75)
+const PATH_TYPES  = "res://assets/imagen/TypesIcons/"
 const PATH_TOKENS = "res://assets/imagen/tokens/"
 
 # ─── REFERENCIAS Y ESTADO ───────────────────────────────────
@@ -29,13 +30,17 @@ var gaze_popup:          Control = null
 var discard_viewer:      Control = null
 var zoom_active:         bool    = false
 
+# Estado interno del setup
+var _setup_active_card_id: String  = ""
+var _setup_active_preview: Control = null
+
 func setup(parent_board: Node2D) -> void:
 	board   = parent_board
 	vp_size = board.get_viewport().get_visible_rect().size
 
 
 # ============================================================
-# SETUP OVERLAY — Rediseñado: más visual, más claro
+# SETUP OVERLAY
 # ============================================================
 func show_setup_overlay(state: Dictionary, my_player_id: String) -> void:
 	var setup_ready = state.get("setup_ready", {})
@@ -43,231 +48,340 @@ func show_setup_overlay(state: Dictionary, my_player_id: String) -> void:
 
 	if yo_listo:
 		if setup_overlay:
-			var btn = setup_overlay.get_node_or_null("SetupPanel/ConfirmBtn")
+			var btn = setup_overlay.get_node_or_null("SetupPanel/BtnRow/ConfirmBtn")
 			if btn: btn.disabled = true
-			var lbl = setup_overlay.get_node_or_null("SetupPanel/SetupLabel")
-			if lbl: lbl.text = "⏳ Esperando que el rival elija..."
-			var step_lbl = setup_overlay.get_node_or_null("SetupPanel/StepLabel")
-			if step_lbl: step_lbl.text = ""
+			var re_btn = setup_overlay.get_node_or_null("SetupPanel/BtnRow/ReelectBtn")
+			if re_btn: re_btn.hide()
+			var title = setup_overlay.get_node_or_null("SetupPanel/TitleLbl")
+			if title: title.text = "⏳  Esperando al rival..."
 		return
 
 	if setup_overlay: return
 
+	_setup_active_card_id = ""
+
+	# ── Fondo oscuro ─────────────────────────────────────────
 	setup_overlay = Control.new()
 	setup_overlay.name = "SetupOverlay"
 	setup_overlay.set_anchors_preset(Control.PRESET_FULL_RECT)
 	setup_overlay.z_index = 50
 	board.add_child(setup_overlay)
 
+	var dim = ColorRect.new()
+	dim.name = "Dim"
+	dim.set_anchors_preset(Control.PRESET_FULL_RECT)
+	dim.color = Color(0.0, 0.0, 0.0, 0.0)
+	setup_overlay.add_child(dim)
+
 	# ── Panel principal ──────────────────────────────────────
-	var panel_w = min(760.0, vp_size.x - 32)
-	var panel_h = 220.0
+	var panel_w = min(820.0, vp_size.x - 40)
+	var panel_h = 320.0
 	var panel   = Panel.new()
 	panel.name     = "SetupPanel"
-	panel.position = Vector2((vp_size.x - panel_w) / 2.0, vp_size.y - panel_h - 140)
+	panel.position = Vector2((vp_size.x - panel_w) / 2.0, (vp_size.y - panel_h) / 2.0)
 	panel.size     = Vector2(panel_w, panel_h)
 
 	var pstyle = StyleBoxFlat.new()
-	pstyle.bg_color = Color(0.04, 0.08, 0.06, 0.97)
-	pstyle.border_color = COLOR_GOLD
+	pstyle.bg_color          = Color(0.04, 0.07, 0.06, 0.98)
+	pstyle.border_color      = COLOR_GOLD
 	pstyle.border_width_left = 2; pstyle.border_width_right  = 2
 	pstyle.border_width_top  = 2; pstyle.border_width_bottom = 2
-	pstyle.corner_radius_top_left    = 14; pstyle.corner_radius_top_right    = 14
-	pstyle.corner_radius_bottom_left = 14; pstyle.corner_radius_bottom_right = 14
-	pstyle.shadow_color = Color(0.85, 0.72, 0.30, 0.25)
-	pstyle.shadow_size  = 14
+	pstyle.corner_radius_top_left    = 18; pstyle.corner_radius_top_right    = 18
+	pstyle.corner_radius_bottom_left = 18; pstyle.corner_radius_bottom_right = 18
+	pstyle.shadow_color = Color(0.85, 0.72, 0.30, 0.30)
+	pstyle.shadow_size  = 20
 	panel.add_theme_stylebox_override("panel", pstyle)
 	setup_overlay.add_child(panel)
 
-	# ── Título con ícono ──────────────────────────────────────
+	# ── Título ───────────────────────────────────────────────
 	var title_lbl = Label.new()
-	title_lbl.name = "SetupLabel"
+	title_lbl.name = "TitleLbl"
 	title_lbl.text = "⚔  FASE DE PREPARACIÓN"
-	title_lbl.position = Vector2(0, 14)
-	title_lbl.size     = Vector2(panel_w, 28)
-	title_lbl.add_theme_font_size_override("font_size", 17)
-	title_lbl.add_theme_color_override("font_color", COLOR_GOLD)
+	title_lbl.position = Vector2(0, 18)
+	title_lbl.size     = Vector2(panel_w, 30)
 	title_lbl.horizontal_alignment = HORIZONTAL_ALIGNMENT_CENTER
+	title_lbl.add_theme_font_size_override("font_size", 20)
+	title_lbl.add_theme_color_override("font_color", COLOR_GOLD)
 	panel.add_child(title_lbl)
 
-	# ── Separador ────────────────────────────────────────────
-	var sep = ColorRect.new()
-	sep.color    = Color(0.85, 0.72, 0.30, 0.35)
-	sep.position = Vector2(panel_w * 0.15, 48)
-	sep.size     = Vector2(panel_w * 0.70, 1)
-	panel.add_child(sep)
+	# ── Separador top ────────────────────────────────────────
+	var sep_top = ColorRect.new()
+	sep_top.color    = Color(COLOR_GOLD.r, COLOR_GOLD.g, COLOR_GOLD.b, 0.30)
+	sep_top.position = Vector2(panel_w * 0.1, 56)
+	sep_top.size     = Vector2(panel_w * 0.8, 1)
+	panel.add_child(sep_top)
 
-	# ── Pasos visuales ───────────────────────────────────────
-	var steps_container = HBoxContainer.new()
-	steps_container.position = Vector2(20, 58)
-	steps_container.size     = Vector2(panel_w - 40, 60)
-	steps_container.alignment = BoxContainer.ALIGNMENT_CENTER
-	steps_container.add_theme_constant_override("separation", 0)
-	panel.add_child(steps_container)
+	# ── Dimensiones layout ───────────────────────────────────
+	var content_x = 24.0
+	var content_y = 72.0
+	var preview_w = CARD_W * 1.1
+	var preview_h = CARD_H * 1.1
+	var info_x    = content_x + preview_w + 32.0
+	var info_w    = panel_w - info_x - 24.0
 
-	# Paso 1
-	var step1 = _build_setup_step(
-		"1",
-		"Elige tu Pokémon Activo",
-		"Haz clic en un Básico de tu mano",
-		false
-	)
-	step1.name = "Step1"
-	steps_container.add_child(step1)
+	# ── Tag "POKÉMON ACTIVO" ──────────────────────────────────
+	var active_tag = Label.new()
+	active_tag.text     = "POKÉMON ACTIVO"
+	active_tag.position = Vector2(content_x, content_y - 18)
+	active_tag.size     = Vector2(preview_w, 16)
+	active_tag.horizontal_alignment = HORIZONTAL_ALIGNMENT_CENTER
+	active_tag.add_theme_font_size_override("font_size", 9)
+	active_tag.add_theme_color_override("font_color", Color(COLOR_GOLD.r, COLOR_GOLD.g, COLOR_GOLD.b, 0.60))
+	panel.add_child(active_tag)
 
-	# Flecha
-	var arrow = Label.new()
-	arrow.text = "  →  "
-	arrow.add_theme_font_size_override("font_size", 22)
-	arrow.add_theme_color_override("font_color", Color(0.5, 0.5, 0.4, 0.6))
-	arrow.vertical_alignment = VERTICAL_ALIGNMENT_CENTER
-	arrow.custom_minimum_size = Vector2(60, 60)
-	steps_container.add_child(arrow)
+	# ── Preview zona carta ────────────────────────────────────
+	var preview_bg = Panel.new()
+	preview_bg.name     = "PreviewBg"
+	preview_bg.position = Vector2(content_x, content_y)
+	preview_bg.size     = Vector2(preview_w, preview_h)
+	var prev_style = StyleBoxFlat.new()
+	prev_style.bg_color          = Color(0.08, 0.12, 0.10, 0.9)
+	prev_style.border_color      = Color(COLOR_GOLD.r, COLOR_GOLD.g, COLOR_GOLD.b, 0.30)
+	prev_style.border_width_left = 1; prev_style.border_width_right  = 1
+	prev_style.border_width_top  = 1; prev_style.border_width_bottom = 1
+	prev_style.corner_radius_top_left    = 10; prev_style.corner_radius_top_right    = 10
+	prev_style.corner_radius_bottom_left = 10; prev_style.corner_radius_bottom_right = 10
+	preview_bg.add_theme_stylebox_override("panel", prev_style)
+	panel.add_child(preview_bg)
 
-	# Paso 2
-	var step2 = _build_setup_step(
-		"2",
-		"Agrega al Banco (opcional)",
-		"Haz clic en más Básicos de tu mano",
-		true
-	)
-	step2.name = "Step2"
-	steps_container.add_child(step2)
+	# Placeholder "?"
+	var placeholder_lbl = Label.new()
+	placeholder_lbl.name = "PlaceholderLbl"
+	placeholder_lbl.text = "?\nActivo"
+	placeholder_lbl.set_anchors_preset(Control.PRESET_FULL_RECT)
+	placeholder_lbl.horizontal_alignment = HORIZONTAL_ALIGNMENT_CENTER
+	placeholder_lbl.vertical_alignment   = VERTICAL_ALIGNMENT_CENTER
+	placeholder_lbl.add_theme_font_size_override("font_size", 22)
+	placeholder_lbl.add_theme_color_override("font_color", Color(COLOR_GOLD.r, COLOR_GOLD.g, COLOR_GOLD.b, 0.28))
+	preview_bg.add_child(placeholder_lbl)
 
-	# Flecha
-	var arrow2 = Label.new()
-	arrow2.text = "  →  "
-	arrow2.add_theme_font_size_override("font_size", 22)
-	arrow2.add_theme_color_override("font_color", Color(0.5, 0.5, 0.4, 0.6))
-	arrow2.vertical_alignment = VERTICAL_ALIGNMENT_CENTER
-	arrow2.custom_minimum_size = Vector2(60, 60)
-	steps_container.add_child(arrow2)
+	# ── Instrucción principal ─────────────────────────────────
+	var instr_lbl = Label.new()
+	instr_lbl.name          = "InstrLbl"
+	instr_lbl.text          = "Haz clic en un Pokémon Básico\nde tu mano para el Activo"
+	instr_lbl.position      = Vector2(info_x, content_y)
+	instr_lbl.size          = Vector2(info_w, 56)
+	instr_lbl.autowrap_mode = TextServer.AUTOWRAP_WORD
+	instr_lbl.add_theme_font_size_override("font_size", 16)
+	instr_lbl.add_theme_color_override("font_color", Color(0.90, 0.85, 0.65))
+	panel.add_child(instr_lbl)
 
-	# Paso 3
-	var step3 = _build_setup_step(
-		"3",
-		"Confirma",
-		"Cuando estés listo, confirma",
-		true
-	)
-	step3.name = "Step3"
-	steps_container.add_child(step3)
+	# ── Nombre carta elegida ──────────────────────────────────
+	var chosen_lbl = Label.new()
+	chosen_lbl.name     = "ChosenLbl"
+	chosen_lbl.text     = ""
+	chosen_lbl.position = Vector2(info_x, content_y + 62)
+	chosen_lbl.size     = Vector2(info_w, 28)
+	chosen_lbl.add_theme_font_size_override("font_size", 17)
+	chosen_lbl.add_theme_color_override("font_color", Color(0.40, 0.92, 0.50))
+	panel.add_child(chosen_lbl)
 
-	# ── Estado dinámico ──────────────────────────────────────
-	var step_lbl = Label.new()
-	step_lbl.name = "StepLabel"
-	step_lbl.text = "▶  Selecciona un Pokémon Básico de tu mano para comenzar"
-	step_lbl.position = Vector2(0, 126)
-	step_lbl.size     = Vector2(panel_w, 22)
-	step_lbl.horizontal_alignment = HORIZONTAL_ALIGNMENT_CENTER
-	step_lbl.add_theme_font_size_override("font_size", 11)
-	step_lbl.add_theme_color_override("font_color", Color(0.75, 0.65, 0.35, 0.9))
-	panel.add_child(step_lbl)
+	# ── Estado banco ──────────────────────────────────────────
+	var bench_lbl = Label.new()
+	bench_lbl.name     = "BenchLbl"
+	bench_lbl.text     = ""
+	bench_lbl.position = Vector2(info_x, content_y + 96)
+	bench_lbl.size     = Vector2(info_w, 22)
+	bench_lbl.add_theme_font_size_override("font_size", 12)
+	bench_lbl.add_theme_color_override("font_color", Color(0.65, 0.65, 0.55, 0.85))
+	panel.add_child(bench_lbl)
 
-	# ── Barra de estado ──────────────────────────────────────
-	var status_lbl = Label.new()
-	status_lbl.name = "StatusLabel"
-	status_lbl.text = "Sin activo elegido"
-	status_lbl.position = Vector2(20, 152)
-	status_lbl.size     = Vector2(panel_w - 240, 26)
-	status_lbl.add_theme_font_size_override("font_size", 12)
-	status_lbl.add_theme_color_override("font_color", Color(0.55, 0.55, 0.45, 0.8))
-	status_lbl.vertical_alignment = VERTICAL_ALIGNMENT_CENTER
-	panel.add_child(status_lbl)
+	# ── Hint banco ────────────────────────────────────────────
+	var bench_hint = Label.new()
+	bench_hint.name     = "BenchHint"
+	bench_hint.text     = "Puedes agregar hasta 5 Pokémon al Banco (opcional)"
+	bench_hint.position = Vector2(info_x, content_y + 120)
+	bench_hint.size     = Vector2(info_w, 18)
+	bench_hint.add_theme_font_size_override("font_size", 10)
+	bench_hint.add_theme_color_override("font_color", Color(0.50, 0.50, 0.42, 0.55))
+	panel.add_child(bench_hint)
 
-	# ── Botón Confirmar ──────────────────────────────────────
-	var confirm_btn = _build_confirm_button(panel_w)
+	# ── Mini dots banco ───────────────────────────────────────
+	var dots_y = content_y + 144.0
+	for i in range(5):
+		var slot_dot = Panel.new()
+		slot_dot.name     = "BenchDot%d" % i
+		slot_dot.position = Vector2(info_x + i * 26.0, dots_y)
+		slot_dot.size     = Vector2(20, 20)
+		var dot_s = StyleBoxFlat.new()
+		dot_s.bg_color     = Color(0.10, 0.16, 0.12, 0.8)
+		dot_s.border_color = Color(COLOR_GOLD.r, COLOR_GOLD.g, COLOR_GOLD.b, 0.18)
+		dot_s.border_width_left = 1; dot_s.border_width_right  = 1
+		dot_s.border_width_top  = 1; dot_s.border_width_bottom = 1
+		dot_s.set_corner_radius_all(4)
+		slot_dot.add_theme_stylebox_override("panel", dot_s)
+		panel.add_child(slot_dot)
+
+	# ── Fila de botones ───────────────────────────────────────
+	var btn_row = HBoxContainer.new()
+	btn_row.name      = "BtnRow"
+	btn_row.position  = Vector2(info_x, panel_h - 60)
+	btn_row.size      = Vector2(info_w, 44)
+	btn_row.alignment = BoxContainer.ALIGNMENT_BEGIN
+	btn_row.add_theme_constant_override("separation", 12)
+	panel.add_child(btn_row)
+
+	# Botón "Elegir de nuevo"
+	var reelect_btn = _build_reelect_button()
+	reelect_btn.name = "ReelectBtn"
+	reelect_btn.hide()
+	reelect_btn.pressed.connect(_on_reelect_pressed)
+	btn_row.add_child(reelect_btn)
+
+	# Botón "Confirmar"
+	var confirm_btn = _build_confirm_button_new()
 	confirm_btn.name     = "ConfirmBtn"
 	confirm_btn.disabled = true
 	confirm_btn.pressed.connect(func(): emit_signal("setup_confirmed"))
-	panel.add_child(confirm_btn)
+	btn_row.add_child(confirm_btn)
 
-	# ── Animación de entrada ─────────────────────────────────
-	panel.position.y += 30
+	# ── Animación de entrada ──────────────────────────────────
+	panel.position.y += 40
 	panel.modulate.a  = 0.0
 	var tw = board.create_tween()
 	tw.set_parallel(true)
-	tw.tween_property(panel, "modulate:a",  1.0,                        0.22)
-	tw.tween_property(panel, "position:y",  panel.position.y - 30,     0.22).set_trans(Tween.TRANS_BACK).set_ease(Tween.EASE_OUT)
+	tw.tween_property(dim,   "color",        Color(0, 0, 0, 0.72), 0.25)
+	tw.tween_property(panel, "modulate:a",   1.0,                  0.25)
+	tw.tween_property(panel, "position:y",   panel.position.y - 40, 0.28).set_trans(Tween.TRANS_BACK).set_ease(Tween.EASE_OUT)
 
-func _build_setup_step(number: String, title: String, subtitle: String, dimmed: bool) -> Control:
-	var container = VBoxContainer.new()
-	container.custom_minimum_size = Vector2(180, 60)
-	container.alignment = BoxContainer.ALIGNMENT_CENTER
-	container.add_theme_constant_override("separation", 3)
 
-	var alpha = 0.4 if dimmed else 1.0
-
-	var num_lbl = Label.new()
-	num_lbl.text = number
-	num_lbl.horizontal_alignment = HORIZONTAL_ALIGNMENT_CENTER
-	num_lbl.add_theme_font_size_override("font_size", 20)
-	num_lbl.add_theme_color_override("font_color", Color(COLOR_GOLD.r, COLOR_GOLD.g, COLOR_GOLD.b, alpha))
-	container.add_child(num_lbl)
-
-	var title_lbl = Label.new()
-	title_lbl.text = title
-	title_lbl.horizontal_alignment = HORIZONTAL_ALIGNMENT_CENTER
-	title_lbl.add_theme_font_size_override("font_size", 12)
-	title_lbl.add_theme_color_override("font_color", Color(0.92, 0.88, 0.75, alpha))
-	container.add_child(title_lbl)
-
-	var sub_lbl = Label.new()
-	sub_lbl.text = subtitle
-	sub_lbl.horizontal_alignment = HORIZONTAL_ALIGNMENT_CENTER
-	sub_lbl.add_theme_font_size_override("font_size", 9)
-	sub_lbl.add_theme_color_override("font_color", Color(0.6, 0.6, 0.5, alpha * 0.75))
-	container.add_child(sub_lbl)
-
-	return container
-
-func _build_confirm_button(panel_w: float) -> Button:
+# ── Botón "Elegir de nuevo" ──────────────────────────────────
+func _build_reelect_button() -> Button:
 	var btn = Button.new()
-	btn.text     = "✓  Confirmar selección"
-	btn.position = Vector2(panel_w - 224, 148)
-	btn.size     = Vector2(208, 38)
+	btn.text = "↩  Elegir de nuevo"
+	btn.custom_minimum_size = Vector2(160, 44)
 	btn.mouse_default_cursor_shape = Control.CURSOR_POINTING_HAND
 
-	var s_normal = StyleBoxFlat.new()
-	s_normal.bg_color                  = Color(0.08, 0.20, 0.10, 0.95)
-	s_normal.border_color              = COLOR_GOLD
-	s_normal.border_width_left         = 2; s_normal.border_width_right  = 2
-	s_normal.border_width_top          = 2; s_normal.border_width_bottom = 2
-	s_normal.corner_radius_top_left    = 8; s_normal.corner_radius_top_right    = 8
-	s_normal.corner_radius_bottom_left = 8; s_normal.corner_radius_bottom_right = 8
-	s_normal.shadow_color = Color(0.85, 0.72, 0.30, 0.3)
-	s_normal.shadow_size  = 6
-	btn.add_theme_stylebox_override("normal", s_normal)
+	var s_n = StyleBoxFlat.new()
+	s_n.bg_color          = Color(0.18, 0.08, 0.06, 0.95)
+	s_n.border_color      = Color(0.80, 0.32, 0.20)
+	s_n.border_width_left = 2; s_n.border_width_right  = 2
+	s_n.border_width_top  = 2; s_n.border_width_bottom = 2
+	s_n.set_corner_radius_all(8)
+	s_n.shadow_color = Color(0.8, 0.3, 0.2, 0.25)
+	s_n.shadow_size  = 5
+	btn.add_theme_stylebox_override("normal", s_n)
 
-	var s_hover = StyleBoxFlat.new()
-	s_hover.bg_color                  = Color(0.15, 0.38, 0.18, 0.98)
-	s_hover.border_color              = COLOR_GOLD
-	s_hover.border_width_left         = 2; s_hover.border_width_right  = 2
-	s_hover.border_width_top          = 2; s_hover.border_width_bottom = 2
-	s_hover.corner_radius_top_left    = 8; s_hover.corner_radius_top_right    = 8
-	s_hover.corner_radius_bottom_left = 8; s_hover.corner_radius_bottom_right = 8
-	s_hover.shadow_color = Color(0.85, 0.72, 0.30, 0.55)
-	s_hover.shadow_size  = 10
-	btn.add_theme_stylebox_override("hover", s_hover)
+	var s_h = StyleBoxFlat.new()
+	s_h.bg_color          = Color(0.35, 0.12, 0.08, 0.98)
+	s_h.border_color      = Color(0.95, 0.42, 0.25)
+	s_h.border_width_left = 2; s_h.border_width_right  = 2
+	s_h.border_width_top  = 2; s_h.border_width_bottom = 2
+	s_h.set_corner_radius_all(8)
+	s_h.shadow_color = Color(0.9, 0.4, 0.2, 0.45)
+	s_h.shadow_size  = 8
+	btn.add_theme_stylebox_override("hover", s_h)
 
-	var s_disabled = StyleBoxFlat.new()
-	s_disabled.bg_color                  = Color(0.06, 0.06, 0.06, 0.40)
-	s_disabled.border_color              = Color(0.28, 0.25, 0.15, 0.35)
-	s_disabled.border_width_left         = 2; s_disabled.border_width_right  = 2
-	s_disabled.border_width_top          = 2; s_disabled.border_width_bottom = 2
-	s_disabled.corner_radius_top_left    = 8; s_disabled.corner_radius_top_right    = 8
-	s_disabled.corner_radius_bottom_left = 8; s_disabled.corner_radius_bottom_right = 8
-	btn.add_theme_stylebox_override("disabled", s_disabled)
-
-	btn.add_theme_color_override("font_color",          COLOR_GOLD)
-	btn.add_theme_color_override("font_disabled_color", Color(0.38, 0.35, 0.22, 0.40))
+	btn.add_theme_color_override("font_color", Color(0.95, 0.62, 0.45))
 	btn.add_theme_font_size_override("font_size", 13)
 	return btn
+
+
+# ── Botón "Confirmar" ─────────────────────────────────────────
+func _build_confirm_button_new() -> Button:
+	var btn = Button.new()
+	btn.text = "✓  Confirmar"
+	btn.custom_minimum_size = Vector2(160, 44)
+	btn.mouse_default_cursor_shape = Control.CURSOR_POINTING_HAND
+
+	var s_n = StyleBoxFlat.new()
+	s_n.bg_color          = Color(0.08, 0.20, 0.10, 0.95)
+	s_n.border_color      = COLOR_GOLD
+	s_n.border_width_left = 2; s_n.border_width_right  = 2
+	s_n.border_width_top  = 2; s_n.border_width_bottom = 2
+	s_n.set_corner_radius_all(8)
+	s_n.shadow_color = Color(0.85, 0.72, 0.30, 0.28)
+	s_n.shadow_size  = 6
+	btn.add_theme_stylebox_override("normal", s_n)
+
+	var s_h = StyleBoxFlat.new()
+	s_h.bg_color          = Color(0.15, 0.38, 0.18, 0.98)
+	s_h.border_color      = COLOR_GOLD
+	s_h.border_width_left = 2; s_h.border_width_right  = 2
+	s_h.border_width_top  = 2; s_h.border_width_bottom = 2
+	s_h.set_corner_radius_all(8)
+	s_h.shadow_color = Color(0.85, 0.72, 0.30, 0.55)
+	s_h.shadow_size  = 10
+	btn.add_theme_stylebox_override("hover", s_h)
+
+	var s_d = StyleBoxFlat.new()
+	s_d.bg_color          = Color(0.06, 0.06, 0.06, 0.40)
+	s_d.border_color      = Color(0.28, 0.25, 0.15, 0.30)
+	s_d.border_width_left = 2; s_d.border_width_right  = 2
+	s_d.border_width_top  = 2; s_d.border_width_bottom = 2
+	s_d.set_corner_radius_all(8)
+	btn.add_theme_stylebox_override("disabled", s_d)
+
+	btn.add_theme_color_override("font_color",          COLOR_GOLD)
+	btn.add_theme_color_override("font_disabled_color", Color(0.38, 0.35, 0.22, 0.38))
+	btn.add_theme_font_size_override("font_size", 14)
+	return btn
+
+
+# ── Handler "Elegir de nuevo" ─────────────────────────────────
+func _on_reelect_pressed() -> void:
+	if not setup_overlay: return
+
+	# Limpiar preview
+	var preview_bg = setup_overlay.get_node_or_null("SetupPanel/PreviewBg")
+	if preview_bg:
+		if _setup_active_preview and is_instance_valid(_setup_active_preview):
+			_setup_active_preview.queue_free()
+			_setup_active_preview = null
+		# Restaurar borde tenue
+		var prev_style = StyleBoxFlat.new()
+		prev_style.bg_color          = Color(0.08, 0.12, 0.10, 0.9)
+		prev_style.border_color      = Color(COLOR_GOLD.r, COLOR_GOLD.g, COLOR_GOLD.b, 0.30)
+		prev_style.border_width_left = 1; prev_style.border_width_right  = 1
+		prev_style.border_width_top  = 1; prev_style.border_width_bottom = 1
+		prev_style.corner_radius_top_left    = 10; prev_style.corner_radius_top_right    = 10
+		prev_style.corner_radius_bottom_left = 10; prev_style.corner_radius_bottom_right = 10
+		preview_bg.add_theme_stylebox_override("panel", prev_style)
+		var ph = preview_bg.get_node_or_null("PlaceholderLbl")
+		if ph:
+			ph.show()
+			ph.modulate.a = 0.0
+			var tw_ph = ph.create_tween()
+			tw_ph.tween_property(ph, "modulate:a", 1.0, 0.20)
+
+	# Resetear labels
+	var chosen_lbl = setup_overlay.get_node_or_null("SetupPanel/ChosenLbl")
+	if chosen_lbl: chosen_lbl.text = ""
+
+	var instr_lbl = setup_overlay.get_node_or_null("SetupPanel/InstrLbl")
+	if instr_lbl:
+		instr_lbl.text = "Haz clic en un Pokémon Básico\nde tu mano para el Activo"
+		instr_lbl.add_theme_color_override("font_color", Color(0.90, 0.85, 0.65))
+
+	var bench_lbl = setup_overlay.get_node_or_null("SetupPanel/BenchLbl")
+	if bench_lbl: bench_lbl.text = ""
+
+	# Ocultar botón reelegir
+	var reelect_btn = setup_overlay.get_node_or_null("SetupPanel/BtnRow/ReelectBtn")
+	if reelect_btn:
+		var tw = reelect_btn.create_tween()
+		tw.tween_property(reelect_btn, "modulate:a", 0.0, 0.15)
+		tw.tween_callback(func(): reelect_btn.hide())
+
+	# Deshabilitar confirmar y detener pulso
+	var confirm_btn = setup_overlay.get_node_or_null("SetupPanel/BtnRow/ConfirmBtn")
+	if confirm_btn:
+		confirm_btn.disabled = true
+		var pulse = confirm_btn.get_node_or_null("PulseTween")
+		if pulse: pulse.queue_free()
+		confirm_btn.modulate.a = 1.0
+
+	_setup_active_card_id = ""
+	emit_signal("setup_reselect_active")
+
 
 func hide_setup_overlay() -> void:
 	if setup_overlay:
 		setup_overlay.queue_free()
 		setup_overlay = null
+	_setup_active_card_id = ""
+	_setup_active_preview = null
+
 
 func update_setup_status(state: Dictionary) -> void:
 	if not setup_overlay: return
@@ -275,64 +389,124 @@ func update_setup_status(state: Dictionary) -> void:
 	var has_active  = my_data.get("active") != null
 	var bench_list  = my_data.get("bench", [])
 	var bench_count = bench_list.filter(func(p): return p != null).size()
+	var active_data = my_data.get("active", null)
 
-	# ── Actualizar etiqueta de estado ────────────────────────
-	var status_lbl = setup_overlay.get_node_or_null("SetupPanel/StatusLabel")
-	if status_lbl:
-		if has_active:
-			status_lbl.text = "✓ Activo elegido   |   Banco: %d / 5 Pokémon" % bench_count
-			status_lbl.add_theme_color_override("font_color", Color(0.40, 0.88, 0.45))
-		else:
-			status_lbl.text = "Sin activo elegido"
-			status_lbl.add_theme_color_override("font_color", Color(0.55, 0.55, 0.45, 0.8))
+	# ── Preview carta activa ──────────────────────────────────
+	var preview_bg = setup_overlay.get_node_or_null("SetupPanel/PreviewBg")
+	if preview_bg and has_active and active_data != null:
+		var new_card_id = active_data.get("card_id", "")
+		if new_card_id != _setup_active_card_id and new_card_id != "":
+			_setup_active_card_id = new_card_id
 
-	# ── Actualizar hint de paso actual ───────────────────────
-	var step_lbl = setup_overlay.get_node_or_null("SetupPanel/StepLabel")
-	if step_lbl:
+			if _setup_active_preview and is_instance_valid(_setup_active_preview):
+				_setup_active_preview.queue_free()
+				_setup_active_preview = null
+
+			var ph = preview_bg.get_node_or_null("PlaceholderLbl")
+			if ph: ph.hide()
+
+			var card_inst = CardDatabase.create_card_instance(new_card_id)
+			card_inst.is_draggable = false
+			card_inst.is_locked    = true
+			card_inst.mouse_filter = Control.MOUSE_FILTER_IGNORE
+			card_inst.position     = Vector2.ZERO
+			card_inst.modulate.a   = 0.0
+			card_inst.scale        = Vector2(0.85, 0.85)
+			preview_bg.add_child(card_inst)
+			_setup_active_preview = card_inst
+
+			var tw = card_inst.create_tween()
+			tw.set_parallel(true)
+			tw.tween_property(card_inst, "modulate:a", 1.0,               0.22)
+			tw.tween_property(card_inst, "scale",      Vector2(1.0, 1.0), 0.22).set_trans(Tween.TRANS_BACK).set_ease(Tween.EASE_OUT)
+
+			# Borde dorado brillante en preview
+			var pstyle = StyleBoxFlat.new()
+			pstyle.bg_color          = Color(0.08, 0.12, 0.10, 0.9)
+			pstyle.border_color      = COLOR_GOLD
+			pstyle.border_width_left = 2; pstyle.border_width_right  = 2
+			pstyle.border_width_top  = 2; pstyle.border_width_bottom = 2
+			pstyle.corner_radius_top_left    = 10; pstyle.corner_radius_top_right    = 10
+			pstyle.corner_radius_bottom_left = 10; pstyle.corner_radius_bottom_right = 10
+			pstyle.shadow_color = Color(COLOR_GOLD.r, COLOR_GOLD.g, COLOR_GOLD.b, 0.50)
+			pstyle.shadow_size  = 12
+			preview_bg.add_theme_stylebox_override("panel", pstyle)
+
+	# ── InstrLbl ──────────────────────────────────────────────
+	var instr_lbl = setup_overlay.get_node_or_null("SetupPanel/InstrLbl")
+	if instr_lbl:
 		if not has_active:
-			step_lbl.text = "▶  Selecciona un Pokémon Básico de tu mano para el Activo"
-			step_lbl.add_theme_color_override("font_color", Color(0.95, 0.72, 0.20, 0.9))
+			instr_lbl.text = "Haz clic en un Pokémon Básico\nde tu mano para el Activo"
+			instr_lbl.add_theme_color_override("font_color", Color(0.90, 0.85, 0.65))
 		elif bench_count == 0:
-			step_lbl.text = "✓ Activo listo — puedes agregar hasta 5 Pokémon al Banco, o Confirmar"
-			step_lbl.add_theme_color_override("font_color", Color(0.40, 0.88, 0.45, 0.85))
+			instr_lbl.text = "¡Activo listo!\nAgrega Pokémon al Banco o confirma"
+			instr_lbl.add_theme_color_override("font_color", Color(0.40, 0.88, 0.45))
 		else:
-			step_lbl.text = "✓ Todo listo — confirma cuando quieras o agrega más al Banco (%d/5)" % bench_count
-			step_lbl.add_theme_color_override("font_color", Color(0.40, 0.88, 0.45, 0.85))
+			instr_lbl.text = "¡Todo listo!\nConfirma o agrega más al Banco"
+			instr_lbl.add_theme_color_override("font_color", Color(0.40, 0.88, 0.45))
 
-	# ── Iluminar pasos completados ───────────────────────────
-	var steps_container = setup_overlay.get_node_or_null("SetupPanel")
-	if steps_container:
-		var step1 = steps_container.get_node_or_null("Step1")
-		var step2 = steps_container.get_node_or_null("Step2")
-		var step3 = steps_container.get_node_or_null("Step3")
-		if step1: _set_step_active(step1, has_active, true)
-		if step2: _set_step_active(step2, bench_count > 0, has_active)
-		if step3: _set_step_active(step3, false, has_active)
+	# ── ChosenLbl ─────────────────────────────────────────────
+	var chosen_lbl = setup_overlay.get_node_or_null("SetupPanel/ChosenLbl")
+	if chosen_lbl:
+		if has_active and active_data != null:
+			var cdata = CardDatabase.get_card(active_data.get("card_id", ""))
+			chosen_lbl.text = "✓  %s" % cdata.get("name", "Pokémon elegido")
+		else:
+			chosen_lbl.text = ""
 
-	# ── Botón confirmar ──────────────────────────────────────
-	var confirm_btn = setup_overlay.get_node_or_null("SetupPanel/ConfirmBtn")
+	# ── BenchLbl ──────────────────────────────────────────────
+	var bench_lbl = setup_overlay.get_node_or_null("SetupPanel/BenchLbl")
+	if bench_lbl:
+		if has_active:
+			bench_lbl.text = "Banco: %d / 5 Pokémon" % bench_count
+			bench_lbl.add_theme_color_override("font_color",
+				Color(0.40, 0.88, 0.45) if bench_count > 0 else Color(0.55, 0.55, 0.45, 0.70))
+		else:
+			bench_lbl.text = ""
+
+	# ── Mini dots banco ───────────────────────────────────────
+	var panel_node = setup_overlay.get_node_or_null("SetupPanel")
+	if panel_node:
+		for i in range(5):
+			var dot = panel_node.get_node_or_null("BenchDot%d" % i)
+			if dot:
+				var filled  = i < bench_count
+				var dot_s   = StyleBoxFlat.new()
+				dot_s.bg_color     = Color(0.30, 0.78, 0.38, 0.85) if filled else Color(0.10, 0.16, 0.12, 0.8)
+				dot_s.border_color = COLOR_GOLD if filled else Color(COLOR_GOLD.r, COLOR_GOLD.g, COLOR_GOLD.b, 0.20)
+				dot_s.border_width_left = 1; dot_s.border_width_right  = 1
+				dot_s.border_width_top  = 1; dot_s.border_width_bottom = 1
+				dot_s.set_corner_radius_all(4)
+				dot.add_theme_stylebox_override("panel", dot_s)
+
+	# ── Botón "Elegir de nuevo" ───────────────────────────────
+	var reelect_btn = setup_overlay.get_node_or_null("SetupPanel/BtnRow/ReelectBtn")
+	if reelect_btn:
+		if has_active and not reelect_btn.visible:
+			reelect_btn.modulate.a = 0.0
+			reelect_btn.show()
+			var tw_re = reelect_btn.create_tween()
+			tw_re.tween_property(reelect_btn, "modulate:a", 1.0, 0.20)
+		elif not has_active and reelect_btn.visible:
+			var tw_re = reelect_btn.create_tween()
+			tw_re.tween_property(reelect_btn, "modulate:a", 0.0, 0.15)
+			tw_re.tween_callback(func(): reelect_btn.hide())
+
+	# ── Botón confirmar ───────────────────────────────────────
+	var confirm_btn = setup_overlay.get_node_or_null("SetupPanel/BtnRow/ConfirmBtn")
 	if confirm_btn:
 		confirm_btn.disabled = not has_active
-		if has_active and not confirm_btn.disabled:
-			# Pulso suave para llamar la atención
-			if not confirm_btn.get_node_or_null("PulseTween"):
-				var pulse_marker = Node.new()
-				pulse_marker.name = "PulseTween"
-				confirm_btn.add_child(pulse_marker)
-				var tw = confirm_btn.create_tween().set_loops()
-				tw.tween_property(confirm_btn, "modulate:a", 0.75, 0.6).set_trans(Tween.TRANS_SINE)
-				tw.tween_property(confirm_btn, "modulate:a", 1.0,  0.6).set_trans(Tween.TRANS_SINE)
-
-func _set_step_active(step_container: Control, is_done: bool, is_enabled: bool) -> void:
-	var alpha     = 1.0 if is_enabled else 0.35
-	var num_color = Color(0.40, 0.88, 0.45) if is_done else Color(COLOR_GOLD.r, COLOR_GOLD.g, COLOR_GOLD.b, alpha)
-	for child in step_container.get_children():
-		if child is Label:
-			var idx = step_container.get_children().find(child)
-			if idx == 0:
-				child.add_theme_color_override("font_color", num_color)
-			else:
-				child.add_theme_color_override("font_color", Color(0.92, 0.88, 0.75, alpha))
+		if has_active and not confirm_btn.get_node_or_null("PulseTween"):
+			var pulse_marker = Node.new()
+			pulse_marker.name = "PulseTween"
+			confirm_btn.add_child(pulse_marker)
+			var tw_p = confirm_btn.create_tween().set_loops()
+			tw_p.tween_property(confirm_btn, "modulate:a", 0.72, 0.65).set_trans(Tween.TRANS_SINE)
+			tw_p.tween_property(confirm_btn, "modulate:a", 1.0,  0.65).set_trans(Tween.TRANS_SINE)
+		elif not has_active:
+			var pulse = confirm_btn.get_node_or_null("PulseTween")
+			if pulse: pulse.queue_free()
+			confirm_btn.modulate.a = 1.0
 
 
 # ============================================================
@@ -467,7 +641,7 @@ func hide_promote_popup() -> void:
 
 
 # ============================================================
-# ZOOM NORMAL — con tokens de daño y estado en grande
+# ZOOM NORMAL
 # ============================================================
 func open_zoom(card_id: String, pokemon_data: Dictionary = {}) -> void:
 	if zoom_overlay: return
@@ -504,7 +678,6 @@ func open_zoom(card_id: String, pokemon_data: Dictionary = {}) -> void:
 	if not pokemon_data.is_empty():
 		_add_zoom_tokens(card_instance, pokemon_data, zoom_scale)
 
-	# Rareza
 	var cdata  = CardDatabase.get_card(card_id)
 	var rarity = cdata.get("rarity", "")
 	if rarity != "":
@@ -533,15 +706,15 @@ func open_zoom(card_id: String, pokemon_data: Dictionary = {}) -> void:
 	zoom_overlay.add_child(click_btn)
 
 	var start_scale = zoom_scale * 0.7
-	card_instance.scale = Vector2(start_scale, start_scale)
+	card_instance.scale    = Vector2(start_scale, start_scale)
 	card_instance.position = Vector2((vp_size.x - (CARD_W * start_scale)) / 2.0, (vp_size.y - (CARD_H * start_scale)) / 2.0 - 30.0)
 
 	center_pivot.modulate.a = 0.0
 	var tw = center_pivot.create_tween()
 	tw.set_parallel(true)
-	tw.tween_property(card_instance, "scale", Vector2(zoom_scale, zoom_scale), 0.20).set_trans(Tween.TRANS_BACK).set_ease(Tween.EASE_OUT)
-	tw.tween_property(card_instance, "position", Vector2(card_x, card_y), 0.20).set_trans(Tween.TRANS_BACK).set_ease(Tween.EASE_OUT)
-	tw.tween_property(center_pivot, "modulate:a", 1.0, 0.15)
+	tw.tween_property(card_instance, "scale",    Vector2(zoom_scale, zoom_scale), 0.20).set_trans(Tween.TRANS_BACK).set_ease(Tween.EASE_OUT)
+	tw.tween_property(card_instance, "position", Vector2(card_x, card_y),         0.20).set_trans(Tween.TRANS_BACK).set_ease(Tween.EASE_OUT)
+	tw.tween_property(center_pivot,  "modulate:a", 1.0,                           0.15)
 
 	zoom_active = true
 
@@ -566,7 +739,6 @@ func _add_zoom_tokens(card_node: Control, pokemon_data: Dictionary, zoom_scale: 
 	overlay.mouse_filter = Control.MOUSE_FILTER_IGNORE
 	card_node.add_child(overlay)
 
-	# ─── TOKENS DE DAÑO ──────────────────────────────────────
 	var dmg: int = int(pokemon_data.get("damage_counters", 0))
 	if dmg > 0:
 		var fifties: int = dmg / 5
@@ -574,7 +746,6 @@ func _add_zoom_tokens(card_node: Control, pokemon_data: Dictionary, zoom_scale: 
 		var ox:      float = 8.0
 		var oy:      float = CARD_H / 2.0 - 20.0
 		var tok_size       = 36.0
-
 		for _i in range(fifties):
 			_spawn_zoom_token(overlay, PATH_TOKENS + "damage_50.png", "50", Vector2(ox, oy), tok_size)
 			ox += tok_size + 4.0
@@ -582,7 +753,6 @@ func _add_zoom_tokens(card_node: Control, pokemon_data: Dictionary, zoom_scale: 
 			_spawn_zoom_token(overlay, PATH_TOKENS + "damage_10.png", "10", Vector2(ox, oy), tok_size)
 			ox += tok_size + 4.0
 
-	# ─── TOKENS DE ESTADO ────────────────────────────────────
 	const TOKEN_FILES = {
 		"POISONED": "poison.png",   "BURNED":    "burn.png",
 		"ASLEEP":   "asleep.png",   "PARALYZED": "paralyzed.png",
@@ -597,19 +767,17 @@ func _add_zoom_tokens(card_node: Control, pokemon_data: Dictionary, zoom_scale: 
 	var status = str(pokemon_data.get("status", ""))
 	if status != "" and status != "null": status_list.append(status)
 	if pokemon_data.get("is_poisoned", false): status_list.append("POISONED")
-	if pokemon_data.get("is_burned", false): status_list.append("BURNED")
+	if pokemon_data.get("is_burned",   false): status_list.append("BURNED")
 
 	var sx: float = CARD_W - 36.0
 	var sy: float = 24.0
 	var st_size   = 30.0
-
 	for st in status_list:
 		var fname = TOKEN_FILES.get(st, "")
 		if fname != "":
 			_spawn_zoom_token(overlay, PATH_TOKENS + fname, EMOJIS.get(st, "?"), Vector2(sx, sy), st_size)
 		sx -= st_size + 4.0
 
-	# ─── ENERGÍAS ADJUNTADAS (COLUMNA TOP-LEFT CON ANIMACIÓN) ────────
 	var energies: Array = pokemon_data.get("attached_energy", [])
 	if energies.is_empty(): return
 
@@ -619,10 +787,9 @@ func _add_zoom_tokens(card_node: Control, pokemon_data: Dictionary, zoom_scale: 
 	var start_y   = 10.0
 
 	for i in range(energies.size()):
-		var e_type  = str(CardDatabase.get_energy_type(energies[i]))
-		var icon_tx = _get_type_icon(e_type)
+		var e_type   = str(CardDatabase.get_energy_type(energies[i]))
+		var icon_tx  = _get_type_icon(e_type)
 		var target_y = start_y + i * (icon_size + gap)
-
 		var energy_node: Control
 
 		if icon_tx:
@@ -643,19 +810,14 @@ func _add_zoom_tokens(card_node: Control, pokemon_data: Dictionary, zoom_scale: 
 			energy_node = dot
 
 		overlay.add_child(energy_node)
-
-		energy_node.position = Vector2(start_x, target_y - 25.0)
+		energy_node.position   = Vector2(start_x, target_y - 25.0)
 		energy_node.modulate.a = 0.0
 
-		var tw = overlay.create_tween()
-		tw.set_parallel(true)
+		var tw            = overlay.create_tween()
 		var cascade_delay = i * 0.08
-		tw.tween_property(energy_node, "position:y", target_y, 0.3) \
-			.set_delay(cascade_delay) \
-			.set_trans(Tween.TRANS_BACK) \
-			.set_ease(Tween.EASE_OUT)
-		tw.tween_property(energy_node, "modulate:a", 1.0, 0.2) \
-			.set_delay(cascade_delay)
+		tw.set_parallel(true)
+		tw.tween_property(energy_node, "position:y", target_y, 0.3).set_delay(cascade_delay).set_trans(Tween.TRANS_BACK).set_ease(Tween.EASE_OUT)
+		tw.tween_property(energy_node, "modulate:a", 1.0,      0.2).set_delay(cascade_delay)
 
 func _spawn_zoom_token(overlay: Control, path: String, fallback: String, pos: Vector2, size: float) -> void:
 	if ResourceLoader.exists(path):
@@ -689,7 +851,7 @@ func show_action_zoom(pokemon_data: Dictionary) -> void:
 
 	action_zoom_overlay = Control.new()
 	action_zoom_overlay.set_anchors_preset(Control.PRESET_FULL_RECT)
-	action_zoom_overlay.size = vp_size
+	action_zoom_overlay.size    = vp_size
 	action_zoom_overlay.z_index = 250
 	board.add_child(action_zoom_overlay)
 
@@ -719,8 +881,8 @@ func show_action_zoom(pokemon_data: Dictionary) -> void:
 	var btn_w = vp_size.x - btn_x - 60.0
 
 	var vbox = VBoxContainer.new()
-	vbox.position = Vector2(btn_x, card_pos_y)
-	vbox.size     = Vector2(btn_w, card_h)
+	vbox.position  = Vector2(btn_x, card_pos_y)
+	vbox.size      = Vector2(btn_w, card_h)
 	vbox.alignment = BoxContainer.ALIGNMENT_CENTER
 	vbox.add_theme_constant_override("separation", 15)
 	action_zoom_overlay.add_child(vbox)
@@ -895,9 +1057,9 @@ func _build_attack_ui(atk: Dictionary, index: int) -> Control:
 	panel.add_theme_stylebox_override("panel", style)
 
 	var hbox = HBoxContainer.new()
-	hbox.alignment = BoxContainer.ALIGNMENT_CENTER
-	hbox.add_theme_constant_override("separation", 15)
+	hbox.alignment    = BoxContainer.ALIGNMENT_CENTER
 	hbox.mouse_filter = Control.MOUSE_FILTER_IGNORE
+	hbox.add_theme_constant_override("separation", 15)
 	panel.add_child(hbox)
 
 	var cost = atk.get("cost", [])
@@ -908,7 +1070,7 @@ func _build_attack_ui(atk: Dictionary, index: int) -> Control:
 		icon.custom_minimum_size = Vector2(32, 32)
 		hbox.add_child(icon)
 
-	var lbl = Label.new()
+	var lbl     = Label.new()
 	var dmg     = str(atk.get("damage", ""))
 	var dmg_txt = (" [" + dmg + "]" if dmg != "" and dmg != "0" else "")
 	lbl.text = " " + atk.get("name", "").to_upper() + dmg_txt
@@ -925,7 +1087,7 @@ func _build_attack_ui(atk: Dictionary, index: int) -> Control:
 func _build_retreat_ui(cdata: Dictionary) -> Control:
 	var panel = PanelContainer.new()
 	var style = StyleBoxFlat.new()
-	style.bg_color = Color(0.08, 0.08, 0.10, 0.90)
+	style.bg_color     = Color(0.08, 0.08, 0.10, 0.90)
 	style.border_color = Color(0.5, 0.5, 0.5)
 	style.border_width_left = 1; style.border_width_right  = 1
 	style.border_width_top  = 1; style.border_width_bottom = 1
@@ -936,9 +1098,9 @@ func _build_retreat_ui(cdata: Dictionary) -> Control:
 	panel.add_theme_stylebox_override("panel", style)
 
 	var hbox = HBoxContainer.new()
-	hbox.alignment = BoxContainer.ALIGNMENT_CENTER
-	hbox.add_theme_constant_override("separation", 8)
+	hbox.alignment    = BoxContainer.ALIGNMENT_CENTER
 	hbox.mouse_filter = Control.MOUSE_FILTER_IGNORE
+	hbox.add_theme_constant_override("separation", 8)
 	panel.add_child(hbox)
 
 	var lbl = Label.new()
@@ -1022,10 +1184,10 @@ func _create_system_btn(text: String, type: String, index: int) -> Button:
 
 func _get_type_icon(type_str: String) -> Texture2D:
 	const FILES = {
-		"FIRE": "fire.png",          "WATER": "water.png",      "GRASS": "grass.png",
-		"LIGHTNING": "electric.png", "PSYCHIC": "psy.png",      "FIGHTING": "figth.png",
-		"COLORLESS": "incolor.png",  "DARKNESS": "dark.png",    "METAL": "metal.png",
-		"DRAGON": "dragon.png",
+		"FIRE":      "fire.png",     "WATER":    "water.png",   "GRASS":    "grass.png",
+		"LIGHTNING": "electric.png", "PSYCHIC":  "psy.png",     "FIGHTING": "figth.png",
+		"COLORLESS": "incolor.png",  "DARKNESS": "dark.png",    "METAL":    "metal.png",
+		"DRAGON":    "dragon.png",
 	}
 	var file = FILES.get(type_str.to_upper(), "incolor.png")
 	return load(PATH_TYPES + file)
@@ -1126,7 +1288,7 @@ func _build_glaring_gaze(revealed_trainers: Array) -> void:
 
 
 # ============================================================
-# GAME OVER — Con botón explícito de volver al menú
+# GAME OVER
 # ============================================================
 func show_game_over_screen(message: String, won: bool) -> void:
 	var overlay = Control.new()
@@ -1135,13 +1297,11 @@ func show_game_over_screen(message: String, won: bool) -> void:
 	overlay.z_index = 500
 	board.add_child(overlay)
 
-	# ── Fondo oscuro con tinte según resultado ───────────────
 	var bg = ColorRect.new()
 	bg.set_anchors_preset(Control.PRESET_FULL_RECT)
 	bg.color = Color(0.0, 0.0, 0.0, 0.0)
 	overlay.add_child(bg)
 
-	# ── Panel central ────────────────────────────────────────
 	var panel_w = min(520.0, vp_size.x - 60)
 	var panel_h = 260.0
 	var panel   = Panel.new()
@@ -1152,12 +1312,8 @@ func show_game_over_screen(message: String, won: bool) -> void:
 
 	var pstyle = StyleBoxFlat.new()
 	pstyle.bg_color = Color(0.04, 0.06, 0.05, 0.98)
-	if won:
-		pstyle.border_color = COLOR_GOLD
-		pstyle.shadow_color = Color(0.85, 0.72, 0.30, 0.45)
-	else:
-		pstyle.border_color = Color(0.75, 0.22, 0.22)
-		pstyle.shadow_color = Color(0.75, 0.20, 0.20, 0.40)
+	pstyle.border_color = COLOR_GOLD if won else Color(0.75, 0.22, 0.22)
+	pstyle.shadow_color = Color(0.85, 0.72, 0.30, 0.45) if won else Color(0.75, 0.20, 0.20, 0.40)
 	pstyle.border_width_left = 3; pstyle.border_width_right  = 3
 	pstyle.border_width_top  = 3; pstyle.border_width_bottom = 3
 	pstyle.corner_radius_top_left    = 18; pstyle.corner_radius_top_right    = 18
@@ -1166,7 +1322,6 @@ func show_game_over_screen(message: String, won: bool) -> void:
 	panel.add_theme_stylebox_override("panel", pstyle)
 	overlay.add_child(panel)
 
-	# ── Emoji grande ─────────────────────────────────────────
 	var emoji_lbl = Label.new()
 	emoji_lbl.text = "🏆" if won else "💀"
 	emoji_lbl.horizontal_alignment = HORIZONTAL_ALIGNMENT_CENTER
@@ -1175,25 +1330,21 @@ func show_game_over_screen(message: String, won: bool) -> void:
 	emoji_lbl.add_theme_font_size_override("font_size", 48)
 	panel.add_child(emoji_lbl)
 
-	# ── Mensaje principal ─────────────────────────────────────
 	var over_lbl = Label.new()
 	over_lbl.text = message
 	over_lbl.horizontal_alignment = HORIZONTAL_ALIGNMENT_CENTER
 	over_lbl.position = Vector2(0, 90)
 	over_lbl.size     = Vector2(panel_w, 52)
 	over_lbl.add_theme_font_size_override("font_size", 36)
-	over_lbl.add_theme_color_override("font_color",
-		COLOR_GOLD if won else Color(0.90, 0.32, 0.32))
+	over_lbl.add_theme_color_override("font_color", COLOR_GOLD if won else Color(0.90, 0.32, 0.32))
 	panel.add_child(over_lbl)
 
-	# ── Separador ─────────────────────────────────────────────
 	var sep = ColorRect.new()
 	sep.color    = (COLOR_GOLD if won else Color(0.75, 0.22, 0.22)) * Color(1,1,1,0.35)
 	sep.position = Vector2(panel_w * 0.15, 150)
 	sep.size     = Vector2(panel_w * 0.70, 1)
 	panel.add_child(sep)
 
-	# ── Botón principal: Volver al Menú ──────────────────────
 	var menu_btn = Button.new()
 	menu_btn.text     = "🏠  Volver al Menú Principal"
 	menu_btn.position = Vector2((panel_w - 280) / 2.0, 168)
@@ -1201,7 +1352,7 @@ func show_game_over_screen(message: String, won: bool) -> void:
 	menu_btn.mouse_default_cursor_shape = Control.CURSOR_POINTING_HAND
 
 	var s_normal = StyleBoxFlat.new()
-	s_normal.bg_color = Color(0.08, 0.18, 0.10, 0.95) if won else Color(0.18, 0.06, 0.06, 0.95)
+	s_normal.bg_color     = Color(0.08, 0.18, 0.10, 0.95) if won else Color(0.18, 0.06, 0.06, 0.95)
 	s_normal.border_color = COLOR_GOLD if won else Color(0.75, 0.22, 0.22)
 	s_normal.border_width_left = 2; s_normal.border_width_right  = 2
 	s_normal.border_width_top  = 2; s_normal.border_width_bottom = 2
@@ -1212,7 +1363,7 @@ func show_game_over_screen(message: String, won: bool) -> void:
 	menu_btn.add_theme_stylebox_override("normal", s_normal)
 
 	var s_hover = StyleBoxFlat.new()
-	s_hover.bg_color = Color(0.15, 0.35, 0.18, 0.98) if won else Color(0.32, 0.10, 0.10, 0.98)
+	s_hover.bg_color     = Color(0.15, 0.35, 0.18, 0.98) if won else Color(0.32, 0.10, 0.10, 0.98)
 	s_hover.border_color = COLOR_GOLD if won else Color(0.95, 0.35, 0.35)
 	s_hover.border_width_left = 2; s_hover.border_width_right  = 2
 	s_hover.border_width_top  = 2; s_hover.border_width_bottom = 2
@@ -1227,7 +1378,6 @@ func show_game_over_screen(message: String, won: bool) -> void:
 	menu_btn.pressed.connect(func(): emit_signal("game_over_closed"))
 	panel.add_child(menu_btn)
 
-	# ── Hint secundario ───────────────────────────────────────
 	var hint_lbl = Label.new()
 	hint_lbl.text = "o haz clic en cualquier parte"
 	hint_lbl.horizontal_alignment = HORIZONTAL_ALIGNMENT_CENTER
@@ -1237,25 +1387,22 @@ func show_game_over_screen(message: String, won: bool) -> void:
 	hint_lbl.add_theme_color_override("font_color", Color(0.45, 0.45, 0.40, 0.7))
 	panel.add_child(hint_lbl)
 
-	# ── Click en fondo también cierra ────────────────────────
 	var click_catcher = Button.new()
 	click_catcher.set_anchors_preset(Control.PRESET_FULL_RECT)
-	click_catcher.flat = true
+	click_catcher.flat    = true
 	click_catcher.z_index = 0
 	click_catcher.pressed.connect(func(): emit_signal("game_over_closed"))
 	overlay.add_child(click_catcher)
 
-	# ── Animación de entrada ──────────────────────────────────
-	bg.color        = Color(0, 0, 0, 0)
-	panel.scale     = Vector2(0.80, 0.80)
-	panel.modulate  = Color(1, 1, 1, 0.0)
+	bg.color       = Color(0, 0, 0, 0)
+	panel.scale    = Vector2(0.80, 0.80)
+	panel.modulate = Color(1, 1, 1, 0.0)
 	var tw = board.create_tween()
 	tw.set_parallel(true)
-	tw.tween_property(bg,    "color",       Color(0, 0, 0, 0.78), 0.30)
-	tw.tween_property(panel, "scale",       Vector2.ONE,          0.30).set_trans(Tween.TRANS_BACK).set_ease(Tween.EASE_OUT)
-	tw.tween_property(panel, "modulate:a",  1.0,                  0.22)
+	tw.tween_property(bg,    "color",      Color(0, 0, 0, 0.78), 0.30)
+	tw.tween_property(panel, "scale",      Vector2.ONE,          0.30).set_trans(Tween.TRANS_BACK).set_ease(Tween.EASE_OUT)
+	tw.tween_property(panel, "modulate:a", 1.0,                  0.22)
 
-	# ── Pulso en botón para llamar atención ───────────────────
 	var pulse_tw = menu_btn.create_tween().set_loops()
 	pulse_tw.tween_property(menu_btn, "modulate:a", 0.78, 0.7).set_trans(Tween.TRANS_SINE).set_delay(0.5)
 	pulse_tw.tween_property(menu_btn, "modulate:a", 1.0,  0.7).set_trans(Tween.TRANS_SINE)

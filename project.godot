@@ -26,6 +26,7 @@ StarterDecks="*uid://dhqxmffk1lvcq"
 MiniCard="*uid://ectku4e87pnt"
 RoomCard="*uid://c8lkfadjdilel"
 LanguageManager="*uid://cs4y6p3yfcnpf"
+AutoUpdater="*uid://dihfu57y7agvy"
 
 [display]
 
@@ -42,3 +43,4 @@ window/stretch/mode="canvas_items"
 rendering_device/driver.windows="d3d12"
 renderer/rendering_method="gl_compatibility"
 renderer/rendering_method.mobile="gl_compatibility"
+textures/vram_compression/import_etc2_astc=true

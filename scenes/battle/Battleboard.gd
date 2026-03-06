@@ -73,6 +73,7 @@ func _ready() -> void:
 	add_child(overlays)
 	overlays.setup(self)
 	overlays.setup_confirmed.connect(_on_confirm_setup)
+	overlays.setup_reselect_active.connect(_on_setup_reselect_active)  # ← NUEVO
 	overlays.promote_selected.connect(func(idx):
 		NetworkManager.send_action("PROMOTE", {"benchIndex": idx})
 		battle_log.add_message("Promoviendo Pokémon al frente...")
@@ -81,8 +82,6 @@ func _ready() -> void:
 		NetworkManager.resolve_glaring_gaze(idx)
 	)
 	overlays.action_zoom_selected.connect(_handle_action_zoom_choice)
-	
-	# Aquí enviamos la señal de salir de la sala antes de ir al menú
 	overlays.game_over_closed.connect(func():
 		NetworkManager.leave_room()
 		get_tree().change_scene_to_file("res://scenes/main_menu/MainMenu.tscn")
@@ -112,7 +111,8 @@ func _ready() -> void:
 	action_handler.action_buttons_update_needed.connect(_update_action_buttons)
 
 	_connect_network()
-	
+
+
 # ============================================================
 # CONSTRUIR TABLERO VISUAL
 # ============================================================
@@ -154,20 +154,16 @@ func _build_board() -> void:
 	renderer.my_discard_clicked.connect(_on_my_discard_clicked)
 	renderer.opp_discard_clicked.connect(_on_opp_discard_clicked)
 
-	# ── Botón Terminar Turno — esquina inferior derecha ─────
 	end_turn_btn = _build_end_turn_button(W, H)
 	add_child(end_turn_btn)
 
-	# ── Notificación deslizante — esquina superior derecha ──
 	_build_notification_bar(W)
 
-	# ── Battle log ──────────────────────────────────────────
 	battle_log = BattleLog.new()
 	battle_log.setup(W, H)
 	add_child(battle_log)
 	battle_log.chat_sent.connect(func(text): NetworkManager.send_chat(text))
 
-	# ── Phase label discreto ────────────────────────────────
 	phase_label = Label.new()
 	phase_label.position             = Vector2(8, H - 20)
 	phase_label.size                 = Vector2(200, 16)
@@ -177,7 +173,6 @@ func _build_board() -> void:
 	add_child(phase_label)
 
 
-# ── Botón único Terminar Turno — esquina inferior derecha ────
 func _build_end_turn_button(W: float, H: float) -> Button:
 	var btn = Button.new()
 	btn.text     = "⏭  Terminar Turno"
@@ -225,7 +220,6 @@ func _build_end_turn_button(W: float, H: float) -> Button:
 	return btn
 
 
-# ── Notificación tipo toast — esquina superior derecha ───────
 func _build_notification_bar(W: float) -> void:
 	const NOTIF_W := 260.0
 	const NOTIF_H := 42.0
@@ -271,7 +265,6 @@ func show_notification(text: String) -> void:
 	if _notif_tween and _notif_tween.is_valid():
 		_notif_tween.kill()
 
-	# Solo entra y se queda — sale cuando cambie el turno y se llame de nuevo
 	_notif_tween = create_tween()
 	_notif_tween.tween_property(_notif_container, "position:x", target_x, 0.28) \
 		.set_trans(Tween.TRANS_BACK).set_ease(Tween.EASE_OUT)
@@ -339,7 +332,6 @@ func _update_board(state: Dictionary) -> void:
 
 	phase_label.text = phase
 
-	# ── Banner + notificación solo al cambiar de turno ──────
 	var current_player = state.get("current_player", "")
 	if phase == "MAIN" and current_player != _last_turn_player:
 		_last_turn_player = current_player
@@ -371,6 +363,22 @@ func _update_board(state: Dictionary) -> void:
 func _on_confirm_setup() -> void:
 	NetworkManager.send_action("CONFIRM_SETUP", {})
 	battle_log.add_message("Confirmado, esperando al rival...")
+
+
+# ── "Elegir de nuevo" — quita el activo en el servidor ──────
+func _on_setup_reselect_active() -> void:
+	# Limpia el activo localmente en current_state para que el overlay
+	# refleje el cambio de inmediato sin esperar round-trip del servidor.
+	if current_state.has("my"):
+		current_state["my"]["active"] = null
+
+	# Notifica al servidor. Si tu GameState.js no tiene este handler aún,
+	# agrégalo (ver comentario abajo). Por ahora también funciona sin él:
+	# el jugador simplemente vuelve a hacer clic en otro Pokémon de la mano.
+	NetworkManager.send_action("SETUP_DESELECT_ACTIVE", {})
+
+	overlays.update_setup_status(current_state)
+	battle_log.add_message("Elige de nuevo tu Pokémon Activo")
 
 
 # ============================================================

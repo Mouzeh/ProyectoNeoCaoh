@@ -26,7 +26,7 @@ var vp_width:  float   = 0.0
 # ─── ESTADO ─────────────────────────────────────────────────
 var selected_index:   int        = -1
 var _drag_hint_label: Label      = null
-var _card_cache:      Dictionary = {}   # índice → { "card_id", "node" }
+var _card_cache:      Dictionary = {}
 var _playable_mask:   Array      = []
 var _hovered_card_id: String     = ""
 
@@ -41,6 +41,10 @@ func setup(my_hand_zone: Control, viewport_width: float) -> void:
 # ============================================================
 func update_hand(hand_cards: Array) -> void:
 	if not hand_zone: return
+
+	# Esperar un frame si la zona aún no tiene tamaño real
+	if hand_zone.get_rect().size.y == 0:
+		await hand_zone.resized
 
 	var count:   int   = hand_cards.size()
 	var new_ids: Array = []
@@ -63,9 +67,10 @@ func update_hand(hand_cards: Array) -> void:
 	var step:    float = _calc_hand_step(count)
 	var total_w: float = CARD_W + (count - 1) * step
 	var start_x: float = (vp_width - total_w) / 2.0
+	var zone_h:  float = hand_zone.get_rect().size.y
 	var base_y:  float = 10.0
-	if hand_zone.size.y > CARD_H:
-		base_y = (hand_zone.size.y - CARD_H) / 2.0
+	if zone_h > CARD_H:
+		base_y = (zone_h - CARD_H) / 2.0
 
 	for i in range(count):
 		var card_id: String = new_ids[i]
@@ -83,9 +88,6 @@ func update_hand(hand_cards: Array) -> void:
 		if _card_cache.has(i):
 			var n = _card_cache[i]["node"]
 			if is_instance_valid(n) and not n.get("is_dragging"):
-				# FIX: Resetear estado hover ANTES de reposicionar.
-				# Si la carta estaba con hover activo y la reposicionamos,
-				# _base_pos queda desactualizado y causa saltos.
 				if n.has_method("reset_hover_state"):
 					n.reset_hover_state()
 				n.position         = target_pos
