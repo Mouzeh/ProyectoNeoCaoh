@@ -4,7 +4,7 @@ extends Node
 # LoginScreen.gd — con email + verificación 6 dígitos
 # ============================================================
 
-const API_URL = "http://localhost:3000/api/auth"
+const API_URL = "https://caoh-tcg.fly.dev/api/auth"
 
 static func build(container: Control, menu) -> void:
 	var C = menu

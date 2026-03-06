@@ -5,8 +5,6 @@ extends Node
 # Top 20 global por ELO + posición del jugador actual
 # ============================================================
 
-const API_URL = "http://localhost:3000/api/social/ranking"
-
 static func build(container: Control, menu) -> void:
 	var C = menu
 
@@ -110,6 +108,7 @@ static func build(container: Control, menu) -> void:
 
 
 static func _fetch_ranking(container: Control, table_v: VBoxContainer, my_card, my_lbl: Label, C, menu) -> void:
+	var url = NetworkManager.BASE_URL + "/api/social/ranking"
 	var http = HTTPRequest.new()
 	container.add_child(http)
 
@@ -147,7 +146,7 @@ static func _fetch_ranking(container: Control, table_v: VBoxContainer, my_card, 
 		_update_my_card(my_card, my_lbl, my_pos, C)
 	)
 
-	http.request(API_URL, headers, HTTPClient.METHOD_GET)
+	http.request(url, headers, HTTPClient.METHOD_GET)
 
 
 static func _update_my_card(my_card, my_lbl: Label, my_pos, C) -> void:

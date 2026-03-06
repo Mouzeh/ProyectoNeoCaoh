@@ -209,30 +209,38 @@ func logout() -> void:
 # API / Servidor
 # ============================================================
 func save_deck_to_server(slot: int, deck_name: String, cards_array: Array) -> void:
+	# 1. Guardar primero de forma local para respuesta inmediata en UI
 	save_deck_local(slot, deck_name, cards_array)
 
+	# 2. Verificar si hay sesión activa
 	if not is_logged_in or NetworkManager.token == "":
 		print("[PlayerData] Jugador no logueado o sin token. Guardado localmente.")
 		return
 
+	# 3. Preparar la petición HTTP
 	var http = HTTPRequest.new()
 	add_child(http)
 
-	http.request_completed.connect(func(result, response_code, _headers, body):
+	http.request_completed.connect(func(result, response_code, _headers, body_response):
 		http.queue_free()
 		if response_code == 200:
 			print("[PlayerData] ¡Mazo guardado en el servidor exitosamente!")
 		else:
-			print("[PlayerData] Error al guardar. Código: ", response_code, " | Motivo: ", body.get_string_from_utf8())
+			var error_msg = body_response.get_string_from_utf8()
+			print("[PlayerData] Error al guardar. Código: ", response_code, " | Motivo: ", error_msg)
 	)
 
-	var url     = "http://localhost:3000/api/decks/save"
+	# 4. Configurar la URL y los datos (Aquí corregimos el error de comillas y duplicidad)
+	var url = NetworkManager.BASE_URL + "/api/decks/save"
 	var headers = [
 		"Content-Type: application/json",
 		"Authorization: Bearer " + NetworkManager.token
 	]
-	var body = JSON.stringify({"slot": slot, "name": deck_name, "cards": cards_array})
+	var payload = JSON.stringify({"slot": slot, "name": deck_name, "cards": cards_array})
 
-	var err = http.request(url, headers, HTTPClient.METHOD_POST, body)
+	# 5. EJECUTAR la petición (Esto es lo que faltaba en tu código)
+	var err = http.request(url, headers, HTTPClient.METHOD_POST, payload)
+	
 	if err != OK:
-		print("[PlayerData] Error al iniciar la petición HTTP")
+		print("[PlayerData] Error al iniciar la petición HTTP: ", err)
+		http.queue_free()

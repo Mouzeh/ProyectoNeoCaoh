@@ -740,7 +740,7 @@ static func _load_pending_packs(content, root, packs_container, menu) -> void:
 			e.horizontal_alignment = HORIZONTAL_ALIGNMENT_CENTER; packs_container.add_child(e); return
 		for pi in packs: _create_pending_pack_card(content, root, packs_container, pi, menu)
 	)
-	http.request("http://localhost:3000/api/shop/my-packs",["Authorization: Bearer "+NetworkManager.token],HTTPClient.METHOD_GET,"")
+	http.request(NetworkManager.BASE_URL + "/api/shop/my-packs", ["Authorization: Bearer " + NetworkManager.token], HTTPClient.METHOD_GET, "")
 
 
 static func _create_pending_pack_card(content, root, parent, pack_info, menu) -> void:

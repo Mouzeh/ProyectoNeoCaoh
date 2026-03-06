@@ -5,7 +5,7 @@ extends Node
 # Banner rotativo Premium + Comunidad Centrada + Cortina de Noticias
 # ============================================================
 
-const API_URL = "http://localhost:3000/api/social"
+const API_URL = "NetworkManager.BASE_URL/api/social"
 
 const NEWS = [
 	{

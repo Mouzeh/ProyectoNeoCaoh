@@ -373,6 +373,7 @@ func _build_reports_tab(C) -> void:
 	status_lbl.text = "Cargando..."
 
 	_api_get("/api/mod/reports?status=pending", func(code, data):
+		if not is_instance_valid(status_lbl) or not is_instance_valid(list): return
 		status_lbl.text = ""
 		if code != 200:
 			status_lbl.text = "Error al cargar reportes"
@@ -435,6 +436,7 @@ func _add_report_card(parent: Control, r: Dictionary) -> void:
 		var hours = dur[1]
 		btn.pressed.connect(func():
 			_api_post("/api/mod/mute", {"user_id": reported_id, "duration_hours": hours, "reason": "report"}, func(code, d):
+				if not is_instance_valid(btn): return
 				if code == 200: btn.text = "✅ Silenciado"
 			)
 		)
@@ -445,6 +447,7 @@ func _add_report_card(parent: Control, r: Dictionary) -> void:
 	dismiss_btn.add_theme_font_size_override("font_size", 11)
 	dismiss_btn.pressed.connect(func():
 		_api_post("/api/mod/reports/%d/resolve" % report_id, {"action": "dismiss"}, func(code, _d):
+			if not is_instance_valid(card): return
 			if code == 200: card.queue_free()
 		)
 	)
@@ -478,6 +481,7 @@ func _build_search_tab(C) -> void:
 		for c in result_v.get_children(): c.queue_free()
 		status_lbl.text = "Buscando..."
 		_api_get("/api/mod/search-user?q=" + input.text.uri_encode(), func(code, data):
+			if not is_instance_valid(status_lbl) or not is_instance_valid(result_v): return
 			status_lbl.text = ""
 			if code != 200:
 				status_lbl.text = "Error en la búsqueda"
@@ -543,6 +547,7 @@ func _add_user_card(parent: Control, u: Dictionary) -> void:
 				var h = dur[1]
 				b.pressed.connect(func():
 					_api_post("/api/mod/mute", {"user_id": user_id, "duration_hours": h, "reason": "panel"}, func(code, _d):
+						if not is_instance_valid(b): return
 						if code == 200: b.text = "✅"
 					)
 				)
@@ -554,6 +559,7 @@ func _add_user_card(parent: Control, u: Dictionary) -> void:
 			ban_b.add_theme_font_size_override("font_size", 11)
 			ban_b.pressed.connect(func():
 				_api_post("/api/mod/ban", {"user_id": user_id, "reason": "ban desde panel"}, func(code, _d):
+					if not is_instance_valid(ban_b): return
 					if code == 200: ban_b.text = "✅ Baneado"
 				)
 			)
@@ -565,6 +571,7 @@ func _add_user_card(parent: Control, u: Dictionary) -> void:
 			unban_b.add_theme_font_size_override("font_size", 11)
 			unban_b.pressed.connect(func():
 				_api_post("/api/mod/unban", {"user_id": user_id}, func(code, _d):
+					if not is_instance_valid(unban_b): return
 					if code == 200: unban_b.text = "✅"
 				)
 			)
@@ -609,6 +616,7 @@ func _build_chat_log_tab(C) -> void:
 		if user_input.text.strip_edges() != "":
 			url += "&user=" + user_input.text.strip_edges().uri_encode()
 		_api_get(url, func(code, data):
+			if not is_instance_valid(list): return
 			if code != 200: return
 			for m in data.get("messages", []):
 				var row = HBoxContainer.new()
@@ -771,8 +779,10 @@ func _build_rewards_tab(C) -> void:
 		_show_confirm_dialog(
 			"¿Estás seguro de %s?" % action_str,
 			func():
+				if not is_instance_valid(status_lbl): return
 				status_lbl.text = "Enviando..."
 				_api_post("/api/mod/give-reward", body, func(code, data):
+					if not is_instance_valid(status_lbl): return
 					if code == 200:
 						status_lbl.text = "✅ " + data.get("message", "Operación completada.")
 					else:
@@ -811,6 +821,7 @@ func _build_roles_tab(C) -> void:
 		for c in result_v.get_children(): c.queue_free()
 		status_lbl.text = "Buscando..."
 		_api_get("/api/mod/search-user?q=" + input.text.uri_encode(), func(code, data):
+			if not is_instance_valid(status_lbl) or not is_instance_valid(result_v): return
 			status_lbl.text = ""
 			for u in data.get("users", []):
 				var row = HBoxContainer.new()
@@ -835,6 +846,7 @@ func _build_roles_tab(C) -> void:
 				var uid = u.get("id","")
 				apply_btn.pressed.connect(func():
 					_api_post("/api/mod/set-role", {"user_id": uid, "new_role": role_opt.selected}, func(code, d):
+						if not is_instance_valid(name_lbl) or not is_instance_valid(status_lbl): return
 						if code == 200:
 							name_lbl.text = u.get("username","?") + "  [" + ROLE_NAMES.get(role_opt.selected,"?") + "] ✅"
 						else:
@@ -864,6 +876,7 @@ func _build_bans_tab(C) -> void:
 	status_lbl.text = "Cargando..."
 
 	_api_get("/api/mod/bans", func(code, data):
+		if not is_instance_valid(status_lbl) or not is_instance_valid(list): return
 		status_lbl.text = ""
 		if code != 200:
 			status_lbl.text = "Error al cargar"
@@ -894,6 +907,7 @@ func _build_bans_tab(C) -> void:
 			var uid = b.get("id","")
 			unban_btn.pressed.connect(func():
 				_api_post("/api/mod/unban", {"user_id": uid}, func(code2, _d):
+					if not is_instance_valid(row): return
 					if code2 == 200: row.queue_free()
 				)
 			)
@@ -909,6 +923,7 @@ func _build_stats_tab(C) -> void:
 	status_lbl.text = "Cargando..."
 
 	_api_get("/api/mod/stats", func(code, data):
+		if not is_instance_valid(status_lbl) or not is_instance_valid(v): return
 		status_lbl.text = ""
 		if code != 200:
 			status_lbl.text = "Error al cargar estadísticas"
@@ -981,6 +996,7 @@ func _build_announce_tab(C) -> void:
 			status_lbl.text = "❌ Escribe algo primero"
 			return
 		_api_post("/api/mod/announce", {"text": text}, func(code, data):
+			if not is_instance_valid(status_lbl) or not is_instance_valid(input): return
 			if code == 200:
 				status_lbl.text = "✅ Anuncio enviado"
 				input.text = ""
@@ -1019,6 +1035,7 @@ func _build_slowmode_tab(C) -> void:
 		var channel = ch
 		apply_btn.pressed.connect(func():
 			_api_post("/api/mod/slowmode", {"channel": channel, "seconds": int(spin.value)}, func(code, _data):
+				if not is_instance_valid(apply_btn): return
 				if code == 200: apply_btn.text = "✅"
 			)
 		)
@@ -1049,6 +1066,7 @@ func _build_action_log_tab(C) -> void:
 	status_lbl.text = "Cargando..."
 
 	_api_get("/api/mod/action-log?limit=100", func(code, data):
+		if not is_instance_valid(status_lbl) or not is_instance_valid(list): return
 		status_lbl.text = ""
 		if code != 200:
 			status_lbl.text = "Error al cargar"
@@ -1077,6 +1095,7 @@ func _build_mod_ranking_tab(C) -> void:
 	status_lbl.text = "Cargando..."
 
 	_api_get("/api/mod/mod-ranking", func(code, data):
+		if not is_instance_valid(status_lbl) or not is_instance_valid(v): return
 		status_lbl.text = ""
 		if code != 200:
 			status_lbl.text = "Error al cargar"

@@ -6,6 +6,64 @@ extends Node
 
 const MiniCard = preload("res://scenes/main_menu/components/MiniCard.gd")
 
+# ── Cache de texturas (igual que CollectionScreen) ───────────
+static var _tex_cache:       Dictionary = {}
+static var _tex_cache_order: Array      = []
+const TEX_CACHE_MAX = 100
+
+static func _cache_texture(path: String, tex: Texture2D) -> void:
+	if path in _tex_cache:
+		_tex_cache_order.erase(path)
+		_tex_cache_order.append(path)
+		return
+	while _tex_cache_order.size() >= TEX_CACHE_MAX:
+		var oldest = _tex_cache_order.pop_front()
+		_tex_cache.erase(oldest)
+	_tex_cache[path] = tex
+	_tex_cache_order.append(path)
+
+static func _get_texture(path: String) -> Texture2D:
+	if path == "": return null
+	if path in _tex_cache: return _tex_cache[path]
+	var status = ResourceLoader.load_threaded_get_status(path)
+	if status == ResourceLoader.THREAD_LOAD_LOADED:
+		var tex = ResourceLoader.load_threaded_get(path)
+		_cache_texture(path, tex)
+		return tex
+	return null
+
+static func _request_texture(path: String) -> void:
+	if path == "" or path in _tex_cache: return
+	var status = ResourceLoader.load_threaded_get_status(path)
+	if status in [ResourceLoader.THREAD_LOAD_IN_PROGRESS, ResourceLoader.THREAD_LOAD_LOADED]: return
+	ResourceLoader.load_threaded_request(path)
+
+static func _load_texture_into(rect: TextureRect, path: String) -> void:
+	if path == "": return
+	var cached = _get_texture(path)
+	if cached:
+		rect.texture = cached
+		return
+	_request_texture(path)
+	# Polling hasta que esté lista
+	var timer = Timer.new()
+	timer.wait_time = 0.05
+	timer.autostart = true
+	timer.timeout.connect(func():
+		if not is_instance_valid(rect):
+			timer.queue_free(); return
+		var status = ResourceLoader.load_threaded_get_status(path)
+		if status == ResourceLoader.THREAD_LOAD_LOADED:
+			var tex = ResourceLoader.load_threaded_get(path)
+			_cache_texture(path, tex)
+			rect.texture = tex
+			timer.queue_free()
+		elif status == ResourceLoader.THREAD_LOAD_FAILED:
+			timer.queue_free()
+	)
+	rect.add_child(timer)
+
+
 static func build(container: Control, menu) -> void:
 	var C = menu
 
@@ -94,6 +152,12 @@ static func build(container: Control, menu) -> void:
 	main_vbox.add_theme_constant_override("separation", 30)
 	scroll.add_child(main_vbox)
 
+	# Precargar imágenes en paralelo
+	_request_texture("res://assets/Sobres/SobreFuego.png")
+	_request_texture("res://assets/Sobres/SobreAgua.png")
+	_request_texture("res://assets/Sobres/SobreHierba.png")
+	_request_texture("res://assets/cards/Neo Genesis/sneasel-alt.png")
+
 	# ── Sección sobres ───────────────────────────────────────
 	var s1 = Label.new()
 	s1.text = "SOBRES DE EXPANSIÓN · Neo Genesis"
@@ -125,13 +189,12 @@ static func build(container: Control, menu) -> void:
 	promo_hbox.add_theme_constant_override("separation", 30)
 	main_vbox.add_child(promo_hbox)
 
-	# ← Agrega aquí tus cartas promo. Ejemplo con sneasel_alt:
 	_create_promo_card(shop_root, menu, promo_hbox,
-		"sneasel_alt",          # card_id (debe existir en cards_dict y shop_stock)
-		"Sneasel Full Art",   # nombre visible
-		"res://assets/cards/Neo Genesis/sneasel-alt.png",  # imagen
-		100,                    # precio en gemas
-		Color(0.3, 0.0, 0.5)   # color del borde
+		"sneasel_alt",
+		"Sneasel Full Art",
+		"res://assets/cards/Neo Genesis/sneasel-alt.png",
+		100,
+		Color(0.3, 0.0, 0.5)
 	)
 
 	main_vbox.add_child(UITheme.vspace(10))
@@ -177,9 +240,8 @@ static func _create_pack_card(shop_root, menu, parent, pack_id, pack_name, img_p
 	img_rect.custom_minimum_size = Vector2(160, 200)
 	img_rect.expand_mode  = TextureRect.EXPAND_IGNORE_SIZE
 	img_rect.stretch_mode = TextureRect.STRETCH_KEEP_ASPECT_CENTERED
-	if ResourceLoader.exists(img_path):
-		img_rect.texture = load(img_path)
 	vbox.add_child(img_rect)
+	_load_texture_into(img_rect, img_path)  # ← caché threaded
 
 	var name_lbl = Label.new()
 	name_lbl.text = pack_name
@@ -223,7 +285,6 @@ static func _create_promo_card(shop_root, menu, parent, card_id, card_name, img_
 	st.border_color = glow_color.lightened(0.2)
 	st.corner_radius_top_left    = 12; st.corner_radius_top_right    = 12
 	st.corner_radius_bottom_left = 12; st.corner_radius_bottom_right = 12
-	# Brillo especial para promos
 	st.shadow_color = Color(glow_color.r, glow_color.g, glow_color.b, 0.4)
 	st.shadow_size  = 12
 	box.add_theme_stylebox_override("panel", st)
@@ -234,7 +295,6 @@ static func _create_promo_card(shop_root, menu, parent, card_id, card_name, img_
 	vbox.add_theme_constant_override("separation", 8)
 	box.add_child(vbox)
 
-	# Badge PROMO
 	var badge = Label.new()
 	badge.text = "✨ PROMO"
 	badge.horizontal_alignment = HORIZONTAL_ALIGNMENT_CENTER
@@ -246,9 +306,8 @@ static func _create_promo_card(shop_root, menu, parent, card_id, card_name, img_
 	img_rect.custom_minimum_size = Vector2(150, 210)
 	img_rect.expand_mode  = TextureRect.EXPAND_IGNORE_SIZE
 	img_rect.stretch_mode = TextureRect.STRETCH_KEEP_ASPECT_CENTERED
-	if ResourceLoader.exists(img_path):
-		img_rect.texture = load(img_path)
 	vbox.add_child(img_rect)
+	_load_texture_into(img_rect, img_path)  # ← caché threaded
 
 	var name_lbl = Label.new()
 	name_lbl.text = card_name
@@ -373,7 +432,7 @@ static func _buy_pack(shop_root: Control, menu, pack_id: String, price: int, btn
 	)
 
 	http.request(
-		"http://localhost:3000/api/shop/buy",
+		NetworkManager.BASE_URL + "/api/shop/buy",
 		["Content-Type: application/json", "Authorization: Bearer " + NetworkManager.token],
 		HTTPClient.METHOD_POST,
 		JSON.stringify({"pack_type": pack_id, "currency": currency})
@@ -410,7 +469,6 @@ static func _buy_promo_card(shop_root: Control, menu, card_id: String, price_gem
 		if data.has("gems_left"):  PlayerData.gems  = data["gems_left"]
 		_update_currency_ui(shop_root)
 
-		# Agregar carta a PlayerData local
 		PlayerData.add_card(data.get("card_id", card_id))
 
 		btn.text     = "✅ Obtenida"
@@ -419,7 +477,7 @@ static func _buy_promo_card(shop_root: Control, menu, card_id: String, price_gem
 	)
 
 	http.request(
-		"http://localhost:3000/api/shop/buy-card",
+		NetworkManager.BASE_URL + "/api/shop/buy-card",
 		["Content-Type: application/json", "Authorization: Bearer " + NetworkManager.token],
 		HTTPClient.METHOD_POST,
 		JSON.stringify({"card_id": card_id, "currency": "gems"})
@@ -445,7 +503,7 @@ static func open_pack_from_collection(shop_root: Control, menu, pack_type: Strin
 	)
 
 	http.request(
-		"http://localhost:3000/api/shop/open-pack",
+		NetworkManager.BASE_URL + "/api/shop/open-pack",
 		["Content-Type: application/json", "Authorization: Bearer " + NetworkManager.token],
 		HTTPClient.METHOD_POST,
 		JSON.stringify({"pack_type": pack_type})
@@ -476,9 +534,10 @@ static func _buy_slot(shop_root: Control, menu, price: int, btn: Button) -> void
 	)
 
 	http.request(
-		"http://localhost:3000/api/shop/buy-slot",
+		NetworkManager.BASE_URL + "/api/shop/buy-slot",
 		["Content-Type: application/json", "Authorization: Bearer " + NetworkManager.token],
-		HTTPClient.METHOD_POST, "{}"
+		HTTPClient.METHOD_POST,
+		"{}"
 	)
 
 
@@ -489,7 +548,6 @@ static func _update_currency_ui(shop_root: Control) -> void:
 	var gems_lbl = UITheme.find_node(shop_root, "GemsLabel") as Label
 	if gems_lbl: gems_lbl.text = "💎 " + str(PlayerData.gems)
 
-# Mantener compatibilidad con llamadas antiguas
 static func _update_coins_ui(shop_root: Control) -> void:
 	_update_currency_ui(shop_root)
 

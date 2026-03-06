@@ -274,7 +274,7 @@ const CARDS: Dictionary = {
 	"cleffa": {
 		"id": "cleffa", "name": "Cleffa", "number": "20/111",
 		"image": "res://assets/cards/Neo Genesis/cleffa-neo-genesis-20.jpg",
-		"image_es": "res://assets/cards/Neo Genesis ES/cleffa-neo-genesis-es-20.jpg",
+		"image_es": "res://assets/cards/Neo Genesis ES/cleffa-neo-genesis-es-20.png",
 		"type": "POKEMON", "pokemon_type": "COLORLESS",
 		"hp": 30, "stage": "baby", "evolves_from": "",
 		"retreat_cost": 0, "weakness": "", "resistance": "",

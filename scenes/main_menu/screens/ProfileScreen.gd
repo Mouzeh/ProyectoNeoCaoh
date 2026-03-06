@@ -5,8 +5,6 @@ extends Node
 # Muestra perfil propio o de otro jugador (menu.viewing_username)
 # ============================================================
 
-const API_URL = "http://localhost:3000/api/social/profile"
-
 static func build(container: Control, menu) -> void:
 	var C = menu
 
@@ -89,6 +87,7 @@ static func build(container: Control, menu) -> void:
 
 
 static func _fetch_profile(container: Control, content_v: VBoxContainer, username: String, C, menu) -> void:
+	var url = NetworkManager.BASE_URL + "/api/social/profile"
 	var http = HTTPRequest.new()
 	container.add_child(http)
 
@@ -117,7 +116,7 @@ static func _fetch_profile(container: Control, content_v: VBoxContainer, usernam
 		_build_profile(content_v, player, stats, matches, C, menu)
 	)
 
-	http.request(API_URL + "/" + username, headers, HTTPClient.METHOD_GET)
+	http.request(url + "/" + username, headers, HTTPClient.METHOD_GET)
 
 
 static func _build_profile(content_v: VBoxContainer, player: Dictionary, stats: Dictionary, matches: Array, C, menu) -> void:

@@ -12,11 +12,17 @@ signal opponent_disconnected
 signal chat_received(player_id, text)
 signal room_list_updated(rooms)
 signal room_created(room_id)
-signal room_left
+signal room_left 
 
 # ─── CONFIGURACIÓN ──────────────────────────────────────────
-const SERVER_URL      = "ws://localhost:3000"
-const BASE_URL        = "http://localhost:3000"
+
+# Descomenta estas dos líneas para jugar en tu PC (Local)
+# const SERVER_URL = "ws://localhost:3000"
+# const BASE_URL   = "http://localhost:3000"
+
+# Descomenta estas dos líneas para jugar en la nube (Fly.io)
+const SERVER_URL = "wss://caoh-tcg.fly.dev"
+const BASE_URL   = "https://caoh-tcg.fly.dev"
 const RECONNECT_DELAY = 3.0
 const PING_INTERVAL   = 20.0
 const MAX_DECK_SIZE   = 60
