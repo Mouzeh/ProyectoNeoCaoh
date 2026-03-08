@@ -20,6 +20,10 @@ const RankingScreen     = preload("res://scenes/main_menu/screens/RankingScreen.
 const ChatScreen        = preload("res://scenes/main_menu/screens/ChatScreen.gd")
 const ModPanelScreen    = preload("res://scenes/main_menu/screens/ModPanelScreen.gd")
 const BattlePassScreen  = preload("res://scenes/main_menu/screens/BattlePassScreen.gd")
+const GymScreen         = preload("res://scenes/main_menu/screens/GymScreen.gd")
+const GymTypeScreen     = preload("res://scenes/main_menu/screens/GymTypeScreen.gd")
+const LiderGymScreen    = preload("res://scenes/main_menu/screens/LiderGymScreen.gd")
+const SpectateScreen    = preload("res://scenes/main_menu/screens/SpectateScreen.gd")
 
 # ─── Componentes ─────────────────────────────────────────────
 const RoomCard     = preload("res://scenes/main_menu/components/RoomCard.gd")
@@ -41,6 +45,10 @@ enum Screen {
 	CHAT,
 	MOD_PANEL,
 	BATTLE_PASS,
+	GYM,
+	GYM_TYPE,
+	LIDER_GYM,
+	SPECTATE,
 }
 
 # ─── Estado global compartido con todas las pantallas ────────
@@ -50,6 +58,7 @@ var current_deck:     Array  = []
 var deck_name:        String = "Fuego Inicial"
 var current_rooms:    Array  = []
 var viewing_username: String = ""
+var _gym_params:      Dictionary = {}
 
 # ─── Colores (alias de UITheme) ──────────────────────────────
 var COLOR_BG:       Color
@@ -86,6 +95,10 @@ const NAVBAR_SCREENS = [
 	Screen.CHAT,
 	Screen.MOD_PANEL,
 	Screen.BATTLE_PASS,
+	Screen.GYM,
+	Screen.GYM_TYPE,
+	Screen.LIDER_GYM,
+	# SPECTATE no muestra navbar — pantalla inmersiva
 ]
 
 # ============================================================
@@ -111,14 +124,12 @@ func _ready() -> void:
 	current_deck = []
 	_build_background()
 	_connect_network()
-	
-	# ─── CORRECCIÓN: Evitar volver al login si ya hay sesión activa ───
+
 	if NetworkManager.player_id != "":
 		_show_screen(Screen.HOME)
 	else:
 		_show_screen(Screen.LOGIN)
-	# ──────────────────────────────────────────────────────────────────
-	
+
 	get_viewport().size_changed.connect(_on_viewport_resized)
 
 
@@ -136,6 +147,18 @@ func _process(delta: float) -> void:
 # ============================================================
 # NAVEGACIÓN
 # ============================================================
+func navigate_to(screen_name: String, params: Dictionary = {}) -> void:
+	_gym_params = params
+	match screen_name:
+		"GymScreen":         _show_screen(Screen.GYM)
+		"GymTypeScreen":     _show_screen(Screen.GYM_TYPE)
+		"LiderGymScreen":    _show_screen(Screen.LIDER_GYM)
+		"DeckBuilderScreen": _show_screen(Screen.DECK_BUILDER)
+		"GymBattleScreen":   pass  # implementar cuando hagamos la batalla
+
+
+# ── Reemplaza la función _show_screen completa en MainMenu.gd ──
+
 func _show_screen(screen: Screen) -> void:
 	current_screen = screen
 	_chat_screen_node = null
@@ -158,6 +181,13 @@ func _show_screen(screen: Screen) -> void:
 		Screen.BATTLE_PASS:  BattlePassScreen.build(screen_container, self)
 		Screen.CHAT:         ChatScreen.build(screen_container, self)
 		Screen.MOD_PANEL:    ModPanelScreen.build(screen_container, self)
+		Screen.GYM:          GymScreen.build(screen_container, self)
+		Screen.GYM_TYPE:     GymTypeScreen.build(screen_container, self, _gym_params)
+		Screen.LIDER_GYM:    LiderGymScreen.build(screen_container, self, _gym_params)
+		Screen.SPECTATE:
+			var ss = SpectateScreen.new()
+			screen_container.add_child(ss)
+			ss.build(screen_container, self, _gym_params)
 
 	if screen == Screen.CHAT:
 		await get_tree().process_frame
@@ -165,7 +195,6 @@ func _show_screen(screen: Screen) -> void:
 
 	if current_screen in NAVBAR_SCREENS:
 		_build_top_navbar()
-
 
 func _show_profile(username: String) -> void:
 	viewing_username = username
@@ -218,7 +247,8 @@ func _build_top_navbar() -> void:
 		["🃏 DECK",        Screen.DECK_BUILDER],
 		["📦 COLECCIÓN",   Screen.COLLECTION],
 		["🏪 TIENDA",      Screen.SHOP],
-		["🎟️ PASE",      Screen.BATTLE_PASS],
+		["🎟️ PASE",       Screen.BATTLE_PASS],
+		["🏟️ GYMS",       Screen.GYM],
 		["🏆 RANKING",     Screen.RANKING],
 		["💬 CHAT",        Screen.CHAT],
 		["👤 PERFIL",      Screen.PROFILE],
@@ -232,7 +262,7 @@ func _build_top_navbar() -> void:
 	for tab in tabs:
 		var b = Button.new()
 		b.text = tab[0]
-		b.custom_minimum_size = Vector2(100, 50)
+		b.custom_minimum_size = Vector2(90, 50)
 		b.add_theme_font_size_override("font_size", 11)
 		var is_active = (current_screen == tab[1])
 
@@ -266,41 +296,33 @@ func _build_top_navbar() -> void:
 func handle_ws_message(data: Dictionary) -> void:
 	var msg_type = data.get("type", "")
 
-	# ── ACTUALIZACIÓN EN TIEMPO REAL ──────────────────────────
 	if msg_type == "PLAYER_DATA_UPDATE":
 		var p = data.get("payload", {})
-
-		# 1. Actualizar PlayerData global
 		if p.has("coins"):             PlayerData.coins             = p["coins"]
 		if p.has("gems"):              PlayerData.gems              = p["gems"]
 		if p.has("battle_pass_level"): PlayerData.battle_pass_level = p["battle_pass_level"]
 		if p.has("battle_pass_xp"):    PlayerData.battle_pass_xp   = p["battle_pass_xp"]
 		if p.has("has_premium_pass"):  PlayerData.has_premium_pass  = (p["has_premium_pass"] == 1 or p["has_premium_pass"] == true)
 
-		# 2. Refrescar label de HomeScreen si está visible
 		var home_sub = screen_container.get_node_or_null("HomeSubLabel")
 		if home_sub:
 			home_sub.text = "Bienvenido, " + PlayerData.username + "  ·  " + str(PlayerData.coins) + " 🪙  ·  ELO " + str(PlayerData.elo)
 
-		# 3. Refrescar CoinsLabel de ShopScreen si está visible
 		var shop_root = screen_container.get_node_or_null("ShopRoot")
 		if shop_root:
 			var coins_lbl = UITheme.find_node(shop_root, "CoinsLabel") as Label
 			if coins_lbl:
 				coins_lbl.text = "🪙 " + str(PlayerData.coins)
 
-		# 4. Refrescar BattlePass si está abierto
 		if current_screen == Screen.BATTLE_PASS:
 			var bp_node = screen_container.get_node_or_null("BattlePassScreenNode")
 			if bp_node and bp_node.has_method("_update_premium_ui"):
 				bp_node._update_premium_ui()
 
-		# 5. Toast con el mensaje del mod/servidor
 		var msg = data.get("message", "Tus datos han sido actualizados.")
 		_show_global_toast("🔔 " + msg)
 		return
 
-	# ── Anuncio global ────────────────────────────────────────
 	if msg_type == "CHAT_ANNOUNCEMENT":
 		var content = data.get("message", {}).get("content", "")
 		if content != "":
@@ -325,9 +347,8 @@ func handle_ws_message(data: Dictionary) -> void:
 # ============================================================
 # TOAST GLOBAL DE ANUNCIOS — desliza desde la derecha
 # ============================================================
-
 func _markdown_to_bbcode(text: String) -> String:
-	var result  = ""
+	var result    = ""
 	var remaining = text
 	var re = RegEx.new()
 	re.compile("\\[([^\\]]+)\\]\\(([^)]+)\\)")
@@ -572,3 +593,47 @@ func _connect_network() -> void:
 	NetworkManager.room_created.connect(func(_room_id):
 		_show_screen(Screen.QUEUE)
 	)
+
+	# ── Espectador: confirmar entrada y navegar a SpectateScreen ──
+	NetworkManager.spectate_ok.connect(_on_spectate_ok)
+
+
+# ============================================================
+# ESPECTAR
+# ============================================================
+
+# Llamado desde RoomCard ANTES de que llegue spectate_ok del servidor.
+# Guarda los datos de la sala para que _on_spectate_ok los use.
+func _on_spectate_room(room: Dictionary) -> void:
+	_gym_params = room
+
+
+# Llamado cuando el servidor confirma que el espectador entró (SPECTATE_OK).
+# Prioriza los datos que ya guardó RoomCard en _gym_params; si no coinciden
+# busca en current_rooms; como último recurso construye un dict mínimo.
+func _on_spectate_ok(room_id: String, state, _count: int) -> void:
+	# ── 1. ¿Ya tenemos los datos de esta sala en _gym_params? ──
+	var saved_id = _gym_params.get("room_id", _gym_params.get("id", ""))
+	if saved_id == room_id and not _gym_params.is_empty():
+		# Adjuntar estado inicial si la partida ya estaba en curso
+		if state != null and typeof(state) == TYPE_DICTIONARY and not state.is_empty():
+			_gym_params["initial_state"] = state
+		_show_screen(Screen.SPECTATE)
+		return
+
+	# ── 2. Buscar en la lista de salas conocida ────────────────
+	var room: Dictionary = {}
+	for r in current_rooms:
+		if r.get("room_id", r.get("id", "")) == room_id:
+			room = r
+			break
+
+	# ── 3. Fallback: dict mínimo ──────────────────────────────
+	if room.is_empty():
+		room = { "room_id": room_id, "name": "Mesa " + room_id }
+
+	if state != null and typeof(state) == TYPE_DICTIONARY and not state.is_empty():
+		room["initial_state"] = state
+
+	_gym_params = room
+	_show_screen(Screen.SPECTATE)

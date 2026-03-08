@@ -1,154 +1,215 @@
 extends Node
 
 # ============================================================
-# RoomCard.gd — Componente: tarjeta de mesa en el lobby
+# scenes/main_menu/components/RoomCard.gd
 # ============================================================
 
-static func make(data: Dictionary, menu) -> Control:
+const TIER_COLORS = {
+	"C":  Color("#8ecae6"),
+	"B":  Color("#52b788"),
+	"A":  Color("#f4a261"),
+	"S":  Color("#e63946"),
+	"SS": Color("#c77dff"),
+}
+const MODE_COLORS = {
+	"casual":  Color("#4a90d9"),
+	"ranking": Color("#52b788"),
+	"wager":   Color("#e8a838"),
+}
+const MODE_ICONS = {
+	"casual":  "🎮",
+	"ranking": "🏆",
+	"wager":   "💰",
+}
+const TIER_ACCESS_LABELS = {
+	"all":   "Todos",
+	"equal": "Solo mi tier",
+	"down":  "Mi tier o ↓",
+}
+
+static func make(room: Dictionary, menu) -> Control:
 	var C = menu
 
-	var card = PanelContainer.new()
-	card.custom_minimum_size = Vector2(340, 240)
-	card.size_flags_horizontal = Control.SIZE_EXPAND_FILL
-	var st = StyleBoxFlat.new()
-	st.bg_color = C.COLOR_PANEL
-	st.border_color = Color(C.COLOR_GOLD_DIM.r, C.COLOR_GOLD_DIM.g, C.COLOR_GOLD_DIM.b, 0.3)
-	st.border_width_left = 1; st.border_width_right  = 1
-	st.border_width_top  = 1; st.border_width_bottom = 1
-	st.corner_radius_top_left    = 16; st.corner_radius_top_right    = 16
-	st.corner_radius_bottom_left = 16; st.corner_radius_bottom_right = 16
-	st.shadow_color = Color(0,0,0,0.4); st.shadow_size = 25; st.shadow_offset = Vector2(0,10)
-	card.add_theme_stylebox_override("panel", st)
+	var panel = PanelContainer.new()
+	panel.custom_minimum_size = Vector2(340, 0)
+	panel.size_flags_horizontal = Control.SIZE_EXPAND_FILL
 
-	var margin = MarginContainer.new()
-	margin.add_theme_constant_override("margin_left",   16)
-	margin.add_theme_constant_override("margin_right",  16)
-	margin.add_theme_constant_override("margin_top",    16)
-	margin.add_theme_constant_override("margin_bottom", 16)
-	card.add_child(margin)
+	var ps = StyleBoxFlat.new()
+	ps.bg_color     = Color(C.COLOR_PANEL.r, C.COLOR_PANEL.g, C.COLOR_PANEL.b, 0.92)
+	ps.border_color = Color(C.COLOR_GOLD_DIM.r, C.COLOR_GOLD_DIM.g, C.COLOR_GOLD_DIM.b, 0.25)
+	ps.border_width_left = 1; ps.border_width_right  = 1
+	ps.border_width_top  = 1; ps.border_width_bottom = 1
+	ps.corner_radius_top_left    = 10; ps.corner_radius_top_right    = 10
+	ps.corner_radius_bottom_left = 10; ps.corner_radius_bottom_right = 10
+	ps.shadow_color = Color(0,0,0,0.3); ps.shadow_size = 8
+	panel.add_theme_stylebox_override("panel", ps)
 
-	var main_vbox = VBoxContainer.new()
-	margin.add_child(main_vbox)
+	var vbox = VBoxContainer.new()
+	vbox.add_theme_constant_override("separation", 0)
+	panel.add_child(vbox)
 
-	# Stats apuesta/modo/premios
-	var header_hbox = HBoxContainer.new()
-	main_vbox.add_child(header_hbox)
-	for pair in [["Apuesta","🪙 " + str(data.get("apuesta",10))], ["Modo","🏆"], ["Premios","🎁 x6"]]:
-		var lbl = Label.new()
-		lbl.text = pair[0] + "\n" + pair[1]
-		lbl.horizontal_alignment = HORIZONTAL_ALIGNMENT_CENTER
-		lbl.size_flags_horizontal = Control.SIZE_EXPAND_FILL
-		lbl.add_theme_font_size_override("font_size", 12)
-		lbl.add_theme_color_override("font_color", C.COLOR_TEXT)
-		header_hbox.add_child(lbl)
+	# ── Franja de color del modo ──
+	var mode     = room.get("mode", "casual")
+	var tier     = room.get("deck_tier", "C")
+	var status   = room.get("status", "waiting")
+	var mode_col = MODE_COLORS.get(mode, Color("#555"))
+	var tier_col = TIER_COLORS.get(tier, Color("#888"))
 
-	main_vbox.add_child(UITheme.vspace(5))
+	var top_strip = ColorRect.new()
+	top_strip.color = mode_col
+	top_strip.custom_minimum_size = Vector2(0, 4)
+	vbox.add_child(top_strip)
 
-	# Campo visual
-	var field_panel = PanelContainer.new()
-	field_panel.custom_minimum_size = Vector2(0, 80)
-	var field_st = StyleBoxFlat.new()
-	field_st.bg_color = C.COLOR_BG.lightened(0.05)
-	field_st.border_color = Color(C.COLOR_GOLD_DIM.r, C.COLOR_GOLD_DIM.g, C.COLOR_GOLD_DIM.b, 0.3)
-	field_st.border_width_left = 1; field_st.border_width_right  = 1
-	field_st.border_width_top  = 1; field_st.border_width_bottom = 1
-	field_panel.add_theme_stylebox_override("panel", field_st)
-	main_vbox.add_child(field_panel)
+	var body_m = MarginContainer.new()
+	body_m.add_theme_constant_override("margin_left",   18)
+	body_m.add_theme_constant_override("margin_right",  18)
+	body_m.add_theme_constant_override("margin_top",    14)
+	body_m.add_theme_constant_override("margin_bottom", 14)
+	vbox.add_child(body_m)
 
-	main_vbox.add_child(UITheme.vspace(5))
+	var body = VBoxContainer.new()
+	body.add_theme_constant_override("separation", 10)
+	body_m.add_child(body)
 
-	# Jugadores
-	var is_full = data.get("guest", "") != ""
-	var stats_hbox = HBoxContainer.new()
-	main_vbox.add_child(stats_hbox)
+	# ── Fila: modo + tier + estado ──
+	var row1 = HBoxContainer.new()
+	row1.add_theme_constant_override("separation", 6)
+	body.add_child(row1)
 
-	var host_vbox = VBoxContainer.new()
-	var h_name = Label.new()
-	h_name.text = data.get("host", "Desconocido")
-	h_name.add_theme_font_size_override("font_size", 14)
-	h_name.add_theme_color_override("font_color", C.COLOR_GOLD)
-	host_vbox.add_child(h_name)
-	var h_stats = Label.new()
-	h_stats.text = "Vict: " + str(data.get("h_win",0)) + " / Derrot: " + str(data.get("h_loss",0))
-	h_stats.add_theme_font_size_override("font_size", 11)
-	h_stats.add_theme_color_override("font_color", C.COLOR_TEXT_DIM)
-	host_vbox.add_child(h_stats)
-	stats_hbox.add_child(host_vbox)
-
-	var stats_spacer = Control.new()
-	stats_spacer.size_flags_horizontal = Control.SIZE_EXPAND_FILL
-	stats_hbox.add_child(stats_spacer)
-
-	var guest_vbox = VBoxContainer.new()
-	guest_vbox.alignment = BoxContainer.ALIGNMENT_END
-	var g_name = Label.new()
-	g_name.text = data.get("guest","") if is_full else "Esperando"
-	g_name.horizontal_alignment = HORIZONTAL_ALIGNMENT_RIGHT
-	g_name.add_theme_font_size_override("font_size", 14)
-	g_name.add_theme_color_override("font_color", C.COLOR_TEXT if is_full else C.COLOR_TEXT_DIM)
-	guest_vbox.add_child(g_name)
-	var g_stats = Label.new()
-	g_stats.horizontal_alignment = HORIZONTAL_ALIGNMENT_RIGHT
-	g_stats.add_theme_font_size_override("font_size", 11)
-	g_stats.add_theme_color_override("font_color", C.COLOR_TEXT_DIM)
-	g_stats.text = ("Vict: " + str(data.get("g_win",0)) + " / Derrot: " + str(data.get("g_loss",0))) if is_full else "Vict: - / Derrot: -"
-	guest_vbox.add_child(g_stats)
-	stats_hbox.add_child(guest_vbox)
+	row1.add_child(_badge(MODE_ICONS.get(mode, "?") + " " + mode.capitalize(), mode_col, Color("#fff")))
+	row1.add_child(_badge("Tier " + tier, tier_col, Color("#fff")))
 
 	var spacer = Control.new()
-	spacer.size_flags_vertical = Control.SIZE_EXPAND_FILL
-	main_vbox.add_child(spacer)
+	spacer.size_flags_horizontal = Control.SIZE_EXPAND_FILL
+	row1.add_child(spacer)
 
-	# Botones
-	var btn_hbox = HBoxContainer.new()
-	btn_hbox.add_theme_constant_override("separation", 10)
-	main_vbox.add_child(btn_hbox)
+	var status_col = Color("#52b788") if status == "waiting" else Color("#e63946")
+	var status_lbl = Label.new()
+	status_lbl.text = "● EN ESPERA" if status == "waiting" else "● EN JUEGO"
+	status_lbl.add_theme_font_size_override("font_size", 10)
+	status_lbl.add_theme_color_override("font_color", status_col)
+	row1.add_child(status_lbl)
 
-	var btn_ver = Button.new()
-	btn_ver.text = "VER MESA"
-	btn_ver.size_flags_horizontal = Control.SIZE_EXPAND_FILL
-	btn_ver.custom_minimum_size = Vector2(0, 36)
-	btn_ver.add_theme_font_size_override("font_size", 12)
-	btn_ver.add_theme_color_override("font_color", C.COLOR_GOLD_DIM)
-	var st_ver = StyleBoxFlat.new()
-	st_ver.bg_color = Color(0,0,0,0)
-	st_ver.border_color = Color(C.COLOR_GOLD_DIM.r, C.COLOR_GOLD_DIM.g, C.COLOR_GOLD_DIM.b, 0.4)
-	st_ver.border_width_left = 1; st_ver.border_width_right  = 1
-	st_ver.border_width_top  = 1; st_ver.border_width_bottom = 1
-	st_ver.corner_radius_top_left = 8; st_ver.corner_radius_top_right    = 8
-	st_ver.corner_radius_bottom_left = 8; st_ver.corner_radius_bottom_right = 8
-	var st_ver_hov = st_ver.duplicate(); st_ver_hov.bg_color = Color(1,1,1,0.05)
-	btn_ver.add_theme_stylebox_override("normal",  st_ver)
-	btn_ver.add_theme_stylebox_override("hover",   st_ver_hov)
-	btn_ver.add_theme_stylebox_override("pressed", st_ver_hov)
-	btn_hbox.add_child(btn_ver)
+	# ── Nombre de la mesa ──
+	# Usar host_username si existe, si no el campo name, si no "Mesa de <username>"
+	var host_username = room.get("host_username", room.get("host_name", ""))
+	var fallback_name = ("Mesa de " + host_username) if host_username != "" else "Mesa sin nombre"
+	var name_str = room.get("name", fallback_name)
+	if name_str == "" or name_str == null:
+		name_str = fallback_name
 
-	var btn_join = Button.new()
-	btn_join.text = "INGRESAR MESA"
-	btn_join.size_flags_horizontal = Control.SIZE_EXPAND_FILL
-	btn_join.custom_minimum_size = Vector2(0, 36)
-	btn_join.add_theme_font_size_override("font_size", 12)
-	btn_join.add_theme_color_override("font_color", C.COLOR_PANEL)
-	var st_join = StyleBoxFlat.new()
-	st_join.bg_color = C.COLOR_GOLD
-	st_join.corner_radius_top_left    = 8; st_join.corner_radius_top_right    = 8
-	st_join.corner_radius_bottom_left = 8; st_join.corner_radius_bottom_right = 8
-	st_join.shadow_color = Color(C.COLOR_GOLD.r, C.COLOR_GOLD.g, C.COLOR_GOLD.b, 0.2)
-	st_join.shadow_size = 10; st_join.shadow_offset = Vector2(0,3)
-	var st_join_hov = st_join.duplicate(); st_join_hov.bg_color = C.COLOR_GOLD.lightened(0.1)
-	if is_full:
-		btn_join.disabled = true
-		var st_dis = st_join.duplicate(); st_dis.bg_color = Color(0.15,0.17,0.20,0.9)
-		btn_join.add_theme_stylebox_override("disabled", st_dis)
-		btn_join.add_theme_color_override("font_disabled_color", Color(0.8,0.8,0.8,0.5))
-	else:
-		btn_join.pressed.connect(func():
-			if NetworkManager.ws_connected:
-				# ¡AQUÍ ESTÁ EL CAMBIO! Ahora mandamos el mazo activo de PlayerData
-				NetworkManager.join_room(data.get("room_id",""), PlayerData.get_active_deck())
+	var name_lbl = Label.new()
+	name_lbl.text = name_str
+	name_lbl.add_theme_font_size_override("font_size", 15)
+	name_lbl.add_theme_color_override("font_color", Color("#ffffff"))
+	name_lbl.clip_text = true
+	body.add_child(name_lbl)
+
+	# ── Host info ──
+	if host_username != "":
+		var host_row = HBoxContainer.new()
+		host_row.add_theme_constant_override("separation", 4)
+		body.add_child(host_row)
+		var host_lbl = Label.new()
+		host_lbl.text = "🧢 " + host_username
+		host_lbl.add_theme_font_size_override("font_size", 11)
+		host_lbl.add_theme_color_override("font_color", Color("#aaaaaa"))
+		host_row.add_child(host_lbl)
+
+		# ELO del host si viene
+		var h_elo = room.get("h_elo", 0)
+		if h_elo > 0:
+			var elo_lbl = Label.new()
+			elo_lbl.text = "· ELO " + str(h_elo)
+			elo_lbl.add_theme_font_size_override("font_size", 11)
+			elo_lbl.add_theme_color_override("font_color", Color("#666"))
+			host_row.add_child(elo_lbl)
+
+	# ── Fila: jugadores + espectadores + cerrojo + acceso ──
+	var row2 = HBoxContainer.new()
+	row2.add_theme_constant_override("separation", 10)
+	body.add_child(row2)
+
+	_info_lbl(row2, "👥 " + str(room.get("players", 1)) + "/2", Color("#aaa"))
+	_info_lbl(row2, "👁 " + str(room.get("spectators", 0)), Color("#aaa"))
+	if room.get("has_password", false):
+		_info_lbl(row2, "🔒", Color("#f4a261"))
+	_info_lbl(row2, "🎯 " + TIER_ACCESS_LABELS.get(room.get("tier_access", "all"), "Todos"), Color("#888"))
+
+	# ── Apuesta ──
+	var wager = room.get("wager", null)
+	if wager and mode == "wager":
+		var wager_icon = "🪙" if wager.get("type","") == "coins" else ("💎" if wager.get("type","") == "gems" else "📦")
+		var wl = Label.new()
+		wl.text = "Apuesta: " + wager_icon + " " + str(wager.get("amount", 0))
+		wl.add_theme_font_size_override("font_size", 12)
+		wl.add_theme_color_override("font_color", Color("#e8a838"))
+		body.add_child(wl)
+
+	# ── Botones ──
+	var btn_row = HBoxContainer.new()
+	btn_row.add_theme_constant_override("separation", 8)
+	body.add_child(btn_row)
+
+	var the_room_id = room.get("room_id", room.get("id", ""))
+
+	var spectate_btn = _mk_btn("👁 ESPECTAR", Color(0.15, 0.2, 0.3), Color("#7eb8e8"), 0)
+	spectate_btn.size_flags_horizontal = Control.SIZE_EXPAND_FILL
+	spectate_btn.pressed.connect(func():
+		if not NetworkManager.ws_connected: return
+		if the_room_id == "": push_warning("[RoomCard] room_id vacío"); return
+		NetworkManager.spectate_room(the_room_id)
+	)
+	btn_row.add_child(spectate_btn)
+
+	if status == "waiting" and room.get("players", 1) < 2:
+		var join_btn = _mk_btn("⚔ UNIRSE", C.COLOR_GOLD, C.COLOR_PANEL, 0)
+		join_btn.size_flags_horizontal = Control.SIZE_EXPAND_FILL
+		join_btn.pressed.connect(func():
+			if not NetworkManager.ws_connected: return
+			var active_deck = PlayerData.get_active_deck()
+			if active_deck.size() != 60:
+				push_warning("[RoomCard] Deck incompleto (%d/60)" % active_deck.size()); return
+			NetworkManager.join_room(the_room_id, active_deck, PlayerData.get_deck_tier(PlayerData.active_deck_slot))
 		)
-	btn_join.add_theme_stylebox_override("normal", st_join)
-	btn_join.add_theme_stylebox_override("hover",  st_join_hov)
-	btn_hbox.add_child(btn_join)
+		btn_row.add_child(join_btn)
 
-	return card
+	return panel
+
+
+static func _badge(text: String, bg: Color, fg: Color) -> Label:
+	var lbl = Label.new()
+	lbl.text = text
+	lbl.add_theme_font_size_override("font_size", 10)
+	lbl.add_theme_color_override("font_color", fg)
+	var st = StyleBoxFlat.new()
+	st.bg_color = Color(bg.r, bg.g, bg.b, 0.85)
+	st.corner_radius_top_left    = 4; st.corner_radius_top_right    = 4
+	st.corner_radius_bottom_left = 4; st.corner_radius_bottom_right = 4
+	st.content_margin_left  = 6; st.content_margin_right  = 6
+	st.content_margin_top   = 2; st.content_margin_bottom = 2
+	lbl.add_theme_stylebox_override("normal", st)
+	return lbl
+
+static func _info_lbl(parent: Control, text: String, color: Color) -> void:
+	var lbl = Label.new()
+	lbl.text = text
+	lbl.add_theme_font_size_override("font_size", 11)
+	lbl.add_theme_color_override("font_color", color)
+	parent.add_child(lbl)
+
+static func _mk_btn(text: String, bg: Color, fg: Color, min_w: int) -> Button:
+	var btn = Button.new()
+	btn.text = text
+	btn.custom_minimum_size = Vector2(min_w if min_w > 0 else 0, 36)
+	btn.add_theme_font_size_override("font_size", 12)
+	btn.add_theme_color_override("font_color", fg)
+	var st = StyleBoxFlat.new()
+	st.bg_color = bg
+	st.corner_radius_top_left    = 6; st.corner_radius_top_right    = 6
+	st.corner_radius_bottom_left = 6; st.corner_radius_bottom_right = 6
+	var st_hov = st.duplicate()
+	st_hov.bg_color = Color(bg.r * 1.2, bg.g * 1.2, bg.b * 1.2, 1.0).clamp()
+	btn.add_theme_stylebox_override("normal", st)
+	btn.add_theme_stylebox_override("hover",  st_hov)
+	return btn

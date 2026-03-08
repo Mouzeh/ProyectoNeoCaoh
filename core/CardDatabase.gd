@@ -1,6 +1,6 @@
 extends Node
 
-const CARDS: Dictionary = {
+var CARDS: Dictionary = {
 	# ═══════════════════════════════════
 	# RARAS HOLOGRÁFICAS (#1-18)
 	# ═══════════════════════════════════
@@ -328,7 +328,7 @@ const CARDS: Dictionary = {
 		"image_es": "res://assets/cards/Neo Genesis ES/murkrow-neo-genesis-es-24.jpg",
 		"type": "POKEMON", "pokemon_type": "DARKNESS",
 		"hp": 50, "stage": 0, "evolves_from": "",
-		"retreat_cost": 1, "weakness": "", "resistance": "FIGHTING",
+		"retreat_cost": 0, "weakness": "", "resistance": "FIGHTING",
 		"rarity": "RARE",
 		"attacks": [
 			{"name": "Mean Look", "cost": {"DARKNESS": 1}, "damage": 0, "effect": "The Defending Pokémon can’t retreat as long as Murkrow remains your Active Pokémon. Benching or evolving either Pokémon ends this effect."},
@@ -341,7 +341,7 @@ const CARDS: Dictionary = {
 		"image_es": "res://assets/cards/Neo Genesis ES/sneasel-neo-genesis-es-25.jpg",
 		"type": "POKEMON", "pokemon_type": "DARKNESS",
 		"hp": 60, "stage": 0, "evolves_from": "",
-		"retreat_cost": 1, "weakness": "", "resistance": "PSYCHIC",
+		"retreat_cost": 0, "weakness": "", "resistance": "PSYCHIC",
 		"rarity": "ULTRA_RARE",
 		"attacks": [
 			{"name": "Fury Swipes", "cost": {"COLORLESS": 1}, "damage": 10, "effect": "Flip 3 coins. This attack does 10 damage times the number of heads."},
@@ -354,7 +354,7 @@ const CARDS: Dictionary = {
 		"image_es": "res://assets/cards/Neo Genesis ES/sneasel-alt-es.png",
 		"type": "POKEMON", "pokemon_type": "DARKNESS",
 		"hp": 60, "stage": 0, "evolves_from": "",
-		"retreat_cost": 1, "weakness": "", "resistance": "PSYCHIC",
+		"retreat_cost": 0, "weakness": "", "resistance": "PSYCHIC",
 		"rarity": "ULTRA_RARE",
 		"attacks": [
 			{"name": "Fury Swipes", "cost": {"COLORLESS": 1}, "damage": 10, "effect": "Flip 3 coins. This attack does 10 damage times the number of heads."},
@@ -1147,6 +1147,15 @@ const CARDS: Dictionary = {
 	"water_energy": {"id": "water_energy", "name": "Water Energy", "number": "111/111", "image": "res://assets/cards/Neo Genesis/water-energy-neo-genesis-111.jpg", "image_es": "res://assets/cards/Neo Genesis/water-energy-neo-genesis-111.jpg", "type": "ENERGY", "energy_type": "WATER", "provides": 1, "rarity": "COMMON"},
 }
 
+func _ready() -> void:
+	var file = FileAccess.open("res://data/card_powers.json", FileAccess.READ)
+	if file:
+		var powers: Dictionary = JSON.parse_string(file.get_as_text())
+		for id in CARDS:
+			CARDS[id]["power"] = powers.get(id, 0)
+	else:
+		push_warning("CardDatabase: no se encontró card_powers.json")
+
 func get_card(card_id: String) -> Dictionary:
 	return CARDS.get(card_id, {})
 
@@ -1189,3 +1198,48 @@ func get_all_pokemon_ids() -> Array:
 		if CARDS[id].get("type") == "POKEMON":
 			result.append(id)
 	return result
+
+# ─── SISTEMA DE TIERS ────────────────────────────────────────
+
+func calculate_deck_tier(deck_cards: Array) -> String:
+	var non_zero_powers = []
+	
+	# 1. Recorrer los IDs de texto y obtener el poder real de cada carta
+	for card_id in deck_cards:
+		var card_data = get_card(card_id)
+		if not card_data.is_empty():
+			var p = card_data.get("power", 0)
+			if p > 0:
+				non_zero_powers.append(p)
+	
+	# 2. Ordenar de mayor a menor poder
+	non_zero_powers.sort_custom(func(a, b): return a > b)
+	
+	# 3. Tomar el top 20
+	var top20 = non_zero_powers.slice(0, min(20, non_zero_powers.size()))
+	
+	if top20.is_empty():
+		return "C"
+	
+	# 4. Calcular promedio
+	var total = 0
+	for p in top20:
+		total += p
+	var avg = float(total) / max(top20.size(), 1)
+	
+	# 5. Retornar tier
+	if avg >= 71: return "SS"
+	elif avg >= 51: return "S"
+	elif avg >= 36: return "A"
+	elif avg >= 21: return "B"
+	else: return "C"
+
+func get_player_max_tier(player_decks: Array) -> String:
+	var tier_order = ["C", "B", "A", "S", "SS"]
+	var max_index = 0
+	for deck in player_decks:
+		var t = calculate_deck_tier(deck.get("cards", []))
+		var idx = tier_order.find(t)
+		if idx > max_index:
+			max_index = idx
+	return tier_order[max_index]

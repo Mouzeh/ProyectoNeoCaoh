@@ -145,49 +145,121 @@ static func show_preview(container: Control, card_id: String) -> void:
 			qty_text = "\nInventario: " + str(PlayerData.get_card_count(card_id))
 		preview_lbl.text = data.get("name", card_id) + "\n(" + data.get("type","Desconocido") + ")" + qty_text
 
-# ── LOGICA PARA AGREGAR CON REGLAS DE ENERGIA ──
+# ── LOGICA PARA AGREGAR CON REGLAS ──
 static func _add_to_deck(card_id: String, container: Control, menu) -> void:
-	var data       = CardDatabase.get_card(card_id)
-	
+	var data = CardDatabase.get_card(card_id)
+
 	var basic_energies = [
-		"grass_energy", "fire_energy", "water_energy", 
+		"grass_energy", "fire_energy", "water_energy",
 		"lightning_energy", "psychic_energy", "fighting_energy"
 	]
-	
-	var is_basic_energy = card_id in basic_energies
-	var max_copies = 60 if is_basic_energy else 4
 
-	# Límite por REGLAS
-	var species_in_deck = menu.current_deck.count(card_id) if is_basic_energy \
-		else _get_species_count(card_id, menu)
-		
-	if species_in_deck >= max_copies or menu.current_deck.size() >= 60:
+	var is_basic_energy = card_id in basic_energies
+	var is_gym_mode     = menu.get_meta("deck_mode", "normal") == "gym"
+	var max_copies      = 60 if is_basic_energy else 4
+
+	# Límite por deck lleno
+	if menu.current_deck.size() >= 60:
 		return
 
-	# Límite de INVENTARIO
-	if PlayerData.is_logged_in and not is_basic_energy:
+	# Límite por especie (4 copias máx)
+	var species_in_deck = menu.current_deck.count(card_id) if is_basic_energy \
+		else _get_species_count(card_id, menu)
+	if species_in_deck >= max_copies:
+		return
+
+	# En modo normal: respetar inventario
+	if not is_gym_mode and PlayerData.is_logged_in and not is_basic_energy:
 		var owned      = PlayerData.get_card_count(card_id)
 		var id_in_deck = menu.current_deck.count(card_id)
 		if id_in_deck >= owned:
 			return
 
 	menu.current_deck.append(card_id)
+
 	var dp  = UITheme.find_node(container, "DeckPanel")
 	var hdr = UITheme.find_node(container, "CountLbl")
 	if hdr: hdr = hdr.get_parent().get_parent()
 	if dp:  _refresh_deck_list(container, dp, hdr, menu)
-	_refresh_collection_grid_badges(container, menu)
 
-static func _refresh_collection_grid_badges(container: Control, menu) -> void:
-	var grid = UITheme.find_node(container, "CollectionGrid")
+	# ── Refrescar colección respetando filtros activos ──
+	_refresh_collection_grid(container, menu)
+
+# ============================================================
+# _refresh_collection_grid — respeta modo gym Y filtros activos
+# (misma lógica que DeckBuilderScreen, centralizada aquí)
+# ============================================================
+static func _refresh_collection_grid(container: Control, menu) -> void:
+	var grid       = UITheme.find_node(container, "CollectionGrid")
+	var search_box = UITheme.find_node(container, "SearchInput")  as LineEdit
+	var cat_box    = UITheme.find_node(container, "CatFilter")    as OptionButton
+	var elem_box   = UITheme.find_node(container, "ElemFilter")   as OptionButton  # null en modo gym
+	var rarity_box = UITheme.find_node(container, "RarityFilter") as OptionButton
 	if not grid: return
 	for ch in grid.get_children(): ch.queue_free()
-	var ids = PlayerData.inventory.keys() if PlayerData.is_logged_in else CardDatabase.get_all_ids()
-	for id in ids:
-		var qty       = PlayerData.get_card_count(id) if PlayerData.is_logged_in else -1
-		var id_in_deck = menu.current_deck.count(id)
-		var available = (qty - id_in_deck) if PlayerData.is_logged_in else -1
-		grid.add_child(make(id, container, menu, qty, available))
+
+	var is_gym_mode = menu.get_meta("deck_mode", "normal") == "gym"
+	var gym_type    = menu.get_meta("gym_type", "COLORLESS") if is_gym_mode else ""
+
+	var search_text = search_box.text.to_lower() if search_box else ""
+	var sel_cat     = cat_box.get_item_text(cat_box.selected)       if cat_box    else "Categoría: Todas"
+	var sel_elem    = elem_box.get_item_text(elem_box.selected)     if elem_box   else "Elemento: Todos"
+	var sel_rarity  = rarity_box.get_item_text(rarity_box.selected) if rarity_box else "Rareza: Todas"
+	var baby_names  = ["pichu","cleffa","igglybuff","smoochum","tyrogue","elekid","magby"]
+
+	var card_ids = CardDatabase.get_all_ids()
+
+	for id in card_ids:
+		var card = CardDatabase.get_card(id)
+		if card.is_empty(): continue
+
+		var c_name   = card.get("name","").to_lower()
+		var c_type   = card.get("type","").to_upper()
+		var c_elem   = card.get("pokemon_type", card.get("type","")).to_upper()
+		var c_rarity = card.get("rarity","COMMON").to_upper()
+		var c_stage  = card.get("stage", 0)
+		var is_baby  = card.get("is_baby", false) or c_name in baby_names
+
+		# ── Filtro de tipo del gym ──
+		if is_gym_mode:
+			if c_type == "POKEMON" and c_elem != gym_type and c_elem != "COLORLESS":
+				continue
+			if c_type == "ENERGY" and "SPECIAL" in c_rarity:
+				continue
+
+		if search_text != "" and not search_text in c_name: continue
+
+		if sel_cat != "Categoría: Todas":
+			if sel_cat == "Básico"     and (c_type != "POKEMON" or int(c_stage) != 0 or is_baby): continue
+			if sel_cat == "Bebé"       and (c_type != "POKEMON" or not is_baby):                  continue
+			if sel_cat == "Fase 1"     and (c_type != "POKEMON" or int(c_stage) != 1):            continue
+			if sel_cat == "Fase 2"     and (c_type != "POKEMON" or int(c_stage) != 2):            continue
+			if sel_cat == "Entrenador" and c_type != "TRAINER":                                   continue
+			if sel_cat == "Energía"    and c_type != "ENERGY":                                    continue
+
+		if not is_gym_mode and sel_elem != "Elemento: Todos":
+			var target = {"Fuego":"FIRE","Agua":"WATER","Planta":"GRASS","Rayo":"LIGHTNING","Psíquico":"PSYCHIC","Lucha":"FIGHTING","Incoloro":"COLORLESS","Siniestro":"DARKNESS","Metálico":"METAL"}.get(sel_elem,"")
+			if c_elem != target: continue
+
+		if sel_rarity != "Rareza: Todas":
+			if sel_rarity == "Común / Infrecuente" and c_rarity not in ["COMMON","UNCOMMON"]: continue
+			if sel_rarity == "Rara / Holo"         and c_rarity not in ["RARE","RARE_HOLO"]:  continue
+			if sel_rarity == "Ultra Rara"          and c_rarity != "ULTRA_RARE":              continue
+
+		var qty       : int
+		var available : int
+		var in_deck   = menu.current_deck.count(id)
+
+		if is_gym_mode:
+			qty       = 99 if c_type == "ENERGY" else 4
+			available = max(0, qty - in_deck)
+		else:
+			qty       = PlayerData.get_card_count(id) if PlayerData.is_logged_in else -1
+			available = (qty - in_deck) if PlayerData.is_logged_in else -1
+
+		var show_card = (available > 0) if is_gym_mode else (qty > 0 or not PlayerData.is_logged_in)
+		if show_card:
+			grid.add_child(make(id, container, menu, qty, available))
 
 static func _get_species_count(card_id: String, menu) -> int:
 	var data         = CardDatabase.get_card(card_id)
@@ -204,8 +276,6 @@ static func _refresh_deck_list(container: Control, deck_panel: Control, header: 
 	var vbox = UITheme.find_node(deck_panel, "DeckVBox")
 	if not vbox: return
 	for c in vbox.get_children(): c.queue_free()
-	
-	_update_count_label(container, header, menu)
 
 	var counts:      Dictionary = {}
 	var types_count: Dictionary = {}
@@ -221,12 +291,9 @@ static func _refresh_deck_list(container: Control, deck_panel: Control, header: 
 		var db = CardDatabase.get_card(b)
 		var ta = da.get("type", "").to_upper()
 		var tb = db.get("type", "").to_upper()
-		
 		var wa = 1 if ta == "POKEMON" else (2 if ta == "TRAINER" else (3 if ta == "ENERGY" else 4))
 		var wb = 1 if tb == "POKEMON" else (2 if tb == "TRAINER" else (3 if tb == "ENERGY" else 4))
-		
-		if wa != wb:
-			return wa < wb
+		if wa != wb: return wa < wb
 		return da.get("name", a) < db.get("name", b)
 	)
 
@@ -248,7 +315,6 @@ static func _refresh_deck_list(container: Control, deck_panel: Control, header: 
 		row.add_theme_constant_override("separation", 8)
 		row.custom_minimum_size = Vector2(0, 30)
 		panel.add_child(row)
-
 		row.add_child(_spacer(2))
 
 		var icon_tex = UITheme.type_icon(type_str)
@@ -294,7 +360,7 @@ static func _refresh_deck_list(container: Control, deck_panel: Control, header: 
 		rm.pressed.connect(func():
 			menu.current_deck.erase(id)
 			_refresh_deck_list(container, deck_panel, header, menu)
-			_refresh_collection_grid_badges(container, menu)
+			_refresh_collection_grid(container, menu)
 		)
 		row.add_child(rm)
 
@@ -307,6 +373,8 @@ static func _refresh_deck_list(container: Control, deck_panel: Control, header: 
 		panel.mouse_exited.connect(func():
 			panel.add_theme_stylebox_override("panel", st_panel)
 		)
+
+	_update_count_label(container, header, menu)
 
 static func _has_basic_pokemon(deck: Array) -> bool:
 	var baby_names = ["pichu", "cleffa", "igglybuff", "smoochum", "tyrogue", "elekid", "magby"]
@@ -324,24 +392,67 @@ static func _has_basic_pokemon(deck: Array) -> bool:
 static func _update_count_label(container: Control, header: Control, menu) -> void:
 	var lbl = UITheme.find_node(header, "CountLbl") as Label
 	var current_size = menu.current_deck.size()
-	
+
 	if lbl:
 		lbl.text = str(current_size) + " / 60 Cartas"
 		lbl.add_theme_color_override("font_color",
 			menu.COLOR_GREEN if current_size == 60 else menu.COLOR_TEXT_DIM)
 
+	# ── Tier badge ──────────────────────────────────────────────
+	const TIER_ORDER_ARR = ["C", "B", "A", "S", "SS"]
+	const TIER_COLORS = {
+		"SS": Color(1.0,  0.85, 0.1),
+		"S":  Color(0.9,  0.5,  0.1),
+		"A":  Color(0.4,  0.8,  0.3),
+		"B":  Color(0.3,  0.6,  1.0),
+		"C":  Color(0.6,  0.6,  0.6),
+	}
+	var tier_lbl     = UITheme.find_node(header, "TierLbl") as Label
+	var tier_too_high : bool = false
+
+	if tier_lbl:
+		if current_size > 0:
+			var deck_tier  : String = CardDatabase.calculate_deck_tier(menu.current_deck)
+			var tier_color : Color  = TIER_COLORS.get(deck_tier, Color(0.6, 0.6, 0.6))
+			var is_gym_mode = menu.get_meta("deck_mode", "normal") == "gym"
+			var slot_tier   = menu.get_meta("gym_tier_editing", "") as String
+			if is_gym_mode and slot_tier != "":
+				var deck_idx = TIER_ORDER_ARR.find(deck_tier)
+				var slot_idx = TIER_ORDER_ARR.find(slot_tier)
+				if deck_idx > slot_idx:
+					tier_too_high = true
+					tier_lbl.text = "⚠️ TIER " + deck_tier + " — excede slot " + slot_tier
+					tier_lbl.add_theme_color_override("font_color", Color(1.0, 0.3, 0.3))
+				else:
+					tier_lbl.text = "⬡ TIER  " + deck_tier
+					tier_lbl.add_theme_color_override("font_color", tier_color)
+			else:
+				tier_lbl.text = "⬡ TIER  " + deck_tier
+				tier_lbl.add_theme_color_override("font_color", tier_color)
+		else:
+			tier_lbl.text = ""
+
+	# ── Botón guardar ────────────────────────────────────────────
 	var save_btn = UITheme.find_node(container, "SaveDeckBtn") as Button
 	if save_btn:
-		if current_size == 60:
+		if tier_too_high:
+			save_btn.text     = "❌ Mazo demasiado poderoso para este slot"
+			save_btn.disabled = true
+		elif current_size == 60:
 			if _has_basic_pokemon(menu.current_deck):
-				save_btn.text = "💾 Guardar Mazo al Servidor (60/60)"
+				var dest = "Gimnasio" if menu.get_meta("deck_mode", "normal") == "gym" else "Servidor"
+				save_btn.text     = "💾 Guardar Mazo en " + dest
 				save_btn.disabled = false
 			else:
-				save_btn.text = "❌ Falta al menos 1 Pokémon Básico"
+				save_btn.text     = "❌ Falta al menos 1 Pokémon Básico"
 				save_btn.disabled = true
 		else:
-			save_btn.text = "Faltan cartas (" + str(current_size) + "/60)"
+			save_btn.text     = "Faltan cartas (" + str(current_size) + "/60)"
 			save_btn.disabled = true
+
+	# Limpiar error anterior al modificar el deck
+	var err_lbl = UITheme.find_node(container, "SaveErrorLbl") as Label
+	if err_lbl: err_lbl.visible = false
 
 static func _spacer(w: int) -> Control:
 	var s = Control.new()

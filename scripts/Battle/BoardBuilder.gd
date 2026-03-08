@@ -21,7 +21,7 @@ const HAND_H    = 180
 
 # ============================================================
 # 🚨 MODO DE PRUEBA 🚨
-const MODO_PRUEBA = true
+const MODO_PRUEBA = false
 
 static func build_all(parent: Node2D, vp_size: Vector2) -> Dictionary:
 	var W = vp_size.x

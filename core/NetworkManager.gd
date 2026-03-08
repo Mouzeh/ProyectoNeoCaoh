@@ -12,17 +12,37 @@ signal opponent_disconnected
 signal chat_received(player_id, text)
 signal room_list_updated(rooms)
 signal room_created(room_id)
-signal room_left 
+signal room_left
+
+# ─── SEÑALES GYM PvP ────────────────────────────────────────
+signal incoming_gym_challenge(payload)
+signal gym_challenge_rejected(message)
+signal gym_battle_started(room_id)
+
+# ─── SEÑALES ESPECTADOR ──────────────────────────────────────
+signal spectate_ok(room_id, state, count)
+signal spectate_ended(room_id)
+signal spectate_state_updated(state, log)
+signal spectate_game_start(room_id, mode)
+signal spectate_game_over(winner)
+signal spectator_chat_received(room_id, user_id, username, text)
+signal spectator_joined(room_id, user_id, count)
+signal spectator_left(room_id, user_id, count)
+
+# ─── CONSTANTES DE MESA ──────────────────────────────────────
+const ROOM_MODE_CASUAL  = "casual"
+const ROOM_MODE_RANKING = "ranking"
+const ROOM_MODE_WAGER   = "wager"
+
+const TIER_ACCESS_ALL   = "all"
+const TIER_ACCESS_EQUAL = "equal"
+const TIER_ACCESS_DOWN  = "down"
 
 # ─── CONFIGURACIÓN ──────────────────────────────────────────
-
-# Descomenta estas dos líneas para jugar en tu PC (Local)
 # const SERVER_URL = "ws://localhost:3000"
 # const BASE_URL   = "http://localhost:3000"
-
-# Descomenta estas dos líneas para jugar en la nube (Fly.io)
-const SERVER_URL = "wss://caoh-tcg.fly.dev"
-const BASE_URL   = "https://caoh-tcg.fly.dev"
+const SERVER_URL      = "wss://caoh-tcg.fly.dev"
+const BASE_URL        = "https://caoh-tcg.fly.dev"
 const RECONNECT_DELAY = 3.0
 const PING_INTERVAL   = 20.0
 const MAX_DECK_SIZE   = 60
@@ -37,7 +57,8 @@ var should_reconnect:   bool          = false
 var ping_timer:         float         = 0.0
 var pending_game_state: Dictionary    = {}
 
-var _was_in_battle: bool = false
+var _was_in_battle:       bool   = false
+var _spectating_room_id:  String = ""
 
 # ============================================================
 func _ready() -> void:
@@ -121,16 +142,61 @@ func authenticate(pid: String, tok: String = "") -> void:
 func get_room_list() -> void:
 	_send({"type": "GET_ROOM_LIST", "payload": {}})
 
-func create_room(deck: Array) -> void:
+## Crear sala con todas las opciones de mesa.
+## options puede contener:
+##   mode        (casual | ranking | wager)
+##   deck_tier   (C | B | A | S | SS)
+##   tier_access (all | equal | down)
+##   name        (string)
+##   password    (string, vacío = sin contraseña)
+##   wager       ({ type: "coins"|"gems"|"packs", amount: int })
+func create_room(deck: Array, options: Dictionary = {}) -> void:
 	if not _validate_deck(deck, "crear mesa"): return
-	_send({"type": "CREATE_ROOM", "payload": {"deck": deck}})
+	_send({
+		"type": "CREATE_ROOM",
+		"payload": {
+			"deck":        deck,
+			"mode":        options.get("mode",        ROOM_MODE_CASUAL),
+			"deck_tier":   options.get("deck_tier",   "C"),
+			"tier_access": options.get("tier_access", TIER_ACCESS_ALL),
+			"name":        options.get("name",        ""),
+			"password":    options.get("password",    ""),
+			"wager":       options.get("wager",       null),
+		}
+	})
 
-func join_room(room_id: String, deck: Array) -> void:
+## Unirse a una sala existente.
+## deck_tier: tier del deck del jugador (para validación de acceso)
+## password:  necesaria si la sala tiene contraseña
+func join_room(room_id: String, deck: Array, deck_tier: String = "C", password: String = "") -> void:
 	if not _validate_deck(deck, "unirse a mesa"): return
-	_send({"type": "JOIN_ROOM", "payload": {"room_id": room_id, "deck": deck}})
+	_send({
+		"type": "JOIN_ROOM",
+		"payload": {
+			"room_id":   room_id,
+			"deck":      deck,
+			"deck_tier": deck_tier,
+			"password":  password,
+		}
+	})
 
 func leave_room() -> void:
 	_send({"type": "LEAVE_ROOM", "payload": {}})
+
+# ─── ESPECTADOR ─────────────────────────────────────────────
+func spectate_room(room_id: String) -> void:
+	_spectating_room_id = room_id
+	_send({"type": "SPECTATE_JOIN", "payload": {"room_id": room_id}})
+
+func stop_spectating(room_id: String = "") -> void:
+	var rid = room_id if room_id != "" else _spectating_room_id
+	if rid != "":
+		_send({"type": "SPECTATE_LEAVE", "payload": {"room_id": rid}})
+	_spectating_room_id = ""
+
+func send_spectator_chat(room_id: String, text: String) -> void:
+	if text.strip_edges() == "": return
+	_send({"type": "SPECTATOR_CHAT", "payload": {"room_id": room_id, "text": text}})
 
 # ─── CHAT (en partida) ──────────────────────────────────────
 func send_chat(text: String) -> void:
@@ -195,56 +261,141 @@ func _handle_message(text: String) -> void:
 
 	var type = msg.get("type", "")
 
-	# ── Mensajes de chat global → redirigir al MainMenu ──
+	# ── Chat global → MainMenu ───────────────────────────────
 	if type.begins_with("CHAT_") or type == "BANNED":
 		var main_menu = get_tree().get_first_node_in_group("main_menu")
 		if main_menu and main_menu.has_method("handle_ws_message"):
 			main_menu.handle_ws_message(msg)
 		return
 
-	# ── Lógica de juego ──────────────────────────────────
+	# ── Lógica de juego y salas ──────────────────────────────
 	match type:
 		"AUTH_OK":
 			emit_signal("auth_ok", msg.get("player_id", ""))
+
 		"ROOM_LIST_UPDATE":
 			emit_signal("room_list_updated", msg.get("rooms", []))
+
 		"ROOM_CREATED":
 			emit_signal("room_created", msg.get("room_id", ""))
+
 		"ROOM_LEFT":
 			_was_in_battle = false
 			emit_signal("room_left")
+
 		"GAME_START":
 			print("[NetworkManager] GAME_START received")
 			_was_in_battle     = true
 			pending_game_state = msg.get("state", {})
 			emit_signal("game_started", pending_game_state)
+
 		"STATE_UPDATE":
 			emit_signal("state_updated", msg.get("state", {}), msg.get("log", []))
+
 		"GAME_OVER":
 			_was_in_battle = false
 			emit_signal("game_over", msg.get("winner", ""), msg.get("you_won", false))
+
 		"OPPONENT_DISCONNECTED":
 			emit_signal("opponent_disconnected")
+
 		"ERROR":
 			push_warning("[NetworkManager] Error del servidor: " + str(msg.get("message", "")))
 			emit_signal("error_received", msg.get("message", "Error desconocido"))
+
 		"PONG":
 			pass
+
 		"CHAT":
 			emit_signal("chat_received", msg.get("player_id", "Rival"), msg.get("text", ""))
 
-		# ── Actualización de datos del jugador en tiempo real ──
+		# ── Datos del jugador en tiempo real ──────────────────
 		"PLAYER_DATA_UPDATE":
 			var payload = msg.get("payload", {})
 			if payload.has("coins"):             PlayerData.coins             = payload["coins"]
 			if payload.has("gems"):              PlayerData.gems              = payload["gems"]
 			if payload.has("battle_pass_level"): PlayerData.battle_pass_level = payload["battle_pass_level"]
-			if payload.has("battle_pass_xp"):    PlayerData.battle_pass_xp   = payload["battle_pass_xp"]
+			if payload.has("battle_pass_xp"):    PlayerData.battle_pass_xp    = payload["battle_pass_xp"]
 			if payload.has("has_premium_pass"):  PlayerData.has_premium_pass  = payload["has_premium_pass"]
-			# Notificar al MainMenu para que refresque la UI
 			var main_menu = get_tree().get_first_node_in_group("main_menu")
 			if main_menu and main_menu.has_method("handle_ws_message"):
 				main_menu.handle_ws_message(msg)
+
+		# ── GYM PvP ───────────────────────────────────────────
+		"INCOMING_GYM_CHALLENGE":
+			print("[NetworkManager] ¡Reto de gimnasio entrante!")
+			emit_signal("incoming_gym_challenge", msg)
+			var current_scene = get_tree().current_scene
+			if current_scene:
+				GymChallengeAlert.show(current_scene, msg)
+
+		"GYM_CHALLENGE_REJECTED":
+			var reject_msg = msg.get("message", "Reto rechazado")
+			emit_signal("gym_challenge_rejected", reject_msg)
+			emit_signal("error_received", reject_msg)
+
+		"GYM_BATTLE_START":
+			var room_id = msg.get("room_id", "")
+			print("[NetworkManager] Batalla de Gym iniciada. Sala: ", room_id)
+			emit_signal("gym_battle_started", room_id)
+			var main_menu = get_tree().get_first_node_in_group("main_menu")
+			if main_menu and main_menu.has_method("_show_screen"):
+				main_menu._show_screen(main_menu.Screen.BATTLE)
+
+		# ── ESPECTADOR ────────────────────────────────────────
+		"SPECTATE_OK":
+			var room_id = msg.get("room_id", "")
+			var state   = msg.get("state",   null)
+			var count   = msg.get("count",   0)
+			_spectating_room_id = room_id
+			emit_signal("spectate_ok", room_id, state, count)
+
+		"SPECTATE_ENDED":
+			var room_id = msg.get("room_id", "")
+			if room_id == _spectating_room_id:
+				_spectating_room_id = ""
+			emit_signal("spectate_ended", room_id)
+
+		"SPECTATE_STATE_UPDATE":
+			emit_signal("spectate_state_updated", msg.get("state", {}), msg.get("log", []))
+
+		"SPECTATE_GAME_START":
+			emit_signal("spectate_game_start",
+				msg.get("room_id", ""),
+				msg.get("mode", "casual")
+			)
+
+		"SPECTATE_GAME_OVER":
+			emit_signal("spectate_game_over", msg.get("winner", ""))
+
+		"SPECTATOR_CHAT":
+			emit_signal("spectator_chat_received",
+				msg.get("room_id", ""),
+				msg.get("user_id", ""),
+				msg.get("username", "?"),
+				msg.get("text", "")
+			)
+
+		"SPECTATOR_JOINED":
+			emit_signal("spectator_joined",
+				msg.get("room_id", ""),
+				msg.get("user_id", ""),
+				msg.get("count",   0)
+			)
+
+		"SPECTATOR_LEFT":
+			emit_signal("spectator_left",
+				msg.get("room_id", ""),
+				msg.get("user_id", ""),
+				msg.get("count",   0)
+			)
+
+		# ── También retransmitir eventos de espectador al MainMenu ──
+		"GAME_STARTED":
+			emit_signal("spectate_game_start",
+				msg.get("room_id", ""),
+				msg.get("mode",    "casual")
+			)
 
 		_:
 			push_warning("[NetworkManager] Tipo desconocido: " + type)

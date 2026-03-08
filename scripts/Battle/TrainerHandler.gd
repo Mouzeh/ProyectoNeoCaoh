@@ -24,6 +24,7 @@ const COLOR_TEXT     := Color(0.92, 0.88, 0.75)
 const CARD_W         := 130
 const CARD_H         := 182
 
+
 # ============================================================
 # API PÚBLICA
 # ============================================================
@@ -87,15 +88,15 @@ func on_zone_clicked(zone: String, index: int) -> void:
 					_send()
 
 func on_discard_selection_confirmed(selected_ids: Array) -> void:
-	if _card_id in ["super_rod", "pokemon_march"]:
-		_targets["selectedCardId"]  = selected_ids[0] if selected_ids.size() > 0 else ""
+	if _card_id == "super_rod":
+		_targets["selectedCardId"] = selected_ids[0] if selected_ids.size() > 0 else ""
 	else:
 		_targets["selectedCardIds"] = selected_ids
-	_close_discard_selector()
+	_close_selection_popup()
 	_send()
 
 func on_discard_selection_cancelled() -> void:
-	_close_discard_selector()
+	_close_selection_popup()
 	cancel()
 
 func cancel() -> void:
@@ -158,9 +159,10 @@ func _dispatch(card_id: String) -> void:
 			emit_signal("trainer_message", "Elige 1 Pokémon del descarte...")
 			_show_discard_selector(false, 1)
 
+		# pokemon_march: enviamos directamente, el servidor cambia la fase
+		# y vuelve con pokemon_march_options para abrir el popup del mazo
 		"pokemon_march":
-			emit_signal("trainer_message", "Elige el Pokémon Básico del descarte...")
-			_show_discard_selector(true, 1)
+			_send()
 
 		"double_gust":
 			emit_signal("trainer_message", "Double Gust: elige tu Pokémon de banco...")
@@ -207,13 +209,198 @@ func _clear_highlights() -> void:
 
 
 # ============================================================
-# POPUP DE SELECCIÓN DE DESCARTE — con imágenes reales
+# POKÉMON MARCH — popup del MAZO (llamado desde Battleboard)
+# ============================================================
+
+# Battleboard llama esto cada vez que llega un STATE_UPDATE con
+# pokemon_march_options != null. El guard verifica que no haya
+# ya un popup de march abierto para no duplicarlo.
+func handle_pokemon_march_options(options: Dictionary) -> void:
+	# Solo bloquear si hay un popup de march activo ahora mismo.
+	# Usar .name para distinguirlo del popup de descarte.
+	if _selection_popup != null \
+			and is_instance_valid(_selection_popup) \
+			and _selection_popup.name == "PokemonMarchSelector":
+		return
+
+	var available:  Array = options.get("available", [])
+	var bench_full: bool  = options.get("benchFull", false)
+
+	if bench_full:
+		# Banco lleno — resolvemos automáticamente sin popup
+		NetworkManager.send_action("RESOLVE_POKEMON_MARCH", {"selectedCardId": ""})
+		emit_signal("trainer_message", "Tu banco está lleno, Pokémon March sin efecto para ti")
+		return
+
+	_show_deck_march_popup(available)
+
+
+func _show_deck_march_popup(available: Array) -> void:
+	if not board: return
+	var vp: Vector2 = board.get_viewport().get_visible_rect().size
+	var popup: Control = _build_deck_march_popup(vp, available)
+	_selection_popup = popup
+	board.add_child(popup)
+
+
+func _build_deck_march_popup(vp: Vector2, available: Array) -> Control:
+	var popup = Control.new()
+	popup.name = "PokemonMarchSelector"
+	popup.set_anchors_preset(Control.PRESET_FULL_RECT)
+	popup.z_index = 200
+	#Z Index del pop up de pokemon march
+
+	# Fondo oscuro semitransparente
+	var dim = ColorRect.new()
+	dim.set_anchors_preset(Control.PRESET_FULL_RECT)
+	dim.color = Color(0, 0, 0, 0.82)
+	popup.add_child(dim)
+
+	# Panel central
+	var panel_w: float = min(700.0, vp.x - 60)
+	var panel_h: float = min(460.0, vp.y - 80)
+	var panel = Panel.new()
+	panel.position = Vector2((vp.x - panel_w) / 2.0, (vp.y - panel_h) / 2.0)
+	panel.size     = Vector2(panel_w, panel_h)
+
+	var pstyle = StyleBoxFlat.new()
+	pstyle.bg_color                  = Color(0.06, 0.10, 0.08, 0.98)
+	pstyle.border_color              = COLOR_GOLD
+	pstyle.border_width_left         = 2; pstyle.border_width_right  = 2
+	pstyle.border_width_top          = 2; pstyle.border_width_bottom = 2
+	pstyle.corner_radius_top_left    = 14; pstyle.corner_radius_top_right    = 14
+	pstyle.corner_radius_bottom_left = 14; pstyle.corner_radius_bottom_right = 14
+	panel.add_theme_stylebox_override("panel", pstyle)
+	popup.add_child(panel)
+
+	# Título
+	var title_lbl = Label.new()
+	title_lbl.position = Vector2(16, 12)
+	title_lbl.size     = Vector2(panel_w - 32, 30)
+	title_lbl.horizontal_alignment = HORIZONTAL_ALIGNMENT_CENTER
+	title_lbl.add_theme_font_size_override("font_size", 15)
+	title_lbl.add_theme_color_override("font_color", COLOR_GOLD)
+	panel.add_child(title_lbl)
+
+	# Botón "saltar" — siempre visible
+	var skip_btn = _make_button("↩  No poner nada", "SKIP")
+	skip_btn.position = Vector2(panel_w / 2.0 - 80, panel_h - 48.0)
+	skip_btn.size     = Vector2(160, 32)
+	skip_btn.pressed.connect(func():
+		_close_selection_popup()
+		NetworkManager.send_action("RESOLVE_POKEMON_MARCH", {"selectedCardId": ""})
+		emit_signal("trainer_message", "Pokémon March: decidiste no poner nada")
+	)
+	panel.add_child(skip_btn)
+
+	# ── Sin básicos disponibles ──────────────────────────────
+	if available.is_empty():
+		title_lbl.text = "Pokémon March — No hay Básicos en tu mazo"
+
+		var empty_lbl = Label.new()
+		empty_lbl.text = "No tienes Pokémon Básicos en el mazo"
+		empty_lbl.position = Vector2(0, panel_h / 2.0 - 20)
+		empty_lbl.size     = Vector2(panel_w, 30)
+		empty_lbl.horizontal_alignment = HORIZONTAL_ALIGNMENT_CENTER
+		empty_lbl.add_theme_color_override("font_color", COLOR_TEXT)
+		empty_lbl.add_theme_font_size_override("font_size", 13)
+		panel.add_child(empty_lbl)
+
+		_animate_panel_in(panel)
+		return popup
+
+	# ── Con básicos disponibles ─────────────────────────────
+	title_lbl.text = "Pokémon March — Elige 1 Básico de tu mazo (o salta)"
+
+	var scroll = ScrollContainer.new()
+	scroll.position = Vector2(12, 50)
+	scroll.size     = Vector2(panel_w - 24, panel_h - 110)
+	panel.add_child(scroll)
+
+	var flow = HFlowContainer.new()
+	flow.size_flags_horizontal = Control.SIZE_EXPAND_FILL
+	flow.add_theme_constant_override("h_separation", 12)
+	flow.add_theme_constant_override("v_separation", 12)
+	scroll.add_child(flow)
+
+	var card_scale := 0.65
+	var cw         := int(CARD_W * card_scale)
+	var ch         := int(CARD_H * card_scale)
+
+	for cid in available:
+		var cdata:     Dictionary = CardDatabase.get_card(cid)
+		var cid_local: String     = str(cid)
+
+		var slot = Control.new()
+		slot.custom_minimum_size = Vector2(cw, ch + 20)
+		flow.add_child(slot)
+
+		var slot_bg    = Panel.new()
+		slot_bg.set_anchors_preset(Control.PRESET_FULL_RECT)
+		var slot_style = StyleBoxFlat.new()
+		slot_style.bg_color                  = Color(0.10, 0.16, 0.12, 0.9)
+		slot_style.border_color              = COLOR_GOLD_DIM
+		slot_style.border_width_left         = 1; slot_style.border_width_right  = 1
+		slot_style.border_width_top          = 1; slot_style.border_width_bottom = 1
+		slot_style.corner_radius_top_left    = 6; slot_style.corner_radius_top_right    = 6
+		slot_style.corner_radius_bottom_left = 6; slot_style.corner_radius_bottom_right = 6
+		slot_bg.add_theme_stylebox_override("panel", slot_style)
+		slot.add_child(slot_bg)
+
+		var card_inst = CardDatabase.create_card_instance(cid_local)
+		card_inst.scale        = Vector2(card_scale, card_scale)
+		card_inst.is_draggable = false
+		card_inst.mouse_filter = Control.MOUSE_FILTER_IGNORE
+		card_inst.position     = Vector2.ZERO
+		slot.add_child(card_inst)
+
+		var name_lbl = Label.new()
+		name_lbl.text     = cdata.get("name", cid_local)
+		name_lbl.position = Vector2(0, ch + 2)
+		name_lbl.size     = Vector2(cw, 16)
+		name_lbl.horizontal_alignment = HORIZONTAL_ALIGNMENT_CENTER
+		name_lbl.add_theme_font_size_override("font_size", 8)
+		name_lbl.add_theme_color_override("font_color", COLOR_TEXT)
+		slot.add_child(name_lbl)
+
+		var btn = Button.new()
+		btn.set_anchors_preset(Control.PRESET_FULL_RECT)
+		btn.flat = true
+		btn.mouse_default_cursor_shape = Control.CURSOR_POINTING_HAND
+
+		var hover_s = StyleBoxFlat.new()
+		hover_s.bg_color                  = Color(1, 1, 1, 0.14)
+		hover_s.corner_radius_top_left    = 6; hover_s.corner_radius_top_right    = 6
+		hover_s.corner_radius_bottom_left = 6; hover_s.corner_radius_bottom_right = 6
+		btn.add_theme_stylebox_override("hover", hover_s)
+
+		btn.pressed.connect(func():
+			_close_selection_popup()
+			NetworkManager.send_action("RESOLVE_POKEMON_MARCH", {"selectedCardId": cid_local})
+			emit_signal("trainer_message",
+				"Pokémon March: poniendo %s en el banco..." % cdata.get("name", cid_local))
+		)
+		btn.mouse_entered.connect(func():
+			slot.create_tween().tween_property(slot, "scale", Vector2(1.06, 1.06), 0.08)
+		)
+		btn.mouse_exited.connect(func():
+			slot.create_tween().tween_property(slot, "scale", Vector2(1.0, 1.0), 0.08)
+		)
+		slot.add_child(btn)
+
+	_animate_panel_in(panel)
+	return popup
+
+
+# ============================================================
+# POPUP DE SELECCIÓN DE DESCARTE
+# (usado por time_capsule y super_rod)
 # ============================================================
 func _show_discard_selector(only_basic_pokemon: bool, max_count: int = 99) -> void:
 	if not board: return
 
-	var my_discard: Array  = board.current_state.get("my", {}).get("discard", [])
-	var candidates: Array  = _build_discard_candidates(my_discard, only_basic_pokemon)
+	var my_discard: Array = board.current_state.get("my", {}).get("discard", [])
+	var candidates: Array = _build_discard_candidates(my_discard, only_basic_pokemon)
 
 	if candidates.is_empty():
 		emit_signal("trainer_message", "⚠ No hay cartas válidas en el descarte")
@@ -249,13 +436,11 @@ func _build_discard_popup(vp: Vector2, candidates: Array, max_count: int) -> Con
 	popup.set_anchors_preset(Control.PRESET_FULL_RECT)
 	popup.z_index = 100
 
-	# Fondo oscuro
 	var dim = ColorRect.new()
 	dim.set_anchors_preset(Control.PRESET_FULL_RECT)
 	dim.color = Color(0, 0, 0, 0.82)
 	popup.add_child(dim)
 
-	# Panel central
 	var panel_w: float = min(700.0, vp.x - 60)
 	var panel_h: float = min(460.0, vp.y - 80)
 	var panel = Panel.new()
@@ -272,7 +457,6 @@ func _build_discard_popup(vp: Vector2, candidates: Array, max_count: int) -> Con
 	panel.add_theme_stylebox_override("panel", pstyle)
 	popup.add_child(panel)
 
-	# Título
 	var title_lbl = Label.new()
 	title_lbl.text = "🗑  Elige %s del descarte" % \
 		("1 carta" if max_count == 1 else "hasta %d cartas" % max_count)
@@ -283,7 +467,6 @@ func _build_discard_popup(vp: Vector2, candidates: Array, max_count: int) -> Con
 	title_lbl.add_theme_color_override("font_color", COLOR_GOLD)
 	panel.add_child(title_lbl)
 
-	# Scroll con cartas
 	var scroll = ScrollContainer.new()
 	scroll.position = Vector2(12, 50)
 	scroll.size     = Vector2(panel_w - 24, panel_h - 110)
@@ -302,16 +485,14 @@ func _build_discard_popup(vp: Vector2, candidates: Array, max_count: int) -> Con
 	var selected_ids: Array[String] = []
 
 	for cid in candidates:
-		var cdata:      Dictionary = CardDatabase.get_card(cid)
-		var cid_local:  String     = str(cid)
+		var cdata:     Dictionary = CardDatabase.get_card(cid)
+		var cid_local: String     = str(cid)
 
-		# Slot
 		var slot = Control.new()
 		slot.custom_minimum_size = Vector2(cw, ch + 20)
 		flow.add_child(slot)
 
-		# Fondo del slot
-		var slot_bg = Panel.new()
+		var slot_bg    = Panel.new()
 		slot_bg.set_anchors_preset(Control.PRESET_FULL_RECT)
 		var slot_style = StyleBoxFlat.new()
 		slot_style.bg_color                  = Color(0.10, 0.16, 0.12, 0.9)
@@ -323,7 +504,6 @@ func _build_discard_popup(vp: Vector2, candidates: Array, max_count: int) -> Con
 		slot_bg.add_theme_stylebox_override("panel", slot_style)
 		slot.add_child(slot_bg)
 
-		# Imagen real de la carta
 		var card_inst = CardDatabase.create_card_instance(cid_local)
 		card_inst.scale        = Vector2(card_scale, card_scale)
 		card_inst.is_draggable = false
@@ -331,9 +511,8 @@ func _build_discard_popup(vp: Vector2, candidates: Array, max_count: int) -> Con
 		card_inst.mouse_filter = Control.MOUSE_FILTER_IGNORE
 		slot.add_child(card_inst)
 
-		# Nombre debajo
 		var name_lbl = Label.new()
-		name_lbl.text = cdata.get("name", cid_local)
+		name_lbl.text     = cdata.get("name", cid_local)
 		name_lbl.position = Vector2(0, ch + 2)
 		name_lbl.size     = Vector2(cw, 16)
 		name_lbl.horizontal_alignment = HORIZONTAL_ALIGNMENT_CENTER
@@ -341,7 +520,6 @@ func _build_discard_popup(vp: Vector2, candidates: Array, max_count: int) -> Con
 		name_lbl.add_theme_color_override("font_color", COLOR_TEXT)
 		slot.add_child(name_lbl)
 
-		# Overlay de selección (checkmark verde)
 		var check_overlay = ColorRect.new()
 		check_overlay.name         = "CheckOverlay"
 		check_overlay.position     = Vector2.ZERO
@@ -362,7 +540,6 @@ func _build_discard_popup(vp: Vector2, candidates: Array, max_count: int) -> Con
 		check_lbl.visible  = false
 		slot.add_child(check_lbl)
 
-		# Botón invisible encima
 		var btn = Button.new()
 		btn.set_anchors_preset(Control.PRESET_FULL_RECT)
 		btn.flat = true
@@ -388,22 +565,17 @@ func _build_discard_popup(vp: Vector2, candidates: Array, max_count: int) -> Con
 				if cl: cl.visible = true
 				slot_style.border_color = Color(0.2, 0.9, 0.4)
 				slot_bg.add_theme_stylebox_override("panel", slot_style)
-
 			if max_count == 1 and selected_ids.size() == 1:
 				on_discard_selection_confirmed(selected_ids)
 		)
-
 		btn.mouse_entered.connect(func():
-			var tw = slot.create_tween()
-			tw.tween_property(slot, "scale", Vector2(1.06, 1.06), 0.08)
+			slot.create_tween().tween_property(slot, "scale", Vector2(1.06, 1.06), 0.08)
 		)
 		btn.mouse_exited.connect(func():
-			var tw = slot.create_tween()
-			tw.tween_property(slot, "scale", Vector2(1.0, 1.0), 0.08)
+			slot.create_tween().tween_property(slot, "scale", Vector2(1.0, 1.0), 0.08)
 		)
 		slot.add_child(btn)
 
-	# Botones de acción
 	var btn_row_y = panel_h - 48.0
 
 	if max_count > 1:
@@ -424,21 +596,26 @@ func _build_discard_popup(vp: Vector2, candidates: Array, max_count: int) -> Con
 	cancel_btn.pressed.connect(func(): on_discard_selection_cancelled())
 	panel.add_child(cancel_btn)
 
-	# Animación de entrada
+	_animate_panel_in(panel)
+	return popup
+
+
+# ============================================================
+# HELPERS COMPARTIDOS DE POPUP
+# ============================================================
+func _close_selection_popup() -> void:
+	if _selection_popup and is_instance_valid(_selection_popup):
+		_selection_popup.queue_free()
+	_selection_popup = null
+
+func _animate_panel_in(panel: Control) -> void:
 	panel.modulate.a = 0.0
 	panel.scale      = Vector2(0.90, 0.90)
 	var tw = panel.create_tween()
 	tw.set_parallel(true)
 	tw.tween_property(panel, "modulate:a", 1.0,         0.18)
-	tw.tween_property(panel, "scale",      Vector2.ONE, 0.20).set_trans(Tween.TRANS_BACK).set_ease(Tween.EASE_OUT)
-
-	return popup
-
-
-func _close_discard_selector() -> void:
-	if _selection_popup:
-		_selection_popup.queue_free()
-		_selection_popup = null
+	tw.tween_property(panel, "scale",      Vector2.ONE, 0.20) \
+		.set_trans(Tween.TRANS_BACK).set_ease(Tween.EASE_OUT)
 
 
 # ============================================================
@@ -455,17 +632,17 @@ func _make_button(label_text: String, _action: String) -> Button:
 	btn.text = label_text
 
 	var style_normal = StyleBoxFlat.new()
-	style_normal.bg_color     = Color(0.12, 0.20, 0.14)
-	style_normal.border_color = COLOR_GOLD_DIM
-	style_normal.border_width_bottom = 1
+	style_normal.bg_color                  = Color(0.12, 0.20, 0.14)
+	style_normal.border_color              = COLOR_GOLD_DIM
+	style_normal.border_width_bottom       = 1
 	style_normal.corner_radius_top_left    = 4; style_normal.corner_radius_top_right    = 4
 	style_normal.corner_radius_bottom_left = 4; style_normal.corner_radius_bottom_right = 4
 	btn.add_theme_stylebox_override("normal", style_normal)
 
 	var style_hover = StyleBoxFlat.new()
-	style_hover.bg_color     = Color(0.20, 0.35, 0.22)
-	style_hover.border_color = COLOR_GOLD
-	style_hover.border_width_bottom = 1
+	style_hover.bg_color                  = Color(0.20, 0.35, 0.22)
+	style_hover.border_color              = COLOR_GOLD
+	style_hover.border_width_bottom       = 1
 	style_hover.corner_radius_top_left    = 4; style_hover.corner_radius_top_right    = 4
 	style_hover.corner_radius_bottom_left = 4; style_hover.corner_radius_bottom_right = 4
 	btn.add_theme_stylebox_override("hover", style_hover)

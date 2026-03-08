@@ -14,6 +14,7 @@ extends Node
 #   • Estadísticas     (role >= 5)
 #   • Anuncios         (role >= 5)
 #   • Slow mode        (role >= 5)
+#   • 🏟️ Gimnasios     (role >= 5)   ← NUEVO
 #   • Log de acciones  (role >= 6)
 # ============================================================
 
@@ -138,6 +139,7 @@ func _build_sidebar(parent: Control, role: int, C) -> Control:
 		tabs.append(["stats",       "📊  Estadísticas"])
 		tabs.append(["announce",    "📢  Anuncios"])
 		tabs.append(["slowmode",    "🐢  Slow mode"])
+		tabs.append(["gyms",        "🏟️  Gimnasios"])  # ← NUEVO
 	if role >= 6:
 		tabs.append(["action_log",  "🗂️  Log de acciones"])
 		tabs.append(["mod_ranking", "🏅  Ranking mods"])
@@ -187,6 +189,7 @@ func _switch_tab(tab_id: String, C) -> void:
 		"stats":      _build_stats_tab(C)
 		"announce":   _build_announce_tab(C)
 		"slowmode":   _build_slowmode_tab(C)
+		"gyms":       _build_gyms_tab(C)  # ← NUEVO
 		"action_log": _build_action_log_tab(C)
 		"mod_ranking":_build_mod_ranking_tab(C)
 
@@ -230,7 +233,7 @@ func _api_post(endpoint: String, body: Dictionary, callback: Callable) -> void:
 	add_child(http)
 	var headers = [
 		"Content-Type: application/json",
-		"Authorization: Bearer " + PlayerData.token
+		"Authorization: Bearer " + NetworkManager.token
 	]
 	http.request(NetworkManager.BASE_URL + endpoint,
 		headers, HTTPClient.METHOD_POST, JSON.stringify(body))
@@ -247,7 +250,7 @@ func _api_post(endpoint: String, body: Dictionary, callback: Callable) -> void:
 func _api_get(endpoint: String, callback: Callable) -> void:
 	var http = HTTPRequest.new()
 	add_child(http)
-	var headers = ["Authorization: Bearer " + PlayerData.token]
+	var headers = ["Authorization: Bearer " + NetworkManager.token]
 	http.request(NetworkManager.BASE_URL + endpoint, headers)
 	http.request_completed.connect(func(result, code, _h, resp_body):
 		var data = {}
@@ -670,14 +673,12 @@ func _build_rewards_tab(C) -> void:
 	form.add_theme_constant_override("v_separation", 12)
 	v.add_child(form)
 
-	# Usuario
 	form.add_child(_form_lbl("Usuario (nombre exacto):"))
 	var user_input = LineEdit.new()
 	user_input.placeholder_text = "Ej: Rudy"
 	user_input.add_theme_stylebox_override("normal", UITheme.input_style(Color(0.15,0.15,0.2)))
 	form.add_child(user_input)
 
-	# Tipo
 	form.add_child(_form_lbl("Tipo:"))
 	var type_opt = OptionButton.new()
 	type_opt.add_item("💎 Gemas",                0)
@@ -687,7 +688,6 @@ func _build_rewards_tab(C) -> void:
 	type_opt.add_item("📦 Sobres",               4)
 	form.add_child(type_opt)
 
-	# Tipo de sobre (oculto por defecto)
 	var pack_lbl = _form_lbl("Tipo de sobre:")
 	form.add_child(pack_lbl)
 	var pack_opt = OptionButton.new()
@@ -696,7 +696,6 @@ func _build_rewards_tab(C) -> void:
 	form.add_child(pack_opt)
 	pack_lbl.hide(); pack_opt.hide()
 
-	# Cantidad
 	var qty_lbl = _form_lbl("Cantidad:")
 	form.add_child(qty_lbl)
 	var qty_input = SpinBox.new()
@@ -711,14 +710,12 @@ func _build_rewards_tab(C) -> void:
 		qty_input.visible = (t != 3)
 	)
 
-	var status_lbl = _status_label(v)
-
-	# ── Botones OTORGAR / QUITAR ──
 	var btn_row = HBoxContainer.new()
 	btn_row.alignment = BoxContainer.ALIGNMENT_CENTER
 	btn_row.add_theme_constant_override("separation", 16)
 	v.add_child(btn_row)
-	v.add_child(status_lbl)
+
+	var status_lbl = _status_label(v)
 
 	var give_btn = _make_button("🎁  Otorgar", Color(0.1, 0.42, 0.15, 0.95))
 	give_btn.custom_minimum_size = Vector2(160, 42)
@@ -730,64 +727,37 @@ func _build_rewards_tab(C) -> void:
 	take_btn.add_theme_font_size_override("font_size", 14)
 	btn_row.add_child(take_btn)
 
-	# ── Lógica compartida ──
 	var _do_send = func(is_take: bool):
 		var target_user = user_input.text.strip_edges()
 		if target_user == "":
 			status_lbl.text = "❌ Ingresa el nombre del usuario."
 			return
-
 		var t         = type_opt.get_item_id(type_opt.selected)
 		var qty       = int(qty_input.value)
 		var type_name = type_opt.get_item_text(type_opt.selected)
 		var pack_name = pack_opt.get_item_text(pack_opt.selected) if t == 4 else ""
-
-		# Texto legible para el diálogo
 		var action_str: String
 		if t == 3:
-			action_str = "%s el Pase Premium a «%s»" % [
-				"quitar" if is_take else "activar", target_user
-			]
+			action_str = "%s el Pase Premium a «%s»" % ["quitar" if is_take else "activar", target_user]
 		elif t == 4:
-			action_str = "%s %d sobre(s) «%s» %s «%s»" % [
-				"quitar" if is_take else "entregar",
-				qty, pack_name,
-				"de" if is_take else "a",
-				target_user
-			]
+			action_str = "%s %d sobre(s) «%s» %s «%s»" % ["quitar" if is_take else "entregar", qty, pack_name, "de" if is_take else "a", target_user]
 		else:
-			action_str = "%s %d %s %s «%s»" % [
-				"quitar" if is_take else "entregar",
-				qty, type_name,
-				"de" if is_take else "a",
-				target_user
-			]
-
-		var body: Dictionary = {
-			"username": target_user,
-			"amount":   -qty if is_take else qty
-		}
+			action_str = "%s %d %s %s «%s»" % ["quitar" if is_take else "entregar", qty, type_name, "de" if is_take else "a", target_user]
+		var body: Dictionary = {"username": target_user, "amount": -qty if is_take else qty}
 		match t:
 			0: body["reward_type"] = "gems"
 			1: body["reward_type"] = "coins"
 			2: body["reward_type"] = "bp_xp"
 			3: body["reward_type"] = "premium_pass"
-			4:
-				body["reward_type"] = "pack"
-				body["pack_id"]     = pack_name
-
-		_show_confirm_dialog(
-			"¿Estás seguro de %s?" % action_str,
-			func():
+			4: body["reward_type"] = "pack"; body["pack_id"] = pack_name
+		_show_confirm_dialog("¿Estás seguro de %s?" % action_str, func():
+			if not is_instance_valid(status_lbl): return
+			status_lbl.text = "Enviando..."
+			_api_post("/api/mod/give-reward", body, func(code, data):
 				if not is_instance_valid(status_lbl): return
-				status_lbl.text = "Enviando..."
-				_api_post("/api/mod/give-reward", body, func(code, data):
-					if not is_instance_valid(status_lbl): return
-					if code == 200:
-						status_lbl.text = "✅ " + data.get("message", "Operación completada.")
-					else:
-						status_lbl.text = "❌ " + data.get("error", "Error.")
-				)
+				if code == 200: status_lbl.text = "✅ " + data.get("message", "Operación completada.")
+				else: status_lbl.text = "❌ " + data.get("error", "Error.")
+			)
 		)
 
 	give_btn.pressed.connect(func(): _do_send.call(false))
@@ -827,30 +797,25 @@ func _build_roles_tab(C) -> void:
 				var row = HBoxContainer.new()
 				row.add_theme_constant_override("separation", 12)
 				result_v.add_child(row)
-
 				var name_lbl = Label.new()
 				name_lbl.text = u.get("username","?") + "  [" + ROLE_NAMES.get(u.get("role",1),"?") + "]"
 				name_lbl.size_flags_horizontal = Control.SIZE_EXPAND_FILL
 				name_lbl.add_theme_font_size_override("font_size", 14)
 				name_lbl.add_theme_color_override("font_color", Color(0.9,0.9,0.9))
 				row.add_child(name_lbl)
-
 				var role_opt = OptionButton.new()
 				var my_role = PlayerData.role if "role" in PlayerData else 5
 				for r in range(0, my_role):
 					role_opt.add_item(ROLE_NAMES.get(r,"?"))
 				role_opt.selected = min(u.get("role",1), my_role - 1)
 				row.add_child(role_opt)
-
 				var apply_btn = _make_button("Aplicar", Color(0.4,0.2,0.0,0.9))
 				var uid = u.get("id","")
 				apply_btn.pressed.connect(func():
 					_api_post("/api/mod/set-role", {"user_id": uid, "new_role": role_opt.selected}, func(code, d):
 						if not is_instance_valid(name_lbl) or not is_instance_valid(status_lbl): return
-						if code == 200:
-							name_lbl.text = u.get("username","?") + "  [" + ROLE_NAMES.get(role_opt.selected,"?") + "] ✅"
-						else:
-							status_lbl.text = "❌ " + d.get("error","Error")
+						if code == 200: name_lbl.text = u.get("username","?") + "  [" + ROLE_NAMES.get(role_opt.selected,"?") + "] ✅"
+						else: status_lbl.text = "❌ " + d.get("error","Error")
 					)
 				)
 				row.add_child(apply_btn)
@@ -878,29 +843,19 @@ func _build_bans_tab(C) -> void:
 	_api_get("/api/mod/bans", func(code, data):
 		if not is_instance_valid(status_lbl) or not is_instance_valid(list): return
 		status_lbl.text = ""
-		if code != 200:
-			status_lbl.text = "Error al cargar"
-			return
+		if code != 200: status_lbl.text = "Error al cargar"; return
 		var bans = data.get("bans", [])
-		if bans.is_empty():
-			status_lbl.text = "✅ No hay usuarios baneados"
-			return
+		if bans.is_empty(): status_lbl.text = "✅ No hay usuarios baneados"; return
 		for b in bans:
 			var row = HBoxContainer.new()
 			row.add_theme_constant_override("separation", 12)
 			list.add_child(row)
-
 			var info = Label.new()
-			info.text = "🔨 %s  —  %s  ·  %s" % [
-				b.get("username","?"),
-				b.get("ban_reason","?"),
-				b.get("banned_at","").substr(0,16)
-			]
+			info.text = "🔨 %s  —  %s  ·  %s" % [b.get("username","?"), b.get("ban_reason","?"), b.get("banned_at","").substr(0,16)]
 			info.size_flags_horizontal = Control.SIZE_EXPAND_FILL
 			info.add_theme_font_size_override("font_size", 13)
 			info.add_theme_color_override("font_color", Color(0.9,0.5,0.5))
 			row.add_child(info)
-
 			var unban_btn = _make_button("✅ Desbanear", Color(0.1,0.4,0.1,0.9))
 			unban_btn.custom_minimum_size = Vector2(100, 28)
 			unban_btn.add_theme_font_size_override("font_size", 11)
@@ -918,30 +873,18 @@ func _build_bans_tab(C) -> void:
 func _build_stats_tab(C) -> void:
 	var v = _content_vbox()
 	_tab_title(v, "📊 Estadísticas del Servidor")
-
 	var status_lbl = _status_label(v)
 	status_lbl.text = "Cargando..."
-
 	_api_get("/api/mod/stats", func(code, data):
 		if not is_instance_valid(status_lbl) or not is_instance_valid(v): return
 		status_lbl.text = ""
-		if code != 200:
-			status_lbl.text = "Error al cargar estadísticas"
-			return
-
+		if code != 200: status_lbl.text = "Error al cargar estadísticas"; return
 		var grid = GridContainer.new()
 		grid.columns = 2
 		grid.add_theme_constant_override("h_separation", 24)
 		grid.add_theme_constant_override("v_separation", 12)
 		v.add_child(grid)
-
-		var sections = {
-			"👥 Usuarios": data.get("users", {}),
-			"💬 Chat":     data.get("chat",  {}),
-			"🎮 Juego":    data.get("game",  {}),
-			"🚩 Reportes": data.get("reports",{}),
-		}
-
+		var sections = {"👥 Usuarios": data.get("users", {}), "💬 Chat": data.get("chat", {}), "🎮 Juego": data.get("game", {}), "🚩 Reportes": data.get("reports",{})}
 		for section_name in sections:
 			var sec_data = sections[section_name]
 			var card = PanelContainer.new()
@@ -955,17 +898,14 @@ func _build_stats_tab(C) -> void:
 			st.content_margin_top = 12; st.content_margin_bottom = 12
 			card.add_theme_stylebox_override("panel", st)
 			grid.add_child(card)
-
 			var cv = VBoxContainer.new()
 			cv.add_theme_constant_override("separation", 6)
 			card.add_child(cv)
-
 			var title_lbl = Label.new()
 			title_lbl.text = section_name
 			title_lbl.add_theme_font_size_override("font_size", 14)
 			title_lbl.add_theme_color_override("font_color", Color(1.0,0.65,0.0))
 			cv.add_child(title_lbl)
-
 			for key in sec_data:
 				var kv = Label.new()
 				kv.text = "%s:  %s" % [key.replace("_"," "), str(sec_data[key])]
@@ -978,45 +918,34 @@ func _build_stats_tab(C) -> void:
 func _build_announce_tab(C) -> void:
 	var v = _content_vbox()
 	_tab_title(v, "📢 Enviar Anuncio al Servidor")
-
 	var input = TextEdit.new()
 	input.placeholder_text = "Escribe el anuncio aquí (máx. 500 caracteres)..."
 	input.custom_minimum_size = Vector2(0, 120)
 	input.add_theme_stylebox_override("normal", UITheme.input_style(Color(0.1,0.1,0.15)))
 	v.add_child(input)
-
-	var status_lbl = _status_label(v)
-
 	var btn = _make_button("📢 Enviar Anuncio a todos", Color(0.5, 0.3, 0.0, 0.9))
 	btn.custom_minimum_size = Vector2(220, 40)
 	btn.size_flags_horizontal = Control.SIZE_SHRINK_CENTER
+	v.add_child(btn)
+	var status_lbl = _status_label(v)
 	btn.pressed.connect(func():
 		var text = input.text.strip_edges()
-		if text.is_empty():
-			status_lbl.text = "❌ Escribe algo primero"
-			return
+		if text.is_empty(): status_lbl.text = "❌ Escribe algo primero"; return
 		_api_post("/api/mod/announce", {"text": text}, func(code, data):
 			if not is_instance_valid(status_lbl) or not is_instance_valid(input): return
-			if code == 200:
-				status_lbl.text = "✅ Anuncio enviado"
-				input.text = ""
-			else:
-				status_lbl.text = "❌ " + data.get("error","Error")
+			if code == 200: status_lbl.text = "✅ Anuncio enviado"; input.text = ""
+			else: status_lbl.text = "❌ " + data.get("error","Error")
 		)
 	)
-	v.add_child(btn)
-	v.add_child(status_lbl)
 
 # ─── PESTAÑA: SLOW MODE ─────────────────────────────────
 func _build_slowmode_tab(C) -> void:
 	var v = _content_vbox()
 	_tab_title(v, "🐢 Slow Mode por Canal")
-
 	for ch in ["global", "vip", "staff"]:
 		var row = HBoxContainer.new()
 		row.add_theme_constant_override("separation", 16)
 		v.add_child(row)
-
 		var ch_lbl = Label.new()
 		ch_lbl.text = "#" + ch
 		ch_lbl.custom_minimum_size = Vector2(80, 0)
@@ -1024,12 +953,9 @@ func _build_slowmode_tab(C) -> void:
 		ch_lbl.add_theme_color_override("font_color", Color(0.8,0.8,0.8))
 		ch_lbl.vertical_alignment = VERTICAL_ALIGNMENT_CENTER
 		row.add_child(ch_lbl)
-
 		var spin = SpinBox.new()
-		spin.min_value = 0; spin.max_value = 120; spin.value = 0
-		spin.suffix = "s"
+		spin.min_value = 0; spin.max_value = 120; spin.value = 0; spin.suffix = "s"
 		row.add_child(spin)
-
 		var apply_btn = _make_button("Aplicar", Color(0.3,0.3,0.5,0.9))
 		apply_btn.custom_minimum_size = Vector2(80, 28)
 		var channel = ch
@@ -1040,17 +966,26 @@ func _build_slowmode_tab(C) -> void:
 			)
 		)
 		row.add_child(apply_btn)
-
 	var note = Label.new()
 	note.text = "0 segundos = desactivado"
 	note.add_theme_font_size_override("font_size", 12)
 	note.add_theme_color_override("font_color", Color(0.5,0.5,0.5))
 	v.add_child(note)
 
-# ─── PESTAÑA: LOG DE ACCIONES ────────────────────────────
-func _build_action_log_tab(C) -> void:
+# ─── PESTAÑA: GIMNASIOS ─────────────────────────────────────
+func _build_gyms_tab(C) -> void:
 	var v = _content_vbox()
-	_tab_title(v, "🗂️ Log Completo de Acciones")
+	_tab_title(v, "🏟️ Gestión de Líderes de Gimnasio")
+
+	var note = Label.new()
+	note.text = "Asigna o remueve líderes y sub-líderes. Un usuario solo puede liderar un gym a la vez."
+	note.autowrap_mode = TextServer.AUTOWRAP_WORD
+	note.add_theme_font_size_override("font_size", 12)
+	note.add_theme_color_override("font_color", Color(0.55, 0.55, 0.55))
+	v.add_child(note)
+
+	var status_lbl = _status_label(v)
+	status_lbl.text = "Cargando gimnasios..."
 
 	var scroll = ScrollContainer.new()
 	scroll.size_flags_vertical = Control.SIZE_EXPAND_FILL
@@ -1059,18 +994,252 @@ func _build_action_log_tab(C) -> void:
 
 	var list = VBoxContainer.new()
 	list.size_flags_horizontal = Control.SIZE_EXPAND_FILL
-	list.add_theme_constant_override("separation", 4)
+	list.add_theme_constant_override("separation", 10)
 	scroll.add_child(list)
 
-	var status_lbl = _status_label(v)
-	status_lbl.text = "Cargando..."
-
-	_api_get("/api/mod/action-log?limit=100", func(code, data):
+	_api_get("/api/mod/gyms", func(code, data):
 		if not is_instance_valid(status_lbl) or not is_instance_valid(list): return
 		status_lbl.text = ""
 		if code != 200:
-			status_lbl.text = "Error al cargar"
+			status_lbl.text = "❌ Error al cargar gimnasios (código %d)" % code
 			return
+		var gyms = data.get("gyms", [])
+		if gyms.is_empty():
+			status_lbl.text = "No se encontraron gimnasios"
+			return
+		for gym in gyms:
+			_add_gym_card(list, gym, status_lbl)
+	)
+
+func _add_gym_card(parent: Control, gym: Dictionary, status_lbl: Label) -> void:
+	var card = PanelContainer.new()
+	var st = StyleBoxFlat.new()
+	st.bg_color = Color(0.08, 0.10, 0.15, 0.95)
+	st.border_color = Color(0.25, 0.35, 0.55, 0.7)
+	st.border_width_left   = 3
+	st.border_width_right  = 1
+	st.border_width_top    = 1
+	st.border_width_bottom = 1
+	st.corner_radius_top_left    = 8; st.corner_radius_top_right    = 8
+	st.corner_radius_bottom_left = 8; st.corner_radius_bottom_right = 8
+	st.content_margin_left   = 16; st.content_margin_right  = 16
+	st.content_margin_top    = 12; st.content_margin_bottom = 12
+	card.add_theme_stylebox_override("panel", st)
+	parent.add_child(card)
+
+	var cv = VBoxContainer.new()
+	cv.add_theme_constant_override("separation", 8)
+	card.add_child(cv)
+
+	var gym_type_colors = {
+		"GRASS": Color(0.3, 0.8, 0.3), "FIRE": Color(1.0, 0.4, 0.1),
+		"WATER": Color(0.2, 0.6, 1.0), "LIGHTNING": Color(1.0, 0.9, 0.1),
+		"PSYCHIC": Color(0.9, 0.3, 0.9), "FIGHTING": Color(0.9, 0.4, 0.2),
+		"DARKNESS": Color(0.5, 0.3, 0.7), "METAL": Color(0.6, 0.7, 0.8),
+		"COLORLESS": Color(0.8, 0.8, 0.8)
+	}
+	var type_color = gym_type_colors.get(gym.get("gym_type", ""), Color(0.7, 0.7, 0.7))
+
+	var title_row = HBoxContainer.new()
+	title_row.add_theme_constant_override("separation", 8)
+	cv.add_child(title_row)
+
+	var gym_name_lbl = Label.new()
+	gym_name_lbl.text = gym.get("name", "?")
+	gym_name_lbl.add_theme_font_size_override("font_size", 15)
+	gym_name_lbl.add_theme_color_override("font_color", type_color)
+	gym_name_lbl.size_flags_horizontal = Control.SIZE_EXPAND_FILL
+	title_row.add_child(gym_name_lbl)
+
+	var type_badge = Label.new()
+	type_badge.text = gym.get("gym_type", "")
+	type_badge.add_theme_font_size_override("font_size", 11)
+	type_badge.add_theme_color_override("font_color", type_color.lerp(Color.WHITE, 0.3))
+	title_row.add_child(type_badge)
+
+	var sep = ColorRect.new()
+	sep.custom_minimum_size = Vector2(0, 1)
+	sep.color = Color(0.2, 0.25, 0.35, 0.5)
+	cv.add_child(sep)
+
+	var gym_id = gym.get("gym_id", "")
+	_add_leader_row(cv, gym_id, "leader",
+		gym.get("leader_user_id", null),
+		gym.get("leader_username", null),
+		status_lbl)
+	_add_leader_row(cv, gym_id, "sub_leader",
+		gym.get("sub_leader_user_id", null),
+		gym.get("sub_leader_username", null),
+		status_lbl)
+
+func _add_leader_row(
+	parent: Control,
+	gym_id: String,
+	role_type: String,
+	current_id,
+	current_name,
+	status_lbl: Label
+) -> void:
+	var role_label = "Líder" if role_type == "leader" else "Sub-Líder"
+	var icon = "👑" if role_type == "leader" else "🥈"
+
+	var row = HBoxContainer.new()
+	row.add_theme_constant_override("separation", 8)
+	parent.add_child(row)
+
+	var role_lbl = Label.new()
+	role_lbl.text = "%s %s:" % [icon, role_label]
+	role_lbl.custom_minimum_size = Vector2(90, 0)
+	role_lbl.add_theme_font_size_override("font_size", 13)
+	role_lbl.add_theme_color_override("font_color", Color(0.7, 0.7, 0.7))
+	role_lbl.vertical_alignment = VERTICAL_ALIGNMENT_CENTER
+	row.add_child(role_lbl)
+
+	var current_lbl = Label.new()
+	if current_name:
+		current_lbl.text = current_name
+		current_lbl.add_theme_color_override("font_color", Color(0.9, 0.85, 0.5))
+	else:
+		current_lbl.text = "— Sin asignar —"
+		current_lbl.add_theme_color_override("font_color", Color(0.4, 0.4, 0.4))
+	current_lbl.custom_minimum_size = Vector2(140, 0)
+	current_lbl.add_theme_font_size_override("font_size", 13)
+	current_lbl.vertical_alignment = VERTICAL_ALIGNMENT_CENTER
+	row.add_child(current_lbl)
+
+	var search_input = LineEdit.new()
+	search_input.placeholder_text = "Buscar usuario..."
+	search_input.custom_minimum_size = Vector2(160, 0)
+	search_input.add_theme_stylebox_override("normal", UITheme.input_style(Color(0.12, 0.12, 0.18)))
+	row.add_child(search_input)
+
+	var results_opt = OptionButton.new()
+	results_opt.custom_minimum_size = Vector2(160, 0)
+	results_opt.hide()
+	row.add_child(results_opt)
+
+	# Array como contenedor para captura por referencia en lambdas
+	var sel = [current_id]  # sel[0] = selected_user_id
+
+	var search_btn = _make_button("🔍", Color(0.2, 0.3, 0.5, 0.9))
+	search_btn.custom_minimum_size = Vector2(36, 0)
+	row.add_child(search_btn)
+
+	search_btn.pressed.connect(func():
+		var q = search_input.text.strip_edges()
+		if q.length() < 2:
+			status_lbl.text = "❌ Escribe al menos 2 caracteres"
+			return
+		_api_get("/api/mod/gym-search-user?q=" + q.uri_encode(), func(code, data):
+			if not is_instance_valid(results_opt): return
+			results_opt.clear()
+			var users = data.get("users", [])
+			if users.is_empty():
+				status_lbl.text = "No se encontraron usuarios"
+				results_opt.hide()
+				return
+			for u in users:
+				results_opt.add_item("%s (ELO %d)" % [u.get("username","?"), u.get("elo",0)])
+				results_opt.set_item_metadata(results_opt.item_count - 1, u.get("id",""))
+			results_opt.show()
+			sel[0] = results_opt.get_item_metadata(0)
+		)
+	)
+
+	results_opt.item_selected.connect(func(idx):
+		sel[0] = results_opt.get_item_metadata(idx)
+	)
+
+	var assign_btn = _make_button("✔ Asignar", Color(0.1, 0.42, 0.15, 0.95))
+	assign_btn.custom_minimum_size = Vector2(90, 0)
+	assign_btn.add_theme_font_size_override("font_size", 12)
+	row.add_child(assign_btn)
+
+	assign_btn.pressed.connect(func():
+		if not sel[0]:
+			status_lbl.text = "❌ Selecciona un usuario primero"
+			return
+		var user_label = results_opt.get_item_text(results_opt.selected) if results_opt.visible else (current_name if current_name else "?")
+		_show_confirm_dialog(
+			"¿Asignar %s como %s del %s?" % [user_label, role_label, gym_id],
+			func():
+				_api_put_gym_leader(gym_id, sel[0], role_type, func(code, data):
+					if not is_instance_valid(status_lbl) or not is_instance_valid(current_lbl): return
+					if code == 200:
+						status_lbl.text = "✅ " + data.get("message", "Asignado correctamente")
+						current_lbl.text = user_label.split(" (")[0]
+						current_lbl.add_theme_color_override("font_color", Color(0.9, 0.85, 0.5))
+						results_opt.hide()
+						search_input.text = ""
+					else:
+						status_lbl.text = "❌ " + data.get("error", "Error al asignar")
+				)
+		)
+	)
+
+	if current_id:
+		var remove_btn = _make_button("✕", Color(0.45, 0.1, 0.1, 0.9))
+		remove_btn.custom_minimum_size = Vector2(30, 0)
+		remove_btn.add_theme_font_size_override("font_size", 12)
+		row.add_child(remove_btn)
+		remove_btn.pressed.connect(func():
+			_show_confirm_dialog(
+				"¿Remover a %s como %s de %s?" % [current_name, role_label, gym_id],
+				func():
+					_api_put_gym_leader(gym_id, null, role_type, func(code, data):
+						if not is_instance_valid(status_lbl) or not is_instance_valid(current_lbl): return
+						if code == 200:
+							status_lbl.text = "✅ " + data.get("message", "Removido")
+							current_lbl.text = "— Sin asignar —"
+							current_lbl.add_theme_color_override("font_color", Color(0.4, 0.4, 0.4))
+							remove_btn.queue_free()
+						else:
+							status_lbl.text = "❌ " + data.get("error", "Error")
+					)
+			)
+		)
+
+func _api_put_gym_leader(gym_id: String, user_id, role_type: String, callback: Callable) -> void:
+	var http = HTTPRequest.new()
+	add_child(http)
+	var headers = [
+		"Content-Type: application/json",
+		"Authorization: Bearer " + NetworkManager.token
+	]
+	var body = JSON.stringify({"user_id": user_id, "role_type": role_type})
+	http.request(
+		NetworkManager.BASE_URL + "/api/mod/gyms/" + gym_id + "/leader",
+		headers,
+		HTTPClient.METHOD_PUT,
+		body
+	)
+	http.request_completed.connect(func(result, code, _h, resp_body):
+		var data = {}
+		if resp_body.size() > 0:
+			var parsed = JSON.parse_string(resp_body.get_string_from_utf8())
+			if parsed is Dictionary: data = parsed
+		callback.call(code, data)
+		http.queue_free()
+	)
+
+# ─── PESTAÑA: LOG DE ACCIONES ────────────────────────────
+func _build_action_log_tab(C) -> void:
+	var v = _content_vbox()
+	_tab_title(v, "🗂️ Log Completo de Acciones")
+	var scroll = ScrollContainer.new()
+	scroll.size_flags_vertical = Control.SIZE_EXPAND_FILL
+	UITheme.apply_scrollbar_theme(scroll)
+	v.add_child(scroll)
+	var list = VBoxContainer.new()
+	list.size_flags_horizontal = Control.SIZE_EXPAND_FILL
+	list.add_theme_constant_override("separation", 4)
+	scroll.add_child(list)
+	var status_lbl = _status_label(v)
+	status_lbl.text = "Cargando..."
+	_api_get("/api/mod/action-log?limit=100", func(code, data):
+		if not is_instance_valid(status_lbl) or not is_instance_valid(list): return
+		status_lbl.text = ""
+		if code != 200: status_lbl.text = "Error al cargar"; return
 		for a in data.get("actions", []):
 			var lbl = Label.new()
 			var details = a.get("details","")
@@ -1090,41 +1259,31 @@ func _build_action_log_tab(C) -> void:
 func _build_mod_ranking_tab(C) -> void:
 	var v = _content_vbox()
 	_tab_title(v, "🏅 Ranking de Moderadores (esta semana)")
-
 	var status_lbl = _status_label(v)
 	status_lbl.text = "Cargando..."
-
 	_api_get("/api/mod/mod-ranking", func(code, data):
 		if not is_instance_valid(status_lbl) or not is_instance_valid(v): return
 		status_lbl.text = ""
-		if code != 200:
-			status_lbl.text = "Error al cargar"
-			return
+		if code != 200: status_lbl.text = "Error al cargar"; return
 		var ranking = data.get("ranking", [])
-		if ranking.is_empty():
-			status_lbl.text = "Sin datos esta semana"
-			return
-
+		if ranking.is_empty(): status_lbl.text = "Sin datos esta semana"; return
 		for i in range(ranking.size()):
 			var r = ranking[i]
 			var row = HBoxContainer.new()
 			row.add_theme_constant_override("separation", 12)
 			v.add_child(row)
-
 			var pos_lbl = Label.new()
 			pos_lbl.text = "#%d" % (i + 1)
 			pos_lbl.custom_minimum_size = Vector2(30, 0)
 			pos_lbl.add_theme_font_size_override("font_size", 14)
 			pos_lbl.add_theme_color_override("font_color", Color(1.0,0.65,0.0))
 			row.add_child(pos_lbl)
-
 			var name_lbl = Label.new()
 			name_lbl.text = r.get("mod_name","?")
 			name_lbl.size_flags_horizontal = Control.SIZE_EXPAND_FILL
 			name_lbl.add_theme_font_size_override("font_size", 14)
 			name_lbl.add_theme_color_override("font_color", Color(0.9,0.9,0.9))
 			row.add_child(name_lbl)
-
 			var count_lbl = Label.new()
 			count_lbl.text = str(r.get("actions",0)) + " acciones"
 			count_lbl.add_theme_font_size_override("font_size", 13)

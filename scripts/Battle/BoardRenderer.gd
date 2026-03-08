@@ -52,7 +52,7 @@ func set_opp_sleeve(sleeve_id: String) -> void:
 	opp_sleeve_id = sleeve_id
 
 # ============================================================
-# HOVER ZOOM — NUEVO MÉTODO A PRUEBA DE BALAS
+# HOVER ZOOM
 # ============================================================
 func get_hovered_card_id() -> String:
 	for key in zones.keys():
@@ -61,7 +61,6 @@ func get_hovered_card_id() -> String:
 			for zone in item:
 				if zone and zone.has_node("CardInstance"):
 					if zone.get_node("CardInstance").get("is_hovered"):
-						# Sacamos el ID directo del caché y le quitamos el sufijo oculto si lo tiene
 						return str(_zone_card_cache.get(zone.name, "")).replace("_oculto", "")
 		else:
 			var zone = item
@@ -69,6 +68,7 @@ func get_hovered_card_id() -> String:
 				if zone.get_node("CardInstance").get("is_hovered"):
 					return str(_zone_card_cache.get(zone.name, "")).replace("_oculto", "")
 	return ""
+
 # ============================================================
 # BOTONES DE DESCARTE (se agregan una sola vez)
 # ============================================================
@@ -119,6 +119,9 @@ func _add_discard_button(zone: Control, is_mine: bool) -> void:
 # ============================================================
 # RENDER PRINCIPAL
 # ============================================================
+# FIX: Se usa _get_count() para deck y prizes, que acepta tanto
+#      un Array (modo jugador) como un int/deck_count (modo espectador).
+# ============================================================
 func render_board(state: Dictionary) -> void:
 	var my_data  = state.get("my",       {})
 	var opp_data = state.get("opponent", {})
@@ -132,15 +135,32 @@ func render_board(state: Dictionary) -> void:
 		_update_zone_pokemon(zones["my_bench"][i],  my_bench[i]  if i < my_bench.size()  else null, false, true)
 		_update_zone_pokemon(zones["opp_bench"][i], opp_bench[i] if i < opp_bench.size() else null, false, false)
 
-	_update_counter_zone(zones["my_deck"],    my_data.get("deck",          []).size(), "Mazo")
-	_update_counter_zone(zones["my_prizes"],  my_data.get("prizes",        []).size(), "Premios")
-	_update_counter_zone(zones["opp_deck"],   opp_data.get("deck_count",   0),         "Mazo")
-	_update_counter_zone(zones["opp_prizes"], opp_data.get("prizes_count", 0),         "Premios")
+	# FIX: usar _get_count para ambos jugadores — funciona con array O con int
+	_update_counter_zone(zones["my_deck"],    _get_count(my_data,  "deck",   "deck_count"),   "Mazo")
+	_update_counter_zone(zones["my_prizes"],  _get_count(my_data,  "prizes", "prizes_count"), "Premios")
+	_update_counter_zone(zones["opp_deck"],   _get_count(opp_data, "deck",   "deck_count"),   "Mazo")
+	_update_counter_zone(zones["opp_prizes"], _get_count(opp_data, "prizes", "prizes_count"), "Premios")
 
 	_update_discard_zone(zones["my_discard"],  my_data.get("discard",  []))
 	_update_discard_zone(zones["opp_discard"], opp_data.get("discard", []))
 
-	_update_opponent_hand(zones["opp_hand"], opp_data.get("hand_count", 0))
+	# FIX: hand_count para ambos lados (espectador no tiene hand array de ninguno)
+	var opp_hand_count = _get_count(opp_data, "hand", "hand_count")
+	_update_opponent_hand(zones["opp_hand"], opp_hand_count)
+
+
+## Helper: obtiene el conteo de un campo que puede ser Array o int.
+## Primero intenta el array_key (.size()), luego el count_key (int directo).
+func _get_count(data: Dictionary, array_key: String, count_key: String) -> int:
+	var arr = data.get(array_key, null)
+	if arr is Array and arr.size() > 0:
+		return arr.size()
+	var cnt = data.get(count_key, 0)
+	if cnt is float: cnt = int(cnt)
+	if cnt is int: return cnt
+	# Fallback: si el array existe pero está vacío, y no hay count_key, devolver 0
+	if arr is Array: return arr.size()
+	return 0
 
 
 # ============================================================

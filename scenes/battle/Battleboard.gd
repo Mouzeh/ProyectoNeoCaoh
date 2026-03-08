@@ -48,6 +48,14 @@ var my_turn:                bool       = false
 var _processed_logs_count:  int        = 0
 var _last_turn_player:      String     = ""
 
+# ─── NOMBRES Y TIERS LEGIBLES ───────────────────────────────
+var _my_display_name:  String = "Tú"
+var _opp_display_name: String = "Rival"
+var _opp_id:           String = ""
+var _my_tier:          String = ""
+var _opp_tier:         String = ""
+var _vs_banner:        Label  = null
+
 # ─── PROTECTORES ────────────────────────────────────────────
 var my_sleeve_id:  String = "default"
 var opp_sleeve_id: String = "default"
@@ -73,7 +81,7 @@ func _ready() -> void:
 	add_child(overlays)
 	overlays.setup(self)
 	overlays.setup_confirmed.connect(_on_confirm_setup)
-	overlays.setup_reselect_active.connect(_on_setup_reselect_active)  # ← NUEVO
+	overlays.setup_reselect_active.connect(_on_setup_reselect_active)
 	overlays.promote_selected.connect(func(idx):
 		NetworkManager.send_action("PROMOTE", {"benchIndex": idx})
 		battle_log.add_message("Promoviendo Pokémon al frente...")
@@ -159,6 +167,10 @@ func _build_board() -> void:
 
 	_build_notification_bar(W)
 
+	# ── Banner "J1 [Tier X]  vs  J2 [Tier Y]" ────────────────
+	_vs_banner = _build_vs_banner(W)
+	add_child(_vs_banner)
+
 	battle_log = BattleLog.new()
 	battle_log.setup(W, H)
 	add_child(battle_log)
@@ -173,9 +185,32 @@ func _build_board() -> void:
 	add_child(phase_label)
 
 
+# ── Banner vs ────────────────────────────────────────────────
+func _build_vs_banner(W: float) -> Label:
+	var lbl = Label.new()
+	lbl.name    = "VsBanner"
+	lbl.text    = ""
+	lbl.z_index = 30
+	lbl.position = Vector2(12, 10)
+	lbl.size     = Vector2(min(W * 0.55, 600), 26)
+	lbl.horizontal_alignment = HORIZONTAL_ALIGNMENT_LEFT
+	lbl.vertical_alignment   = VERTICAL_ALIGNMENT_CENTER
+	lbl.add_theme_font_size_override("font_size", 13)
+	lbl.add_theme_color_override("font_color",         Color("#c9a84c"))
+	lbl.add_theme_color_override("font_outline_color", Color(0, 0, 0, 0.85))
+	lbl.add_theme_constant_override("outline_size", 4)
+	return lbl
+
+func _update_vs_banner() -> void:
+	if not _vs_banner: return
+	var my_part  = _my_display_name  + (" [Tier %s]" % _my_tier  if _my_tier  != "" else "")
+	var opp_part = _opp_display_name + (" [Tier %s]" % _opp_tier if _opp_tier != "" else "")
+	_vs_banner.text = "%s  vs  %s" % [my_part, opp_part]
+
+
 func _build_end_turn_button(W: float, H: float) -> Button:
 	var btn = Button.new()
-	btn.text     = "⏭  Terminar Turno"
+	btn.text     = "Terminar Turno"
 	btn.position = Vector2(W - 200, H - 64)
 	btn.size     = Vector2(184, 48)
 	btn.z_index  = 10
@@ -280,40 +315,110 @@ func _connect_network() -> void:
 	NetworkManager.game_over.connect(_on_game_over)
 	NetworkManager.error_received.connect(_on_error)
 	NetworkManager.chat_received.connect(_on_chat_received)
+	# FIX: Recibir chat de espectadores en la pantalla de batalla
+	NetworkManager.spectator_chat_received.connect(_on_spectator_chat_received)
 
 	if not NetworkManager.pending_game_state.is_empty():
 		_on_game_started(NetworkManager.pending_game_state)
 
+
+# ── FIX: resolver UUID a nombre antes de mandar al log ──────
 func _on_chat_received(player_id: String, text: String) -> void:
-	if battle_log:
-		battle_log.receive_chat_message(player_id, text)
+	if not battle_log: return
+	var is_mine = player_id == my_player_id
+	var display_name: String
+	if is_mine:
+		display_name = _my_display_name
+	elif player_id == _opp_id:
+		display_name = _opp_display_name
+	else:
+		display_name = _clean_log(player_id)
+	var color = Color("#7eb8e8") if is_mine else Color("#f5a94e")
+	battle_log.add_chat_message(display_name, text, color, is_mine)
+
+
+# ── FIX: Recibir chat de espectadores ────────────────────────
+func _on_spectator_chat_received(rid: String, _uid: String, uname: String, text: String) -> void:
+	if not battle_log: return
+	battle_log.add_chat_message("👁 " + uname, text, Color("#7eb8e8"), false)
+
 
 func _on_game_started(state: Dictionary) -> void:
-	my_player_id      = NetworkManager.player_id
-	var opp_info      = state.get("opponent", {})
+	my_player_id = NetworkManager.player_id
+
+	if PlayerData.get("username") != null and str(PlayerData.get("username")) != "":
+		_my_display_name = str(PlayerData.get("username"))
+	elif PlayerData.get("display_name") != null and str(PlayerData.get("display_name")) != "":
+		_my_display_name = str(PlayerData.get("display_name"))
+	else:
+		_my_display_name = "Tú"
+
+	var _pd_tier = PlayerData.get("selected_deck_tier") if PlayerData.get("selected_deck_tier") != null else ""
+	_my_tier = str(state.get("my", {}).get("deck_tier", _pd_tier))
+
+	var opp_info = state.get("opponent", {})
+	_opp_id           = opp_info.get("id", "")
+	_opp_display_name = opp_info.get("username",
+		opp_info.get("display_name",
+			opp_info.get("name", "Rival")))
+	_opp_tier = str(opp_info.get("deck_tier", ""))
+
 	if opp_info.has("sleeve_id"):
 		opp_sleeve_id = opp_info.get("sleeve_id", "default")
 		if renderer: renderer.set_opp_sleeve(opp_sleeve_id)
+
 	_processed_logs_count = 0
 	_last_turn_player     = ""
 	_update_board(state)
-	battle_log.add_message("¡Partida iniciada!")
+	_update_vs_banner()
+
+	if battle_log:
+		battle_log.set_chat_name(_my_display_name)
+		battle_log.add_message("¡Partida iniciada!")
+
 
 func _on_state_updated(state: Dictionary, log_arr: Array) -> void:
-	_update_board(state)
-	if log_arr.size() >= _processed_logs_count:
-		for i in range(_processed_logs_count, log_arr.size()):
-			battle_log.add_message(log_arr[i])
-		_processed_logs_count = log_arr.size()
-	else:
-		for entry in log_arr:
-			battle_log.add_message(entry)
+	var opp_info = state.get("opponent", {})
+	if _opp_id == "":
+		_opp_id = opp_info.get("id", "")
+	var new_name = opp_info.get("username",
+		opp_info.get("display_name",
+			opp_info.get("name", "")))
+	if new_name != "":
+		var changed = new_name != _opp_display_name
+		_opp_display_name = new_name
+		if _opp_tier == "":
+			_opp_tier = str(opp_info.get("deck_tier", ""))
+		if changed: _update_vs_banner()
 
+	_update_board(state)
+
+	# Si el log se resetó (nuevo turno), resetear contador también
+	if log_arr.size() < _processed_logs_count:
+		_processed_logs_count = 0
+
+	# Mostrar solo mensajes nuevos
+	for i in range(_processed_logs_count, log_arr.size()):
+		battle_log.add_message(_clean_log(log_arr[i]))
+	_processed_logs_count = log_arr.size()
+	
+	
 func _on_game_over(winner: String, you_won: bool) -> void:
 	overlays.show_game_over_screen("¡GANASTE! 🏆" if you_won else "Perdiste...", you_won)
 
 func _on_error(message: String) -> void:
 	battle_log.add_message("⚠ " + message)
+
+
+# ============================================================
+# LIMPIAR UUIDS DEL LOG
+# ============================================================
+func _clean_log(msg: String) -> String:
+	if _opp_id != "" and _opp_id in msg:
+		msg = msg.replace(_opp_id, _opp_display_name)
+	if my_player_id != "" and my_player_id in msg:
+		msg = msg.replace(my_player_id, _my_display_name)
+	return msg
 
 
 # ============================================================
@@ -330,22 +435,21 @@ func _update_board(state: Dictionary) -> void:
 	_update_playable_mask(state)
 	_update_action_buttons()
 
-	phase_label.text = phase
+	if phase_label:
+		phase_label.text = phase
 
 	var current_player = state.get("current_player", "")
 	if phase == "MAIN" and current_player != _last_turn_player:
 		_last_turn_player = current_player
 		renderer.show_turn_banner(my_turn)
-		show_notification("🟢  Tu turno" if my_turn else "⏳  Turno del rival")
+		show_notification("Tu turno" if my_turn else "Turno del rival")
 
-	# ── Setup overlay ───────────────────────────────────────
 	if phase == "SETUP_PLACE_ACTIVE":
 		overlays.show_setup_overlay(state, my_player_id)
 		overlays.update_setup_status(state)
 	else:
 		overlays.hide_setup_overlay()
 
-	# ── Promote popup ───────────────────────────────────────
 	var my_data         = state.get("my", {})
 	var waiting_promote = state.get("waiting_promote_player", null)
 	var needs_promote   = (phase == "WAITING_PROMOTE") \
@@ -359,24 +463,19 @@ func _update_board(state: Dictionary) -> void:
 
 	overlays.check_glaring_gaze(state, my_turn)
 
+	var march_opts = state.get("pokemon_march_options", null)
+	if march_opts != null and trainer_handler:
+		trainer_handler.handle_pokemon_march_options(march_opts)
+
 
 func _on_confirm_setup() -> void:
 	NetworkManager.send_action("CONFIRM_SETUP", {})
 	battle_log.add_message("Confirmado, esperando al rival...")
 
-
-# ── "Elegir de nuevo" — quita el activo en el servidor ──────
 func _on_setup_reselect_active() -> void:
-	# Limpia el activo localmente en current_state para que el overlay
-	# refleje el cambio de inmediato sin esperar round-trip del servidor.
 	if current_state.has("my"):
 		current_state["my"]["active"] = null
-
-	# Notifica al servidor. Si tu GameState.js no tiene este handler aún,
-	# agrégalo (ver comentario abajo). Por ahora también funciona sin él:
-	# el jugador simplemente vuelve a hacer clic en otro Pokémon de la mano.
 	NetworkManager.send_action("SETUP_DESELECT_ACTIVE", {})
-
 	overlays.update_setup_status(current_state)
 	battle_log.add_message("Elige de nuevo tu Pokémon Activo")
 
@@ -405,7 +504,15 @@ func _update_playable_mask(state: Dictionary) -> void:
 		hand_manager.clear_playable_mask()
 		return
 
-	var energy_used    = my_data.get("energy_played_this_turn",   false)
+	var blocked_phases = [
+		"WAITING_POKEMON_MARCH_OPPONENT",
+		"WAITING_POKEMON_MARCH_PLAYER",
+	]
+	if phase in blocked_phases:
+		hand_manager.clear_playable_mask()
+		return
+
+	var energy_used    = my_data.get("energy_played_this_turn",    false)
 	var supporter_used = my_data.get("supporter_played_this_turn", false)
 	var elm_used       = my_data.get("elm_played_this_turn",       false)
 	var has_active     = my_data.get("active") != null
@@ -497,11 +604,11 @@ func _on_hand_card_dropped(hand_index: int, card_id: String, drop_pos: Vector2, 
 						battle_log.add_message("Evolucionando a %s..." % card_data.get("name", card_id))
 						drop_accepted = true
 					else:
-						battle_log.add_message("⚠ No puedes evolucionar ahí")
+						battle_log.add_message("No puedes evolucionar ahí")
 		"ENERGY":
 			var my_state = current_state.get("my", {})
 			if my_state.get("energy_played_this_turn", false):
-				battle_log.add_message("⚠ Ya jugaste una energía este turno")
+				battle_log.add_message("Ya jugaste una energía este turno")
 			elif target.is_empty():
 				battle_log.add_message("Suelta la energía sobre un Pokémon")
 			else:
@@ -517,7 +624,7 @@ func _on_hand_card_dropped(hand_index: int, card_id: String, drop_pos: Vector2, 
 
 
 # ============================================================
-# TRAINER: HIGHLIGHT
+# TRAINER: HIGHLIGHT DE ZONAS
 # ============================================================
 func _on_trainer_highlight_zones(zone_set: String) -> void:
 	var COLOR_OWN = Color(0.20, 0.80, 0.95, 0.50)
@@ -655,10 +762,19 @@ func _pokemon_name_matches(card_id: String, species_name: String) -> bool:
 	return data.get("name", "").to_lower() == species_name.to_lower() \
 		or card_id.begins_with(species_name.to_lower())
 
+
+# ============================================================
+# BOTONES DE ACCIÓN
+# ============================================================
 func _update_action_buttons() -> void:
-	var in_setup = current_state.get("phase", "") == "SETUP_PLACE_ACTIVE"
+	var phase = current_state.get("phase", "")
+	var blocked_phases = [
+		"SETUP_PLACE_ACTIVE",
+		"WAITING_POKEMON_MARCH_OPPONENT",
+		"WAITING_POKEMON_MARCH_PLAYER",
+	]
 	if end_turn_btn:
-		end_turn_btn.disabled = not my_turn or in_setup
+		end_turn_btn.disabled = not my_turn or phase in blocked_phases
 
 
 # ============================================================
@@ -666,6 +782,14 @@ func _update_action_buttons() -> void:
 # ============================================================
 func _on_hand_card_clicked(hand_index: int) -> void:
 	var phase = current_state.get("phase", "")
+
+	var blocked_phases = [
+		"WAITING_POKEMON_MARCH_OPPONENT",
+		"WAITING_POKEMON_MARCH_PLAYER",
+	]
+	if phase in blocked_phases:
+		battle_log.add_message("Espera a que se resuelva Pokémon March")
+		return
 
 	if phase == "SETUP_PLACE_ACTIVE":
 		var my_data = current_state.get("my", {})
@@ -734,7 +858,6 @@ func _unhandled_input(event: InputEvent) -> void:
 			if overlays.action_zoom_overlay: overlays.close_action_zoom(); return
 			_zoom_hovered_card()
 
-
 func _input(event: InputEvent) -> void:
 	if not (event is InputEventKey and event.pressed and not event.is_echo()): return
 	var key = event.keycode if event.keycode != KEY_NONE else event.physical_keycode
@@ -757,13 +880,11 @@ func _input(event: InputEvent) -> void:
 			if overlays.action_zoom_overlay: overlays.close_action_zoom(); return
 			_zoom_hovered_card()
 
-
 func _toggle_zoom_selected_card() -> void:
 	var hand = current_state.get("my", {}).get("hand", [])
 	if selected_hand_index < 0 or selected_hand_index >= hand.size(): return
 	var card_id = hand[selected_hand_index].get("card_id", "")
 	if card_id != "": overlays.open_zoom(card_id)
-
 
 func _zoom_hovered_card() -> void:
 	var hand_hovered_id = hand_manager.get_hovered_card_id()

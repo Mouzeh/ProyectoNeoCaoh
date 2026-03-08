@@ -374,8 +374,7 @@ static func _wire_form(form: Control, verify: Control, state: Dictionary, menu, 
 	var pass_input   = form.find_child("PassInput",    true, false)
 	var status_lbl   = form.find_child("StatusLabel",  true, false)
 	var btn_main     = form.find_child("BtnMain",      true, false)
-
-	var confirm_row2 = form.find_child("ConfirmRow", true, false)
+	var confirm_row2 = form.find_child("ConfirmRow",   true, false)
 
 	# Overlay negro para fade-through
 	var fade_overlay = ColorRect.new()
@@ -400,7 +399,6 @@ static func _wire_form(form: Control, verify: Control, state: Dictionary, menu, 
 				var t = load("res://assets/imagen/banner/banner1.png")
 				if t: b.texture = t
 		)
-		# Animar card encogiendo suavemente
 		if card: _animate_card_height(card, 560, form)
 	)
 
@@ -419,7 +417,6 @@ static func _wire_form(form: Control, verify: Control, state: Dictionary, menu, 
 				var t = load("res://assets/imagen/banner/banner3.png")
 				if t: b.texture = t
 		)
-		# Animar card expandiéndose suavemente
 		if card: _animate_card_height(card, 680, form)
 	)
 
@@ -446,7 +443,6 @@ static func _wire_verify(verify: Control, form: Control, state: Dictionary, menu
 	for i in range(6):
 		var d = digits_hb.get_child(i)
 		d.text_changed.connect(func(new_text: String):
-			# Filtra no-dígitos
 			if new_text != "" and not new_text[-1].is_valid_int():
 				d.text = new_text.left(new_text.length() - 1)
 				d.caret_column = d.text.length()
@@ -496,7 +492,6 @@ static func _on_main_pressed(
 		_set_status(status_lbl, "⚠ Ingresa tu contraseña", C.COLOR_RED); return
 
 	if not state.is_login:
-		# Validaciones solo en registro
 		if not _is_valid_email(email):
 			_set_status(status_lbl, "⚠ Ingresa un correo electrónico válido", C.COLOR_RED); return
 		if password.length() < 4:
@@ -511,7 +506,6 @@ static func _on_main_pressed(
 	if state.is_login:
 		_do_login_request(username, password, status_lbl, btn_main, menu, C)
 	else:
-		# Registro → el servidor guarda el usuario pendiente y envía el código
 		state.pending_email = email
 		state.pending_user  = username
 		state.pending_pass  = password
@@ -529,7 +523,10 @@ static func _do_login_request(
 
 	http.request_completed.connect(func(result, code, _headers, response_bytes):
 		http.queue_free()
-		btn_main.disabled = false
+		# GUARD: el menu o btn_main pueden haberse liberado si el jugador
+		# cambió de pantalla mientras esperaba la respuesta HTTP
+		if not is_instance_valid(menu): return
+		if is_instance_valid(btn_main): btn_main.disabled = false
 
 		if result != HTTPRequest.RESULT_SUCCESS:
 			_set_status(status_lbl, "⚠ No se pudo conectar al servidor", C.COLOR_RED); return
@@ -543,7 +540,7 @@ static func _do_login_request(
 			var token  = data.get("token", "")
 			var player = data.get("player", {})
 			PlayerData.load_from_server(player)
-			PlayerData.token     = token
+			PlayerData.token         = token
 			NetworkManager.token     = token
 			menu.player_id           = PlayerData.player_id
 			NetworkManager.player_id = PlayerData.player_id
@@ -570,7 +567,9 @@ static func _do_register_request(
 
 	http.request_completed.connect(func(result, code, _headers, response_bytes):
 		http.queue_free()
-		btn_main.disabled = false
+		# GUARD
+		if not is_instance_valid(menu): return
+		if is_instance_valid(btn_main): btn_main.disabled = false
 
 		if result != HTTPRequest.RESULT_SUCCESS:
 			_set_status(status_lbl, "⚠ No se pudo conectar al servidor", C.COLOR_RED); return
@@ -588,7 +587,6 @@ static func _do_register_request(
 			var digits_hb = verify.find_child("DigitsBox", true, false)
 			for i in range(6):
 				digits_hb.get_child(i).text = ""
-			# Animación de transición form → verify
 			_animate_switch(form, verify, menu)
 			digits_hb.get_child(0).grab_focus()
 		else:
@@ -614,7 +612,9 @@ static func _submit_verification(
 
 	http.request_completed.connect(func(result, code_http, _headers, response_bytes):
 		http.queue_free()
-		btn_verify.disabled = false
+		# GUARD
+		if not is_instance_valid(menu): return
+		if is_instance_valid(btn_verify): btn_verify.disabled = false
 
 		if result != HTTPRequest.RESULT_SUCCESS:
 			_set_status(status_lbl, "⚠ Error de conexión", C.COLOR_RED); return
@@ -649,6 +649,7 @@ static func _request_resend(email: String, status_lbl: Label, C, menu) -> void:
 
 	http.request_completed.connect(func(result, code, _headers, response_bytes):
 		http.queue_free()
+		if not is_instance_valid(menu): return
 		if result != HTTPRequest.RESULT_SUCCESS or code != 200:
 			_set_status(status_lbl, "⚠ No se pudo reenviar el código", C.COLOR_RED); return
 		_set_status(status_lbl, "✓ Código reenviado a " + email, C.COLOR_GREEN)
@@ -661,14 +662,19 @@ static func _request_resend(email: String, status_lbl: Label, C, menu) -> void:
 
 # ─── NAVEGACIÓN ──────────────────────────────────────────────
 static func _go_to_lobby(menu) -> void:
+	if not is_instance_valid(menu): return
 	if NetworkManager.ws_connected:
 		NetworkManager.authenticate(PlayerData.player_id, NetworkManager.token)
-		NetworkManager.auth_ok.connect(
-			func(_p): menu._show_screen(menu.Screen.LOBBY), CONNECT_ONE_SHOT)
+		NetworkManager.auth_ok.connect(func(_p):
+			if is_instance_valid(menu):
+				menu._show_screen(menu.Screen.LOBBY)
+			, CONNECT_ONE_SHOT)
 	else:
 		NetworkManager.connect_to_server()
-		NetworkManager.auth_ok.connect(
-			func(_p): menu._show_screen(menu.Screen.LOBBY), CONNECT_ONE_SHOT)
+		NetworkManager.auth_ok.connect(func(_p):
+			if is_instance_valid(menu):
+				menu._show_screen(menu.Screen.LOBBY)
+			, CONNECT_ONE_SHOT)
 
 
 static func _on_local_pressed(name_input: LineEdit, menu) -> void:
@@ -683,8 +689,6 @@ static func _on_local_pressed(name_input: LineEdit, menu) -> void:
 
 
 # ─── ANIMACIONES ─────────────────────────────────────────────
-
-# Anima el alto del card suavemente — fade contenido + resize fluido
 static func _animate_card_height(card: Control, target_h: float, parent: Node) -> void:
 	var from_h = card.custom_minimum_size.y
 	var tween  = parent.create_tween()
@@ -696,7 +700,6 @@ static func _animate_card_height(card: Control, target_h: float, parent: Node) -
 		from_h, target_h, 0.30
 	)
 
-# Fade rápido del panel derecho, cambia contenido en el medio
 static func _fade_switch_content(overlay: ColorRect, parent: Node, swap_fn: Callable) -> void:
 	var tween = parent.create_tween()
 	tween.set_ease(Tween.EASE_IN_OUT)
@@ -705,7 +708,6 @@ static func _fade_switch_content(overlay: ColorRect, parent: Node, swap_fn: Call
 	tween.tween_callback(swap_fn)
 	tween.tween_property(overlay, "color", Color(0, 0, 0, 0.0),  0.15)
 
-# Transición entre vistas: fade out → swap → fade in
 static func _animate_switch(from_view: Control, to_view: Control, parent: Node) -> void:
 	var panel   = from_view.get_parent()
 	var overlay = ColorRect.new()
@@ -728,7 +730,6 @@ static func _animate_switch(from_view: Control, to_view: Control, parent: Node) 
 	tween.tween_callback(func(): overlay.queue_free())
 
 
-
 # ─── HELPERS UI ──────────────────────────────────────────────
 static func _make_label(text: String, C) -> Label:
 	var lbl = Label.new()
@@ -736,7 +737,6 @@ static func _make_label(text: String, C) -> Label:
 	lbl.add_theme_font_size_override("font_size", 11)
 	lbl.add_theme_color_override("font_color", C.COLOR_TEXT)
 	return lbl
-
 
 static func _make_input(placeholder: String, secret: bool, C) -> LineEdit:
 	var input = LineEdit.new()
@@ -748,7 +748,6 @@ static func _make_input(placeholder: String, secret: bool, C) -> LineEdit:
 	input.add_theme_color_override("caret_color", C.COLOR_GOLD)
 	_apply_input_style(input, C)
 	return input
-
 
 static func _make_primary_button(text: String, C) -> Button:
 	var btn = Button.new()
@@ -769,7 +768,6 @@ static func _make_primary_button(text: String, C) -> Button:
 	btn.add_theme_stylebox_override("pressed", st_press)
 	return btn
 
-
 static func _make_ghost_button(text: String, C) -> Button:
 	var btn = Button.new()
 	btn.text = text
@@ -787,7 +785,6 @@ static func _make_ghost_button(text: String, C) -> Button:
 	btn.add_theme_stylebox_override("normal", st)
 	btn.add_theme_stylebox_override("hover",  st_hov)
 	return btn
-
 
 static func _make_divider(C) -> Control:
 	var hb = HBoxContainer.new()
@@ -809,7 +806,6 @@ static func _make_divider(C) -> Control:
 	hb.add_child(l); hb.add_child(lbl); hb.add_child(r)
 	return hb
 
-
 static func _apply_input_style(input: LineEdit, C) -> void:
 	var st = StyleBoxFlat.new()
 	st.bg_color = C.COLOR_BG
@@ -823,7 +819,6 @@ static func _apply_input_style(input: LineEdit, C) -> void:
 	st_focus.border_color = C.COLOR_GOLD
 	input.add_theme_stylebox_override("normal", st)
 	input.add_theme_stylebox_override("focus",  st_focus)
-
 
 static func _style_toggle(btn_login: Button, btn_register: Button, login_active: bool, C) -> void:
 	var st_active = StyleBoxFlat.new()
@@ -854,15 +849,13 @@ static func _style_toggle(btn_login: Button, btn_register: Button, login_active:
 		btn_login.add_theme_stylebox_override("hover",    st_inactive)
 		btn_login.add_theme_color_override("font_color",  C.COLOR_GOLD_DIM)
 
-
 static func _is_valid_email(email: String) -> bool:
-	# Validación básica: tiene @ y al menos un punto después
 	var at_pos = email.find("@")
 	if at_pos < 1: return false
 	var domain = email.substr(at_pos + 1)
 	return domain.contains(".") and domain.length() > 2
 
-
 static func _set_status(lbl: Label, text: String, color: Color) -> void:
-	lbl.text = text
-	lbl.add_theme_color_override("font_color", color)
+	if is_instance_valid(lbl):
+		lbl.text = text
+		lbl.add_theme_color_override("font_color", color)

@@ -19,6 +19,7 @@ config/icon="res://icon.svg"
 
 CardDatabase="*uid://7il2fi78hvgi"
 NetworkManager="*uid://cfnskomhsgo3r"
+GymManager="*uid://bajdohqs8x4rb"
 PlayerData="*uid://bwiueh7h02g2p"
 GameManager="*uid://dgwrecfkc85ft"
 UITheme="*uid://6l1g37rg00c7"
