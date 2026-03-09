@@ -29,10 +29,15 @@ signal spectator_chat_received(room_id, user_id, username, text)
 signal spectator_joined(room_id, user_id, count)
 signal spectator_left(room_id, user_id, count)
 
+
+signal challenge_decision_received(available: Array)
+signal challenge_pick_basics_received(available: Array, opp_placed_count: int)
+
 # ─── CONSTANTES DE MESA ──────────────────────────────────────
 const ROOM_MODE_CASUAL  = "casual"
 const ROOM_MODE_RANKING = "ranking"
 const ROOM_MODE_WAGER   = "wager"
+
 
 const TIER_ACCESS_ALL   = "all"
 const TIER_ACCESS_EQUAL = "equal"
@@ -389,7 +394,16 @@ func _handle_message(text: String) -> void:
 				msg.get("user_id", ""),
 				msg.get("count",   0)
 			)
+# ── Challenge! ───────────────────────────────────────────
+		"CHALLENGE_DECISION":
+			emit_signal("challenge_decision_received", msg.get("available", []))
 
+		"CHALLENGE_PICK_YOUR_BASICS":
+			emit_signal("challenge_pick_basics_received",
+				msg.get("available", []),
+				msg.get("opp_placed_count", 0)
+			)
+			
 		# ── También retransmitir eventos de espectador al MainMenu ──
 		"GAME_STARTED":
 			emit_signal("spectate_game_start",

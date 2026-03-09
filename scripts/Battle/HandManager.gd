@@ -30,10 +30,31 @@ var _card_cache:      Dictionary = {}
 var _playable_mask:   Array      = []
 var _hovered_card_id: String     = ""
 
+# ─── CARTA EN DRAG ACTIVO ───────────────────────────────────
+# Mientras una carta está siendo arrastrada, la guardamos aquí
+# para que update_hand no la destruya antes de que el drop termine.
+var _dragging_node:     Node   = null
+var _dragging_card_id:  String = ""
+var _dragging_hand_idx: int    = -1
+
 
 func setup(my_hand_zone: Control, viewport_width: float) -> void:
 	hand_zone = my_hand_zone
 	vp_width  = viewport_width
+
+
+# ============================================================
+# NOTIFICAR INICIO / FIN DE DRAG (llamado desde BattleBoard)
+# ============================================================
+func notify_drag_started(hand_index: int, card_id: String, card_node: Node) -> void:
+	_dragging_node     = card_node
+	_dragging_card_id  = card_id
+	_dragging_hand_idx = hand_index
+
+func notify_drag_ended() -> void:
+	_dragging_node     = null
+	_dragging_card_id  = ""
+	_dragging_hand_idx = -1
 
 
 # ============================================================
@@ -51,24 +72,22 @@ func update_hand(hand_cards: Array) -> void:
 	for c in hand_cards:
 		new_ids.append(str(c.get("card_id", "")))
 
-	# Si el tamaño de la mano cambió, limpiar todo el cache para evitar
-	# desfase de índices (ej: cuando el servidor devuelve una carta con unshift)
+	# Limpiar cache preservando el nodo en drag activo
 	var cached_count = _card_cache.size()
 	if cached_count != count:
 		for idx in _card_cache.keys():
 			var n = _card_cache[idx]["node"]
-			if is_instance_valid(n) and not n.get("is_dragging"):
+			if is_instance_valid(n) and n != _dragging_node:
 				n.queue_free()
 		_card_cache.clear()
 	else:
-		# Mismo tamaño: eliminar solo los que cambiaron
 		var to_remove: Array = []
 		for idx in _card_cache.keys():
 			if idx >= count or _card_cache[idx]["card_id"] != new_ids[idx]:
 				to_remove.append(idx)
 		for idx in to_remove:
 			var n = _card_cache[idx]["node"]
-			if is_instance_valid(n) and not n.get("is_dragging"):
+			if is_instance_valid(n) and n != _dragging_node:
 				n.queue_free()
 			_card_cache.erase(idx)
 
@@ -97,13 +116,19 @@ func update_hand(hand_cards: Array) -> void:
 
 		if _card_cache.has(i):
 			var n = _card_cache[i]["node"]
-			if is_instance_valid(n) and not n.get("is_dragging"):
+			if is_instance_valid(n) and n != _dragging_node:
 				if n.has_method("reset_hover_state"):
 					n.reset_hover_state()
 				n.position         = target_pos
 				n.rotation_degrees = target_rot
 				n.z_index          = i
 		else:
+			# Si esta carta es la que está en drag, reutilizamos el nodo
+			# pero NO lo reposicionamos todavía.
+			if _dragging_node != null and card_id == _dragging_card_id and i == _dragging_hand_idx:
+				_card_cache[i] = { "card_id": card_id, "node": _dragging_node }
+				continue
+
 			var card = CardDatabase.create_card_instance(card_id)
 			card.scale            = Vector2.ONE
 			card.is_draggable     = true
@@ -139,6 +164,9 @@ func clear_hand() -> void:
 	_card_cache.clear()
 	_playable_mask.clear()
 	_hovered_card_id = ""
+	_dragging_node     = null
+	_dragging_card_id  = ""
+	_dragging_hand_idx = -1
 
 
 # ============================================================

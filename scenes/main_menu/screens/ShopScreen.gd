@@ -6,7 +6,7 @@ extends Node
 
 const MiniCard = preload("res://scenes/main_menu/components/MiniCard.gd")
 
-# ── Cache de texturas (igual que CollectionScreen) ───────────
+# ── Cache de texturas ────────────────────────────────────────
 static var _tex_cache:       Dictionary = {}
 static var _tex_cache_order: Array      = []
 const TEX_CACHE_MAX = 100
@@ -45,7 +45,6 @@ static func _load_texture_into(rect: TextureRect, path: String) -> void:
 		rect.texture = cached
 		return
 	_request_texture(path)
-	# Polling hasta que esté lista
 	var timer = Timer.new()
 	timer.wait_time = 0.05
 	timer.autostart = true
@@ -115,7 +114,6 @@ static func build(container: Control, menu) -> void:
 	title_lbl.vertical_alignment = VERTICAL_ALIGNMENT_CENTER
 	title_m.add_child(title_lbl)
 
-	# ── Monedas + Gemas en el header ──
 	var currency_hbox = HBoxContainer.new()
 	currency_hbox.add_theme_constant_override("separation", 20)
 	currency_hbox.size_flags_vertical = Control.SIZE_SHRINK_CENTER
@@ -138,7 +136,7 @@ static func build(container: Control, menu) -> void:
 	gems_lbl.add_theme_color_override("font_color", Color(0.5, 0.8, 1.0))
 	currency_hbox.add_child(gems_lbl)
 
-	# ── Contenido ────────────────────────────────────────────
+	# ── Scroll principal ─────────────────────────────────────
 	var scroll = ScrollContainer.new()
 	scroll.anchor_left = 0; scroll.anchor_right  = 1
 	scroll.anchor_top  = 0; scroll.anchor_bottom = 1
@@ -152,18 +150,17 @@ static func build(container: Control, menu) -> void:
 	main_vbox.add_theme_constant_override("separation", 30)
 	scroll.add_child(main_vbox)
 
-	# Precargar imágenes en paralelo
+	# Precargar imágenes
 	_request_texture("res://assets/Sobres/SobreFuego.png")
 	_request_texture("res://assets/Sobres/SobreAgua.png")
 	_request_texture("res://assets/Sobres/SobreHierba.png")
+	_request_texture("res://assets/Sobres/legendary.png")
+	_request_texture("res://assets/Sobres/Lava.jpg")
+	_request_texture("res://assets/Sobres/Turmoil.jpg")
 	_request_texture("res://assets/cards/Neo Genesis/sneasel-alt.png")
 
-	# ── Sección sobres ───────────────────────────────────────
-	var s1 = Label.new()
-	s1.text = "SOBRES DE EXPANSIÓN · Neo Genesis"
-	s1.add_theme_font_size_override("font_size", 15)
-	s1.add_theme_color_override("font_color", C.COLOR_GOLD_DIM)
-	main_vbox.add_child(s1)
+	# ── Sección: Sobres Neo Genesis ──────────────────────────
+	_section_label(main_vbox, "SOBRES DE EXPANSIÓN · Neo Genesis", C.COLOR_GOLD_DIM)
 
 	var packs_hbox = HBoxContainer.new()
 	packs_hbox.add_theme_constant_override("separation", 30)
@@ -178,33 +175,48 @@ static func build(container: Control, menu) -> void:
 
 	main_vbox.add_child(UITheme.vspace(10))
 
-	# ── Sección cartas promo ─────────────────────────────────
-	var s_promo = Label.new()
-	s_promo.text = "✨ CARTAS PROMO · Edición Especial"
-	s_promo.add_theme_font_size_override("font_size", 15)
-	s_promo.add_theme_color_override("font_color", Color(0.5, 0.8, 1.0))
-	main_vbox.add_child(s_promo)
+	# ── Sección: Sobres Legendary Collection ─────────────────
+	_section_label(main_vbox, "SOBRES DE EXPANSIÓN · Legendary Collection", Color(0.85, 0.65, 0.1))
+
+	var lc_packs_hbox = HBoxContainer.new()
+	lc_packs_hbox.add_theme_constant_override("separation", 30)
+	main_vbox.add_child(lc_packs_hbox)
+
+	_create_pack_card(shop_root, menu, lc_packs_hbox, "legendary_collection_pack", "Sobre Legendary Collection",
+		"res://assets/Sobres/legendary.png", 150, Color(0.85, 0.65, 0.1), "coins")
+
+	main_vbox.add_child(UITheme.vspace(10))
+
+	# ── Sección: Starter Decks LC ─────────────────────────────
+	_section_label(main_vbox, "🃏 STARTER DECKS · Legendary Collection", Color(0.6, 0.85, 0.4))
+
+	var decks_hbox = HBoxContainer.new()
+	decks_hbox.name = "DecksHBox"
+	decks_hbox.add_theme_constant_override("separation", 30)
+	main_vbox.add_child(decks_hbox)
+
+	# Consultar al servidor qué decks ya compró el usuario
+	_fetch_bought_decks(shop_root, menu, decks_hbox)
+
+	main_vbox.add_child(UITheme.vspace(10))
+
+	# ── Sección: Cartas Promo ────────────────────────────────
+	_section_label(main_vbox, "✨ CARTAS PROMO · Edición Especial", Color(0.5, 0.8, 1.0))
 
 	var promo_hbox = HBoxContainer.new()
 	promo_hbox.add_theme_constant_override("separation", 30)
 	main_vbox.add_child(promo_hbox)
 
 	_create_promo_card(shop_root, menu, promo_hbox,
-		"sneasel_alt",
-		"Sneasel Full Art",
+		"sneasel_alt", "Sneasel Full Art",
 		"res://assets/cards/Neo Genesis/sneasel-alt.png",
-		100,
-		Color(0.3, 0.0, 0.5)
+		100, Color(0.3, 0.0, 0.5)
 	)
 
 	main_vbox.add_child(UITheme.vspace(10))
 
-	# ── Sección mejoras ──────────────────────────────────────
-	var s2 = Label.new()
-	s2.text = "MEJORAS DE CUENTA"
-	s2.add_theme_font_size_override("font_size", 15)
-	s2.add_theme_color_override("font_color", C.COLOR_GOLD_DIM)
-	main_vbox.add_child(s2)
+	# ── Sección: Mejoras ─────────────────────────────────────
+	_section_label(main_vbox, "MEJORAS DE CUENTA", C.COLOR_GOLD_DIM)
 
 	var upgrades_hbox = HBoxContainer.new()
 	upgrades_hbox.add_theme_constant_override("separation", 30)
@@ -213,6 +225,222 @@ static func build(container: Control, menu) -> void:
 	_create_slot_upgrade_card(shop_root, menu, upgrades_hbox, 500)
 
 	main_vbox.add_child(UITheme.vspace(40))
+
+
+# ─── HELPER: label de sección ────────────────────────────────
+static func _section_label(parent: Control, text: String, color: Color) -> void:
+	var lbl = Label.new()
+	lbl.text = text
+	lbl.add_theme_font_size_override("font_size", 15)
+	lbl.add_theme_color_override("font_color", color)
+	parent.add_child(lbl)
+
+
+# ─── HTTP: cargar qué decks ya compró ────────────────────────
+static func _fetch_bought_decks(shop_root: Control, menu, decks_hbox: Control) -> void:
+	# Placeholder mientras carga
+	var loading_lbl = Label.new()
+	loading_lbl.name = "DecksLoading"
+	loading_lbl.text = "Cargando..."
+	loading_lbl.add_theme_color_override("font_color", Color(0.5, 0.5, 0.5))
+	decks_hbox.add_child(loading_lbl)
+
+	var http = HTTPRequest.new()
+	shop_root.add_child(http)
+
+	http.request_completed.connect(func(result, code, _h, body):
+		http.queue_free()
+		loading_lbl.queue_free()
+
+		var bought: Array = []
+		if result == HTTPRequest.RESULT_SUCCESS and code == 200:
+			var data = JSON.parse_string(body.get_string_from_utf8())
+			if data: bought = data.get("bought_decks", [])
+		else:
+			# Mostrar error si falla la carga
+			var err_lbl = Label.new()
+			err_lbl.text = "⚠ Error al cargar decks"
+			err_lbl.add_theme_color_override("font_color", Color(0.8, 0.3, 0.3))
+			decks_hbox.add_child(err_lbl)
+			return
+
+		_create_deck_card(shop_root, menu, decks_hbox,
+			"lc_starter_turmoil", "Deck Turmoil",
+			"res://assets/Sobres/Turmoil.jpg",
+			"⚡🌊 Dark Pokémon + Lightning",
+			300, Color(0.2, 0.5, 0.9),
+			"lc_starter_turmoil" in bought
+		)
+		_create_deck_card(shop_root, menu, decks_hbox,
+			"lc_starter_lava", "Deck Lava",
+			"res://assets/Sobres/Lava.jpg",
+			"🔥🥊 Fire + Fighting",
+			300, Color(0.9, 0.3, 0.1),
+			"lc_starter_lava" in bought
+		)
+	)
+
+	http.request(
+		NetworkManager.BASE_URL + "/api/shop/my-decks",
+		["Authorization: Bearer " + NetworkManager.token],
+		HTTPClient.METHOD_GET, ""
+	)
+
+
+# ─── CARD DE STARTER DECK ────────────────────────────────────
+static func _create_deck_card(shop_root: Control, menu, parent: Control,
+		deck_id: String, deck_name: String, img_path: String,
+		description: String, price: int, glow_color: Color,
+		already_bought: bool) -> void:
+	var C   = menu
+	var box = PanelContainer.new()
+	box.custom_minimum_size = Vector2(240, 340)
+
+	var st = StyleBoxFlat.new()
+	st.bg_color = Color(0.08, 0.10, 0.14, 0.97)
+	st.border_width_left = 2; st.border_width_right  = 2
+	st.border_width_top  = 2; st.border_width_bottom = 2
+	st.border_color = glow_color.darkened(0.2) if not already_bought else Color(0.3, 0.5, 0.3)
+	st.corner_radius_top_left    = 12; st.corner_radius_top_right    = 12
+	st.corner_radius_bottom_left = 12; st.corner_radius_bottom_right = 12
+	if not already_bought:
+		st.shadow_color = Color(glow_color.r, glow_color.g, glow_color.b, 0.25)
+		st.shadow_size  = 10
+	box.add_theme_stylebox_override("panel", st)
+	parent.add_child(box)
+
+	var vbox = VBoxContainer.new()
+	vbox.alignment = BoxContainer.ALIGNMENT_CENTER
+	vbox.add_theme_constant_override("separation", 8)
+	box.add_child(vbox)
+
+	# Imagen del deck
+	var img_rect = TextureRect.new()
+	img_rect.custom_minimum_size = Vector2(200, 140)
+	img_rect.expand_mode  = TextureRect.EXPAND_IGNORE_SIZE
+	img_rect.stretch_mode = TextureRect.STRETCH_KEEP_ASPECT_CENTERED
+	vbox.add_child(img_rect)
+	_load_texture_into(img_rect, img_path)
+
+	# Nombre
+	var name_lbl = Label.new()
+	name_lbl.text = deck_name
+	name_lbl.horizontal_alignment = HORIZONTAL_ALIGNMENT_CENTER
+	name_lbl.add_theme_font_size_override("font_size", 15)
+	name_lbl.add_theme_color_override("font_color", C.COLOR_GOLD if not already_bought else Color(0.5, 0.7, 0.5))
+	vbox.add_child(name_lbl)
+
+	# Descripción
+	var desc_lbl = Label.new()
+	desc_lbl.text = description
+	desc_lbl.horizontal_alignment = HORIZONTAL_ALIGNMENT_CENTER
+	desc_lbl.add_theme_font_size_override("font_size", 11)
+	desc_lbl.add_theme_color_override("font_color", C.COLOR_TEXT_DIM)
+	vbox.add_child(desc_lbl)
+
+	# Info
+	var info_lbl = Label.new()
+	info_lbl.text = "60 cartas · 1 por jugador"
+	info_lbl.horizontal_alignment = HORIZONTAL_ALIGNMENT_CENTER
+	info_lbl.add_theme_font_size_override("font_size", 10)
+	info_lbl.add_theme_color_override("font_color", Color(0.4, 0.4, 0.5))
+	vbox.add_child(info_lbl)
+
+	vbox.add_child(UITheme.vspace(4))
+
+	# Botón
+	var buy_btn = Button.new()
+	buy_btn.custom_minimum_size   = Vector2(180, 38)
+	buy_btn.size_flags_horizontal = Control.SIZE_SHRINK_CENTER
+	buy_btn.add_theme_font_size_override("font_size", 13)
+
+	if already_bought:
+		buy_btn.text     = "✅ Ya obtenido"
+		buy_btn.disabled = true
+		var st_d = StyleBoxFlat.new()
+		st_d.bg_color = Color(0.15, 0.3, 0.15, 0.8)
+		st_d.corner_radius_top_left    = 6; st_d.corner_radius_top_right    = 6
+		st_d.corner_radius_bottom_left = 6; st_d.corner_radius_bottom_right = 6
+		buy_btn.add_theme_stylebox_override("disabled", st_d)
+		buy_btn.add_theme_color_override("font_disabled_color", Color(0.4, 0.7, 0.4))
+	else:
+		buy_btn.text = "🪙 " + str(price) + " monedas"
+		var st_btn = StyleBoxFlat.new()
+		st_btn.bg_color = glow_color.darkened(0.25)
+		st_btn.corner_radius_top_left    = 6; st_btn.corner_radius_top_right    = 6
+		st_btn.corner_radius_bottom_left = 6; st_btn.corner_radius_bottom_right = 6
+		var st_hov = st_btn.duplicate()
+		st_hov.bg_color = glow_color.darkened(0.1)
+		buy_btn.add_theme_stylebox_override("normal", st_btn)
+		buy_btn.add_theme_stylebox_override("hover",  st_hov)
+		buy_btn.add_theme_color_override("font_color", Color.WHITE)
+		buy_btn.pressed.connect(func():
+			_buy_deck(shop_root, menu, deck_id, price, buy_btn)
+		)
+	vbox.add_child(buy_btn)
+
+
+# ─── HTTP: COMPRAR DECK ──────────────────────────────────────
+static func _buy_deck(shop_root: Control, menu, deck_id: String, price: int, btn: Button) -> void:
+	if PlayerData.coins < price:
+		_show_toast(shop_root, "🪙 Monedas insuficientes", Color(0.8, 0.2, 0.2))
+		return
+
+	btn.disabled = true
+	btn.text     = "Comprando..."
+
+	var http = HTTPRequest.new()
+	shop_root.add_child(http)
+
+	http.request_completed.connect(func(result, code, _h, body):
+		http.queue_free()
+
+		if result != HTTPRequest.RESULT_SUCCESS or code != 200:
+			var err_data = JSON.parse_string(body.get_string_from_utf8())
+			var msg = err_data.get("error", "Error al comprar") if err_data else "Error de red"
+			_show_toast(shop_root, "⚠ " + msg, Color(0.8, 0.2, 0.2))
+			btn.disabled = false
+			btn.text     = "🪙 " + str(price) + " monedas"
+			return
+
+		var data = JSON.parse_string(body.get_string_from_utf8())
+		if not data or not data.get("success", false):
+			_show_toast(shop_root, "⚠ " + data.get("error", "Error"), Color(0.8, 0.2, 0.2))
+			btn.disabled = false
+			btn.text     = "🪙 " + str(price) + " monedas"
+			return
+
+		# Actualizar monedas localmente
+		if data.has("coins_left"): PlayerData.coins = data["coins_left"]
+		_update_currency_ui(shop_root)
+
+		# Añadir cartas del deck a PlayerData
+		var cards_list = data.get("cards_list", [])
+		for card_id in cards_list:
+			PlayerData.add_card(card_id)
+
+		# Marcar botón como obtenido
+		btn.text     = "✅ Ya obtenido"
+		btn.disabled = true
+		var st_d = StyleBoxFlat.new()
+		st_d.bg_color = Color(0.15, 0.3, 0.15, 0.8)
+		st_d.corner_radius_top_left    = 6; st_d.corner_radius_top_right    = 6
+		st_d.corner_radius_bottom_left = 6; st_d.corner_radius_bottom_right = 6
+		btn.add_theme_stylebox_override("disabled", st_d)
+		btn.add_theme_color_override("font_disabled_color", Color(0.4, 0.7, 0.4))
+
+		var cards_added = data.get("cards_added", 0)
+		_show_toast(shop_root,
+			"✓ Deck obtenido · " + str(cards_added) + " cartas añadidas a tu colección",
+			Color(0.2, 0.7, 0.3))
+	)
+
+	http.request(
+		NetworkManager.BASE_URL + "/api/shop/buy-deck",
+		["Content-Type: application/json", "Authorization: Bearer " + NetworkManager.token],
+		HTTPClient.METHOD_POST,
+		JSON.stringify({"deck_id": deck_id, "currency": "coins"})
+	)
 
 
 # ─── CARD DE SOBRE ───────────────────────────────────────────
@@ -241,7 +469,7 @@ static func _create_pack_card(shop_root, menu, parent, pack_id, pack_name, img_p
 	img_rect.expand_mode  = TextureRect.EXPAND_IGNORE_SIZE
 	img_rect.stretch_mode = TextureRect.STRETCH_KEEP_ASPECT_CENTERED
 	vbox.add_child(img_rect)
-	_load_texture_into(img_rect, img_path)  # ← caché threaded
+	_load_texture_into(img_rect, img_path)
 
 	var name_lbl = Label.new()
 	name_lbl.text = pack_name
@@ -307,7 +535,7 @@ static func _create_promo_card(shop_root, menu, parent, card_id, card_name, img_
 	img_rect.expand_mode  = TextureRect.EXPAND_IGNORE_SIZE
 	img_rect.stretch_mode = TextureRect.STRETCH_KEEP_ASPECT_CENTERED
 	vbox.add_child(img_rect)
-	_load_texture_into(img_rect, img_path)  # ← caché threaded
+	_load_texture_into(img_rect, img_path)
 
 	var name_lbl = Label.new()
 	name_lbl.text = card_name
@@ -413,7 +641,9 @@ static func _buy_pack(shop_root: Control, menu, pack_id: String, price: int, btn
 		btn.text     = "Comprar"
 
 		if result != HTTPRequest.RESULT_SUCCESS or code != 200:
-			_show_toast(shop_root, "⚠ Error al comprar", Color(0.8, 0.2, 0.2))
+			var err_data = JSON.parse_string(body.get_string_from_utf8())
+			var msg = err_data.get("error", "Error al comprar") if err_data else "Error de red"
+			_show_toast(shop_root, "⚠ " + msg, Color(0.8, 0.2, 0.2))
 			return
 
 		var data = JSON.parse_string(body.get_string_from_utf8())
@@ -457,7 +687,9 @@ static func _buy_promo_card(shop_root: Control, menu, card_id: String, price_gem
 		btn.text     = "💎 Comprar"
 
 		if result != HTTPRequest.RESULT_SUCCESS or code != 200:
-			_show_toast(shop_root, "⚠ Error al comprar", Color(0.8, 0.2, 0.2))
+			var err_data = JSON.parse_string(body.get_string_from_utf8())
+			var msg = err_data.get("error", "Error al comprar") if err_data else "Error de red"
+			_show_toast(shop_root, "⚠ " + msg, Color(0.8, 0.2, 0.2))
 			return
 
 		var data = JSON.parse_string(body.get_string_from_utf8())
@@ -470,7 +702,6 @@ static func _buy_promo_card(shop_root: Control, menu, card_id: String, price_gem
 		_update_currency_ui(shop_root)
 
 		PlayerData.add_card(data.get("card_id", card_id))
-
 		btn.text     = "✅ Obtenida"
 		btn.disabled = true
 		_show_toast(shop_root, "✨ ¡Carta promo obtenida!", Color(0.4, 0.2, 0.9))
@@ -536,8 +767,7 @@ static func _buy_slot(shop_root: Control, menu, price: int, btn: Button) -> void
 	http.request(
 		NetworkManager.BASE_URL + "/api/shop/buy-slot",
 		["Content-Type: application/json", "Authorization: Bearer " + NetworkManager.token],
-		HTTPClient.METHOD_POST,
-		"{}"
+		HTTPClient.METHOD_POST, "{}"
 	)
 
 
@@ -550,7 +780,6 @@ static func _update_currency_ui(shop_root: Control) -> void:
 
 static func _update_coins_ui(shop_root: Control) -> void:
 	_update_currency_ui(shop_root)
-
 
 static func _show_toast(parent: Control, msg: String, color: Color) -> void:
 	var toast = Label.new()

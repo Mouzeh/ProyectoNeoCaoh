@@ -2,6 +2,7 @@ extends Node
 
 # ============================================================
 # TrainerHandler.gd
+# Los powers Fire Recharge y Downpour fueron movidos a PokePowerHandler.gd
 # ============================================================
 
 signal trainer_message(text: String)
@@ -45,6 +46,12 @@ func on_zone_clicked(zone: String, index: int) -> void:
 			_clear_highlights()
 			_send()
 
+		"breeder_target":
+			_targets["targetZone"]  = zone
+			_targets["targetIndex"] = index
+			_clear_highlights()
+			_show_breeder_stage2_selector(zone, index)
+
 		"double_gust_mine":
 			_targets["myBenchIndex"] = index
 			_clear_highlights()
@@ -57,25 +64,13 @@ func on_zone_clicked(zone: String, index: int) -> void:
 			_clear_highlights()
 			_send()
 
-		"fire_recharge_target":
-			_awaiting = ""
-			_clear_highlights()
-			NetworkManager.send_action("USE_POWER", {
-				"sourceZone": "active",
-				"targetZone": zone,
-				"targetIndex": index,
-			})
-			emit_signal("trainer_message", "Fire Recharge enviado")
-
-		"downpour_target":
-			_awaiting = ""
-			_clear_highlights()
-			NetworkManager.send_action("USE_POWER", {
-				"sourceZone": "active",
-				"targetZone": zone,
-				"targetIndex": index,
-			})
-			emit_signal("trainer_message", "Downpour enviado")
+		"hand_discard_one":
+			if index != _hand_index:
+				_targets["discardIndex"] = index
+				_clear_highlights()
+				_send()
+			else:
+				emit_signal("trainer_message", "Elige una carta diferente al trainer")
 
 		"hand_discard":
 			var indices: Array = _targets.get("discardIndices", [])
@@ -142,6 +137,8 @@ func _validate_can_play(card_id: String, card_data: Dictionary) -> bool:
 # ============================================================
 func _dispatch(card_id: String) -> void:
 	match card_id:
+
+		# ── Neo Genesis ──────────────────────────────────────
 		"professor_elm", "mary", "energy_charge", "sprout_tower", "ecogym", \
 		"new_pokedex", "pokegear", "arcade_game", "card_flip_game", "bills_teleporter":
 			_send()
@@ -159,8 +156,6 @@ func _dispatch(card_id: String) -> void:
 			emit_signal("trainer_message", "Elige 1 Pokémon del descarte...")
 			_show_discard_selector(false, 1)
 
-		# pokemon_march: enviamos directamente, el servidor cambia la fase
-		# y vuelve con pokemon_march_options para abrir el popup del mazo
 		"pokemon_march":
 			_send()
 
@@ -174,6 +169,45 @@ func _dispatch(card_id: String) -> void:
 			_awaiting = "hand_discard"
 			_targets["discardIndices"] = []
 			emit_signal("trainer_highlight_zones", "hand")
+
+		# ── Legendary Collection ─────────────────────────────
+		"lc_bill":
+			_send()
+
+		"lc_potion":
+			emit_signal("trainer_message", "Elige el Pokémon objetivo...")
+			_awaiting = "own_pokemon"
+			emit_signal("trainer_highlight_zones", "own_pokemon")
+
+		"lc_scoop-up":
+			emit_signal("trainer_message", "Elige el Pokémon a devolver a la mano...")
+			_awaiting = "own_pokemon"
+			emit_signal("trainer_highlight_zones", "own_pokemon")
+
+		"lc_energy-retrieval":
+			emit_signal("trainer_message", "Elige 1 carta de tu mano para descartar...")
+			_awaiting = "hand_discard_one"
+			emit_signal("trainer_highlight_zones", "hand")
+
+		"lc_pokemon-breeder":
+			emit_signal("trainer_message", "Elige el Pokémon Básico a evolucionar directamente...")
+			_awaiting = "breeder_target"
+			emit_signal("trainer_highlight_zones", "own_pokemon")
+
+		"lc_pokemon-trader":
+			_send()
+
+		"lc_challenge":
+			_send()
+
+		"lc_the-boss-s-way":
+			_send()
+
+		"lc_mysterious-fossil":
+			_send()
+
+		"lc_full-heal-energy", "lc_potion-energy":
+			emit_signal("trainer_message", "⚠ Esta es una carta de energía, no un Trainer")
 
 		_:
 			emit_signal("trainer_message", "⚠ Trainer no implementado: " + card_id)
@@ -209,15 +243,183 @@ func _clear_highlights() -> void:
 
 
 # ============================================================
-# POKÉMON MARCH — popup del MAZO (llamado desde Battleboard)
+# POKÉMON BREEDER — selector de Stage 2
 # ============================================================
+func _show_breeder_stage2_selector(target_zone: String, target_index: int) -> void:
+	if not board: return
 
-# Battleboard llama esto cada vez que llega un STATE_UPDATE con
-# pokemon_march_options != null. El guard verifica que no haya
-# ya un popup de march abierto para no duplicarlo.
+	var my_data = board.current_state.get("my", {})
+
+	var target_poke: Dictionary = {}
+	if target_zone == "active":
+		target_poke = my_data.get("active", {})
+	else:
+		var bench = my_data.get("bench", [])
+		if target_index < bench.size() and bench[target_index] != null:
+			target_poke = bench[target_index]
+
+	var basic_id   = target_poke.get("card_id", "")
+	var basic_data = CardDatabase.get_card(basic_id)
+	var basic_name = basic_data.get("name", basic_id)
+
+	var hand: Array = my_data.get("hand", [])
+	var valid_stage2: Array = []
+
+	for i in range(hand.size()):
+		if i == _hand_index: continue
+		var cid   = hand[i].get("card_id", "")
+		var cdata = CardDatabase.get_card(cid)
+		if cdata.get("type", "") != "POKEMON": continue
+		if int(str(cdata.get("stage", 0))) != 2: continue
+		valid_stage2.append({"hand_index": i, "card_id": cid})
+
+	if valid_stage2.is_empty():
+		emit_signal("trainer_message", "⚠ No tienes cartas Stage 2 en la mano")
+		cancel()
+		return
+
+	if valid_stage2.size() == 1:
+		_targets["stage2CardId"] = valid_stage2[0]["card_id"]
+		_send()
+		return
+
+	var vp: Vector2 = board.get_viewport().get_visible_rect().size
+	var popup = _build_breeder_popup(vp, valid_stage2, basic_name)
+	_selection_popup = popup
+	board.add_child(popup)
+
+
+func _build_breeder_popup(vp: Vector2, valid_stage2: Array, basic_name: String) -> Control:
+	var popup = Control.new()
+	popup.name = "BreederSelector"
+	popup.set_anchors_preset(Control.PRESET_FULL_RECT)
+	popup.z_index = 200
+
+	var dim = ColorRect.new()
+	dim.set_anchors_preset(Control.PRESET_FULL_RECT)
+	dim.color = Color(0, 0, 0, 0.82)
+	popup.add_child(dim)
+
+	var panel_w: float = min(600.0, vp.x - 60)
+	var panel_h: float = min(380.0, vp.y - 80)
+	var panel = Panel.new()
+	panel.position = Vector2((vp.x - panel_w) / 2.0, (vp.y - panel_h) / 2.0)
+	panel.size     = Vector2(panel_w, panel_h)
+
+	var pstyle = StyleBoxFlat.new()
+	pstyle.bg_color                  = Color(0.06, 0.10, 0.08, 0.98)
+	pstyle.border_color              = COLOR_GOLD
+	pstyle.border_width_left         = 2; pstyle.border_width_right  = 2
+	pstyle.border_width_top          = 2; pstyle.border_width_bottom = 2
+	pstyle.corner_radius_top_left    = 14; pstyle.corner_radius_top_right    = 14
+	pstyle.corner_radius_bottom_left = 14; pstyle.corner_radius_bottom_right = 14
+	panel.add_theme_stylebox_override("panel", pstyle)
+	popup.add_child(panel)
+
+	var title_lbl = Label.new()
+	title_lbl.text        = "Pokémon Breeder — Elige el Stage 2 para %s" % basic_name
+	title_lbl.position    = Vector2(16, 12)
+	title_lbl.size        = Vector2(panel_w - 32, 36)
+	title_lbl.horizontal_alignment = HORIZONTAL_ALIGNMENT_CENTER
+	title_lbl.autowrap_mode        = TextServer.AUTOWRAP_WORD
+	title_lbl.add_theme_font_size_override("font_size", 13)
+	title_lbl.add_theme_color_override("font_color", COLOR_GOLD)
+	panel.add_child(title_lbl)
+
+	var scroll = ScrollContainer.new()
+	scroll.position = Vector2(12, 58)
+	scroll.size     = Vector2(panel_w - 24, panel_h - 118)
+	panel.add_child(scroll)
+
+	var flow = HFlowContainer.new()
+	flow.size_flags_horizontal = Control.SIZE_EXPAND_FILL
+	flow.add_theme_constant_override("h_separation", 16)
+	flow.add_theme_constant_override("v_separation", 12)
+	scroll.add_child(flow)
+
+	var card_scale: float = 0.65
+	var cw: int = int(CARD_W * card_scale)
+	var ch: int = int(CARD_H * card_scale)
+
+	for entry in valid_stage2:
+		var cid:   String     = entry["card_id"]
+		var cdata: Dictionary = CardDatabase.get_card(cid)
+
+		var slot = Control.new()
+		slot.custom_minimum_size = Vector2(cw, ch + 24)
+		flow.add_child(slot)
+
+		var slot_bg    = Panel.new()
+		slot_bg.set_anchors_preset(Control.PRESET_FULL_RECT)
+		var slot_style = StyleBoxFlat.new()
+		slot_style.bg_color                  = Color(0.10, 0.16, 0.12, 0.9)
+		slot_style.border_color              = COLOR_GOLD_DIM
+		slot_style.border_width_left         = 1; slot_style.border_width_right  = 1
+		slot_style.border_width_top          = 1; slot_style.border_width_bottom = 1
+		slot_style.corner_radius_top_left    = 6; slot_style.corner_radius_top_right    = 6
+		slot_style.corner_radius_bottom_left = 6; slot_style.corner_radius_bottom_right = 6
+		slot_bg.add_theme_stylebox_override("panel", slot_style)
+		slot.add_child(slot_bg)
+
+		var card_inst = CardDatabase.create_card_instance(cid)
+		card_inst.scale        = Vector2(card_scale, card_scale)
+		card_inst.is_draggable = false
+		card_inst.mouse_filter = Control.MOUSE_FILTER_IGNORE
+		card_inst.position     = Vector2.ZERO
+		slot.add_child(card_inst)
+
+		var name_lbl = Label.new()
+		name_lbl.text     = cdata.get("name", cid)
+		name_lbl.position = Vector2(0, ch + 2)
+		name_lbl.size     = Vector2(cw, 18)
+		name_lbl.horizontal_alignment = HORIZONTAL_ALIGNMENT_CENTER
+		name_lbl.add_theme_font_size_override("font_size", 9)
+		name_lbl.add_theme_color_override("font_color", COLOR_TEXT)
+		slot.add_child(name_lbl)
+
+		var btn = Button.new()
+		btn.set_anchors_preset(Control.PRESET_FULL_RECT)
+		btn.flat = true
+		btn.mouse_default_cursor_shape = Control.CURSOR_POINTING_HAND
+		var hover_s = StyleBoxFlat.new()
+		hover_s.bg_color                  = Color(1, 1, 1, 0.14)
+		hover_s.corner_radius_top_left    = 6; hover_s.corner_radius_top_right    = 6
+		hover_s.corner_radius_bottom_left = 6; hover_s.corner_radius_bottom_right = 6
+		btn.add_theme_stylebox_override("hover", hover_s)
+
+		var cid_local: String = cid
+		btn.pressed.connect(func():
+			_close_selection_popup()
+			_targets["stage2CardId"] = cid_local
+			_send()
+			emit_signal("trainer_message",
+				"Pokémon Breeder: evolucionando a %s..." % cdata.get("name", cid_local))
+		)
+		btn.mouse_entered.connect(func():
+			slot.create_tween().tween_property(slot, "scale", Vector2(1.06, 1.06), 0.08)
+		)
+		btn.mouse_exited.connect(func():
+			slot.create_tween().tween_property(slot, "scale", Vector2(1.0, 1.0), 0.08)
+		)
+		slot.add_child(btn)
+
+	var cancel_btn = _make_button("✕  Cancelar", "CANCEL")
+	cancel_btn.position = Vector2(panel_w / 2.0 - 50, panel_h - 48.0)
+	cancel_btn.size     = Vector2(100, 32)
+	cancel_btn.pressed.connect(func():
+		_close_selection_popup()
+		cancel()
+	)
+	panel.add_child(cancel_btn)
+
+	_animate_panel_in(panel)
+	return popup
+
+
+# ============================================================
+# POKÉMON MARCH — popup del MAZO
+# ============================================================
 func handle_pokemon_march_options(options: Dictionary) -> void:
-	# Solo bloquear si hay un popup de march activo ahora mismo.
-	# Usar .name para distinguirlo del popup de descarte.
 	if _selection_popup != null \
 			and is_instance_valid(_selection_popup) \
 			and _selection_popup.name == "PokemonMarchSelector":
@@ -227,7 +429,6 @@ func handle_pokemon_march_options(options: Dictionary) -> void:
 	var bench_full: bool  = options.get("benchFull", false)
 
 	if bench_full:
-		# Banco lleno — resolvemos automáticamente sin popup
 		NetworkManager.send_action("RESOLVE_POKEMON_MARCH", {"selectedCardId": ""})
 		emit_signal("trainer_message", "Tu banco está lleno, Pokémon March sin efecto para ti")
 		return
@@ -248,15 +449,12 @@ func _build_deck_march_popup(vp: Vector2, available: Array) -> Control:
 	popup.name = "PokemonMarchSelector"
 	popup.set_anchors_preset(Control.PRESET_FULL_RECT)
 	popup.z_index = 200
-	#Z Index del pop up de pokemon march
 
-	# Fondo oscuro semitransparente
 	var dim = ColorRect.new()
 	dim.set_anchors_preset(Control.PRESET_FULL_RECT)
 	dim.color = Color(0, 0, 0, 0.82)
 	popup.add_child(dim)
 
-	# Panel central
 	var panel_w: float = min(700.0, vp.x - 60)
 	var panel_h: float = min(460.0, vp.y - 80)
 	var panel = Panel.new()
@@ -273,7 +471,6 @@ func _build_deck_march_popup(vp: Vector2, available: Array) -> Control:
 	panel.add_theme_stylebox_override("panel", pstyle)
 	popup.add_child(panel)
 
-	# Título
 	var title_lbl = Label.new()
 	title_lbl.position = Vector2(16, 12)
 	title_lbl.size     = Vector2(panel_w - 32, 30)
@@ -282,7 +479,6 @@ func _build_deck_march_popup(vp: Vector2, available: Array) -> Control:
 	title_lbl.add_theme_color_override("font_color", COLOR_GOLD)
 	panel.add_child(title_lbl)
 
-	# Botón "saltar" — siempre visible
 	var skip_btn = _make_button("↩  No poner nada", "SKIP")
 	skip_btn.position = Vector2(panel_w / 2.0 - 80, panel_h - 48.0)
 	skip_btn.size     = Vector2(160, 32)
@@ -293,10 +489,8 @@ func _build_deck_march_popup(vp: Vector2, available: Array) -> Control:
 	)
 	panel.add_child(skip_btn)
 
-	# ── Sin básicos disponibles ──────────────────────────────
 	if available.is_empty():
 		title_lbl.text = "Pokémon March — No hay Básicos en tu mazo"
-
 		var empty_lbl = Label.new()
 		empty_lbl.text = "No tienes Pokémon Básicos en el mazo"
 		empty_lbl.position = Vector2(0, panel_h / 2.0 - 20)
@@ -305,11 +499,9 @@ func _build_deck_march_popup(vp: Vector2, available: Array) -> Control:
 		empty_lbl.add_theme_color_override("font_color", COLOR_TEXT)
 		empty_lbl.add_theme_font_size_override("font_size", 13)
 		panel.add_child(empty_lbl)
-
 		_animate_panel_in(panel)
 		return popup
 
-	# ── Con básicos disponibles ─────────────────────────────
 	title_lbl.text = "Pokémon March — Elige 1 Básico de tu mazo (o salta)"
 
 	var scroll = ScrollContainer.new()
@@ -367,7 +559,6 @@ func _build_deck_march_popup(vp: Vector2, available: Array) -> Control:
 		btn.set_anchors_preset(Control.PRESET_FULL_RECT)
 		btn.flat = true
 		btn.mouse_default_cursor_shape = Control.CURSOR_POINTING_HAND
-
 		var hover_s = StyleBoxFlat.new()
 		hover_s.bg_color                  = Color(1, 1, 1, 0.14)
 		hover_s.corner_radius_top_left    = 6; hover_s.corner_radius_top_right    = 6
@@ -394,7 +585,6 @@ func _build_deck_march_popup(vp: Vector2, available: Array) -> Control:
 
 # ============================================================
 # POPUP DE SELECCIÓN DE DESCARTE
-# (usado por time_capsule y super_rod)
 # ============================================================
 func _show_discard_selector(only_basic_pokemon: bool, max_count: int = 99) -> void:
 	if not board: return
@@ -481,7 +671,6 @@ func _build_discard_popup(vp: Vector2, candidates: Array, max_count: int) -> Con
 	var card_scale: float = 0.65
 	var cw: int = int(CARD_W * card_scale)
 	var ch: int = int(CARD_H * card_scale)
-
 	var selected_ids: Array[String] = []
 
 	for cid in candidates:

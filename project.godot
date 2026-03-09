@@ -17,6 +17,7 @@ config/icon="res://icon.svg"
 
 [autoload]
 
+CardDatabaseLC="*uid://de8moxskavxyy"
 CardDatabase="*uid://7il2fi78hvgi"
 NetworkManager="*uid://cfnskomhsgo3r"
 GymManager="*uid://bajdohqs8x4rb"

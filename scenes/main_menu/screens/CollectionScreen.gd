@@ -10,6 +10,7 @@ const MiniCard   = preload("res://scenes/main_menu/components/MiniCard.gd")
 enum Tab { CARDS, PACKS, DECKS, STATS }
 
 const EXPANSIONS = [
+	{"id":"Legendary Collection","label":"Legendary Collection","logo":"res://assets/imagen/ExpNeoGenesis/Neo Discovery.png","total":110, "active":true},
 	{"id":"Neo Genesis",   "label":"Neo Genesis",   "logo":"res://assets/imagen/ExpNeoGenesis/Neo Genesis.png",   "total":111, "active":true},
 	{"id":"Neo Discovery", "label":"Neo Discovery", "logo":"res://assets/imagen/ExpNeoGenesis/Neo Discovery.png", "total":75,  "active":false},
 	{"id":"Neo Revelation","label":"Neo Revelation","logo":"res://assets/imagen/ExpNeoGenesis/Neo Revelation.png","total":66,  "active":false},

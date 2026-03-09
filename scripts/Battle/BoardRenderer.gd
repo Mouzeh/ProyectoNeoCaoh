@@ -31,7 +31,7 @@ var _turn_banner:  Control    = null
 
 var _zone_card_cache:      Dictionary = {}
 var _tex_cache:            Dictionary = {}
-var _opp_hand_count_cache: int        = -1
+var _opp_hand_cache_str:   String     = ""
 var _discard_btns_added:   bool       = false
 
 # ─── CACHÉ DE TEXTURAS ──────────────────────────────────────
@@ -55,18 +55,32 @@ func set_opp_sleeve(sleeve_id: String) -> void:
 # HOVER ZOOM
 # ============================================================
 func get_hovered_card_id() -> String:
+	# 1. Revisar zonas del tablero (Activos y Bancas)
 	for key in zones.keys():
+		if key in ["opp_hand", "my_discard", "opp_discard"]: continue
 		var item = zones[key]
 		if typeof(item) == TYPE_ARRAY:
 			for zone in item:
-				if zone and zone.has_node("CardInstance"):
-					if zone.get_node("CardInstance").get("is_hovered"):
-						return str(_zone_card_cache.get(zone.name, "")).replace("_oculto", "")
+				if zone and zone.has_node("CardInstance") and zone.get_node("CardInstance").get("is_hovered"):
+					return str(_zone_card_cache.get(zone.name, "")).replace("_oculto", "")
 		else:
 			var zone = item
-			if zone and zone.has_node("CardInstance"):
-				if zone.get_node("CardInstance").get("is_hovered"):
-					return str(_zone_card_cache.get(zone.name, "")).replace("_oculto", "")
+			if zone and zone.has_node("CardInstance") and zone.get_node("CardInstance").get("is_hovered"):
+				return str(_zone_card_cache.get(zone.name, "")).replace("_oculto", "")
+
+	# 2. Revisar la mano del oponente (Clarividencia)
+	if zones.has("opp_hand") and zones["opp_hand"]:
+		for child in zones["opp_hand"].get_children():
+			if child.get("is_hovered") and child.has_meta("card_id"):
+				return str(child.get_meta("card_id"))
+
+	# 3. Revisar los descartes
+	for key in ["my_discard", "opp_discard"]:
+		if zones.has(key) and zones[key]:
+			var top_card = zones[key].get_node_or_null("DiscardTopCard")
+			if top_card and top_card.get("is_hovered") and top_card.has_meta("card_id"):
+				return str(top_card.get_meta("card_id"))
+
 	return ""
 
 # ============================================================
@@ -119,9 +133,6 @@ func _add_discard_button(zone: Control, is_mine: bool) -> void:
 # ============================================================
 # RENDER PRINCIPAL
 # ============================================================
-# FIX: Se usa _get_count() para deck y prizes, que acepta tanto
-#      un Array (modo jugador) como un int/deck_count (modo espectador).
-# ============================================================
 func render_board(state: Dictionary) -> void:
 	var my_data  = state.get("my",       {})
 	var opp_data = state.get("opponent", {})
@@ -135,7 +146,6 @@ func render_board(state: Dictionary) -> void:
 		_update_zone_pokemon(zones["my_bench"][i],  my_bench[i]  if i < my_bench.size()  else null, false, true)
 		_update_zone_pokemon(zones["opp_bench"][i], opp_bench[i] if i < opp_bench.size() else null, false, false)
 
-	# FIX: usar _get_count para ambos jugadores — funciona con array O con int
 	_update_counter_zone(zones["my_deck"],    _get_count(my_data,  "deck",   "deck_count"),   "Mazo")
 	_update_counter_zone(zones["my_prizes"],  _get_count(my_data,  "prizes", "prizes_count"), "Premios")
 	_update_counter_zone(zones["opp_deck"],   _get_count(opp_data, "deck",   "deck_count"),   "Mazo")
@@ -144,13 +154,12 @@ func render_board(state: Dictionary) -> void:
 	_update_discard_zone(zones["my_discard"],  my_data.get("discard",  []))
 	_update_discard_zone(zones["opp_discard"], opp_data.get("discard", []))
 
-	# FIX: hand_count para ambos lados (espectador no tiene hand array de ninguno)
 	var opp_hand_count = _get_count(opp_data, "hand", "hand_count")
-	_update_opponent_hand(zones["opp_hand"], opp_hand_count)
+	var revealed_hand  = opp_data.get("revealed_hand", [])
+	_update_opponent_hand(zones["opp_hand"], opp_hand_count, revealed_hand)
 
 
 ## Helper: obtiene el conteo de un campo que puede ser Array o int.
-## Primero intenta el array_key (.size()), luego el count_key (int directo).
 func _get_count(data: Dictionary, array_key: String, count_key: String) -> int:
 	var arr = data.get(array_key, null)
 	if arr is Array and arr.size() > 0:
@@ -158,7 +167,6 @@ func _get_count(data: Dictionary, array_key: String, count_key: String) -> int:
 	var cnt = data.get(count_key, 0)
 	if cnt is float: cnt = int(cnt)
 	if cnt is int: return cnt
-	# Fallback: si el array existe pero está vacío, y no hay count_key, devolver 0
 	if arr is Array: return arr.size()
 	return 0
 
@@ -194,6 +202,7 @@ func _update_discard_zone(zone: Control, discard) -> void:
 
 	var card_inst = CardDatabase.create_card_instance(top_id)
 	card_inst.name         = "DiscardTopCard"
+	card_inst.set_meta("card_id", top_id)
 	card_inst.is_draggable = false
 	card_inst.z_index      = 5
 	card_inst.mouse_filter = Control.MOUSE_FILTER_IGNORE
@@ -272,7 +281,6 @@ func _update_zone_pokemon(zone: Control, pokemon_data, is_active: bool, is_mine:
 	var zone_key:  String = zone.name
 	var cached_id: String = str(_zone_card_cache.get(zone_key, ""))
 
-	# Solo reconstruir si la carta cambió o se dio vuelta
 	if cache_value != cached_id:
 		for child in zone.get_children():
 			if child.name not in ["Background", "DropOverlay", "SelectOverlay",
@@ -298,21 +306,18 @@ func _update_zone_pokemon(zone: Control, pokemon_data, is_active: bool, is_mine:
 			_fit_node_to_zone(card_instance, zone, 4)
 			zone.add_child(card_instance)
 
-			# TokenOverlay vacío inicial
 			var ov = Control.new()
 			ov.name         = "TokenOverlay"
 			ov.size         = Vector2(CARD_W, CARD_H)
 			ov.mouse_filter = Control.MOUSE_FILTER_IGNORE
 			card_instance.add_child(ov)
 
-	# Si no hay carta, nada más que hacer
 	if new_card_id == "" or is_face_down or new_card_id == "face_down":
 		return
 
 	var card_instance = zone.get_node_or_null("CardInstance")
 	if not card_instance: return
 
-	# Limpiar y redibujar solo los tokens (sin tocar posición/scale)
 	var overlay = card_instance.get_node_or_null("TokenOverlay")
 	if overlay == null:
 		overlay = Control.new()
@@ -324,7 +329,6 @@ func _update_zone_pokemon(zone: Control, pokemon_data, is_active: bool, is_mine:
 		for child in overlay.get_children():
 			child.free()
 
-	# HP Badge
 	if is_active:
 		var card_data: Dictionary = CardDatabase.get_card(new_card_id)
 		var max_hp: int = int(card_data.get("hp", 0))
@@ -333,7 +337,6 @@ func _update_zone_pokemon(zone: Control, pokemon_data, is_active: bool, is_mine:
 		if max_hp > 0:
 			_add_hp_badge(overlay, cur_hp, max_hp)
 
-	# Estados
 	var status: String = str(pokemon_data.get("status", ""))
 	if status != "" and status != "null":
 		_add_status_token(overlay, status)
@@ -342,12 +345,10 @@ func _update_zone_pokemon(zone: Control, pokemon_data, is_active: bool, is_mine:
 	if pokemon_data.get("is_burned", false):
 		_add_status_token(overlay, "BURNED")
 
-	# Daño
 	var dmg_counters: int = int(pokemon_data.get("damage_counters", 0))
 	if dmg_counters > 0:
 		_add_damage_tokens(overlay, dmg_counters)
 
-	# Energías
 	var energies: Array = pokemon_data.get("attached_energy", [])
 	if energies.size() > 0:
 		_add_energy_indicators(overlay, energies)
@@ -535,10 +536,13 @@ func _update_counter_zone(zone: Control, count: int, label: String) -> void:
 # ============================================================
 # MANO DEL OPONENTE
 # ============================================================
-func _update_opponent_hand(opp_hand_zone: Control, count: int) -> void:
+func _update_opponent_hand(opp_hand_zone: Control, count: int, revealed_hand: Array = []) -> void:
 	if not opp_hand_zone: return
-	if count == _opp_hand_count_cache: return
-	_opp_hand_count_cache = count
+	
+	# Usamos un string combinado para saber si recargar la mano
+	var current_cache_str = str(count) + "_" + str(revealed_hand)
+	if current_cache_str == _opp_hand_cache_str: return
+	_opp_hand_cache_str = current_cache_str
 
 	for child in opp_hand_zone.get_children():
 		if not (child is ColorRect):
@@ -556,10 +560,22 @@ func _update_opponent_hand(opp_hand_zone: Control, count: int) -> void:
 	var card_y:  float = (opp_hand_zone.size.y - float(CARD_BACK_H)) / 2.0
 
 	for i in range(count):
-		var back = _make_mini_card_back(opp_sleeve_id, CARD_BACK_W, CARD_BACK_H)
-		back.position = Vector2(start_x + float(i) * step, card_y)
-		back.z_index  = i
-		opp_hand_zone.add_child(back)
+		var node_to_add: Control
+		
+		if i < revealed_hand.size() and str(revealed_hand[i]) != "":
+			var card_id = str(revealed_hand[i])
+			node_to_add = CardDatabase.create_card_instance(card_id)
+			node_to_add.set_meta("card_id", card_id)
+			node_to_add.is_draggable = false
+			node_to_add.scale = Vector2(float(CARD_BACK_W) / float(CARD_W), float(CARD_BACK_H) / float(CARD_H))
+			if node_to_add.has_node("DropOverlay"):
+				node_to_add.get_node("DropOverlay").mouse_filter = Control.MOUSE_FILTER_IGNORE
+		else:
+			node_to_add = _make_mini_card_back(opp_sleeve_id, CARD_BACK_W, CARD_BACK_H)
+			
+		node_to_add.position = Vector2(start_x + float(i) * step, card_y)
+		node_to_add.z_index  = i
+		opp_hand_zone.add_child(node_to_add)
 
 func _make_mini_card_back(sleeve_id: String, w: int, h: int) -> Control:
 	var container = Control.new()

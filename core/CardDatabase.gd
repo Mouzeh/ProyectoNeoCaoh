@@ -331,7 +331,7 @@ var CARDS: Dictionary = {
 		"retreat_cost": 0, "weakness": "", "resistance": "FIGHTING",
 		"rarity": "RARE",
 		"attacks": [
-			{"name": "Mean Look", "cost": {"DARKNESS": 1}, "damage": 0, "effect": "The Defending Pokémon can’t retreat as long as Murkrow remains your Active Pokémon. Benching or evolving either Pokémon ends this effect."},
+			{"name": "Mean Look", "cost": {"DARKNESS": 1}, "damage": 0, "effect": "The Defending Pokémon can't retreat as long as Murkrow remains your Active Pokémon. Benching or evolving either Pokémon ends this effect."},
 			{"name": "Feint Attack", "cost": {"DARKNESS": 1, "COLORLESS": 1}, "damage": 20, "effect": "Choose 1 of your opponent's Pokémon. This attack does 20 damage to that Pokémon. This attack's damage isn't affected by Weakness, Resistance, Pokémon Powers, or any other effects on the Defending Pokémon."},
 		]
 	},
@@ -1153,15 +1153,20 @@ func _ready() -> void:
 		var powers: Dictionary = JSON.parse_string(file.get_as_text())
 		for id in CARDS:
 			CARDS[id]["power"] = powers.get(id, 0)
+		# Inyectar powers a LC también
+		for id in CardDatabaseLC.CARDS:
+			CardDatabaseLC.CARDS[id]["power"] = powers.get(id, 0)
 	else:
 		push_warning("CardDatabase: no se encontró card_powers.json")
 
 func get_card(card_id: String) -> Dictionary:
-	return CARDS.get(card_id, {})
+	var card = CARDS.get(card_id, {})
+	if card.is_empty():
+		return CardDatabaseLC.get_card(card_id)
+	return card
 
 func get_energy_type(card_id: String) -> String:
-	return CARDS.get(card_id, {}).get("energy_type", "COLORLESS")
-
+	return get_card(card_id).get("energy_type", "COLORLESS")
 
 var _card_scene: PackedScene = null
 
@@ -1174,7 +1179,6 @@ func create_card_instance(card_id: String) -> Node:
 	var card_node = _card_scene.instantiate()
 	var data = get_card(card_id)
 	if not data.is_empty():
-		# Inyectar imagen según idioma antes de hacer setup
 		var localized_data = data.duplicate()
 		var img_path = LanguageManager.get_card_image(data)
 		if img_path != "":
@@ -1184,18 +1188,19 @@ func create_card_instance(card_id: String) -> Node:
 
 func get_cards_by_type(type: String) -> Array:
 	var result = []
-	for id in CARDS:
-		if CARDS[id].get("type") == type:
-			result.append(CARDS[id])
+	for id in get_all_ids():
+		var card = get_card(id)
+		if card.get("type") == type:
+			result.append(card)
 	return result
 
 func get_all_ids() -> Array:
-	return CARDS.keys()
+	return CARDS.keys() + CardDatabaseLC.get_all_ids()
 
 func get_all_pokemon_ids() -> Array:
 	var result = []
-	for id in CARDS:
-		if CARDS[id].get("type") == "POKEMON":
+	for id in get_all_ids():
+		if get_card(id).get("type") == "POKEMON":
 			result.append(id)
 	return result
 
@@ -1203,31 +1208,20 @@ func get_all_pokemon_ids() -> Array:
 
 func calculate_deck_tier(deck_cards: Array) -> String:
 	var non_zero_powers = []
-	
-	# 1. Recorrer los IDs de texto y obtener el poder real de cada carta
 	for card_id in deck_cards:
 		var card_data = get_card(card_id)
 		if not card_data.is_empty():
 			var p = card_data.get("power", 0)
 			if p > 0:
 				non_zero_powers.append(p)
-	
-	# 2. Ordenar de mayor a menor poder
 	non_zero_powers.sort_custom(func(a, b): return a > b)
-	
-	# 3. Tomar el top 20
 	var top20 = non_zero_powers.slice(0, min(20, non_zero_powers.size()))
-	
 	if top20.is_empty():
 		return "C"
-	
-	# 4. Calcular promedio
 	var total = 0
 	for p in top20:
 		total += p
 	var avg = float(total) / max(top20.size(), 1)
-	
-	# 5. Retornar tier
 	if avg >= 71: return "SS"
 	elif avg >= 51: return "S"
 	elif avg >= 36: return "A"

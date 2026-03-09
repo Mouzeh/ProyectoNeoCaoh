@@ -3,6 +3,7 @@ extends Node
 # ============================================================
 # TargetSelector.gd
 # Maneja el flujo: elegir acción → elegir carta de mano → elegir target
+# Los Pokémon Powers ahora son responsabilidad de PokePowerHandler.gd
 # ============================================================
 
 signal target_selected(action, hand_index, zone, zone_index)
@@ -15,15 +16,15 @@ enum Action { NONE, PLAY_BASIC, ATTACH_ENERGY, EVOLVE, RETREAT, ATTACK, ATTACK_W
 var current_state:  State  = State.IDLE
 var current_action: Action = Action.NONE
 var selected_hand_index: int = -1
-var _pending_attack_index:   int    = -1  # índice del ataque que necesita target
+var _pending_attack_index:   int = -1
 var board = null
 
 const COLOR_SELECTABLE = Color(0.20, 0.85, 0.40, 0.40)
-const COLOR_OPPONENT   = Color(0.95, 0.35, 0.20, 0.45)  # naranja para objetivos rivales
+const COLOR_OPPONENT   = Color(0.95, 0.35, 0.20, 0.45)
 const COLOR_INVALID    = Color(0.85, 0.20, 0.20, 0.40)
 const COLOR_CLEAR      = Color(0, 0, 0, 0)
 
-# Ataques que requieren elegir objetivo (activo o banco rival)
+# Ataques que requieren elegir objetivo rival
 const TARGETED_ATTACKS = ["Mean Look", "Feint Attack", "Telekinesis"]
 
 func _input(event: InputEvent) -> void:
@@ -60,7 +61,6 @@ func begin_retreat() -> void:
 	_set_state(State.WAITING_TARGET, Action.RETREAT)
 	_highlight_my_bench_for_retreat()
 
-# Llamado desde ActionHandler cuando el ataque necesita elegir objetivo rival
 func begin_attack_target(attack_index: int) -> void:
 	_pending_attack_index = attack_index
 	_set_state(State.WAITING_TARGET, Action.ATTACK_WITH_TARGET)
@@ -82,7 +82,6 @@ func cancel() -> void:
 func on_hand_card_clicked(hand_index: int, card_id: String = "") -> void:
 	if current_state != State.WAITING_HAND: return
 
-	# Obtener card_id si no se pasó
 	if card_id == "":
 		var hand = board.current_state.get("my", {}).get("hand", [])
 		if hand_index < hand.size():
@@ -119,12 +118,9 @@ func on_zone_clicked(zone: String, zone_index: int) -> void:
 	if current_state != State.WAITING_TARGET: return
 
 	if current_action == Action.ATTACK_WITH_TARGET:
-		# Convertir zona a _target_pokemon_index para el servidor:
-		# 0 = activo, 1–5 = banco[0..4]
 		var target_index = 0
 		if zone == "bench":
 			target_index = zone_index + 1
-
 		NetworkManager.send_action("ATTACK", {
 			"attackIndex":        _pending_attack_index,
 			"targetPokemonIndex": target_index,
@@ -150,7 +146,6 @@ func _finish_selection() -> void:
 func _highlight_hand_cards(filter_func: Callable) -> void:
 	if not board or not board.my_hand_zone: return
 	var hand = board.current_state.get("my", {}).get("hand", [])
-
 	var i = 0
 	for child in board.my_hand_zone.get_children():
 		if child is ColorRect: continue
@@ -182,14 +177,11 @@ func _highlight_my_bench_for_retreat() -> void:
 			_set_zone_highlight(board.my_bench_zones[i], COLOR_SELECTABLE)
 			_connect_zone_click(board.my_bench_zones[i], "bench", i)
 
-# Resalta activo + banco del rival como objetivos seleccionables
 func _highlight_opponent_pokemon_zones() -> void:
 	var opp = board.current_state.get("opponent", {})
-
 	if board.opp_active_zone and opp.get("active") != null:
 		_set_zone_highlight(board.opp_active_zone, COLOR_OPPONENT)
 		_connect_zone_click(board.opp_active_zone, "active", 0)
-
 	var bench = opp.get("bench", [])
 	for i in range(bench.size()):
 		if bench[i] != null:
@@ -198,12 +190,10 @@ func _highlight_opponent_pokemon_zones() -> void:
 
 func _highlight_valid_evolution_targets(evolution_card_id: String) -> void:
 	var evolves_from = CardDatabase.get_card(evolution_card_id).get("evolves_from", "").to_lower()
-
 	var active = board.current_state.get("my", {}).get("active")
 	if active and _check_evolution_match(active, evolves_from):
 		_set_zone_highlight(board.my_active_zone, COLOR_SELECTABLE)
 		_connect_zone_click(board.my_active_zone, "active", 0)
-
 	var bench = board.current_state.get("my", {}).get("bench", [])
 	for i in range(bench.size()):
 		if bench[i] and _check_evolution_match(bench[i], evolves_from):
@@ -233,8 +223,6 @@ func _set_zone_highlight(zone: Control, color: Color) -> void:
 
 func _clear_all_highlights() -> void:
 	if not board: return
-
-	# Limpiar mano
 	if board.my_hand_zone:
 		for child in board.my_hand_zone.get_children():
 			if child is ColorRect: continue
@@ -242,8 +230,6 @@ func _clear_all_highlights() -> void:
 				child.set_highlighted(false)
 			else:
 				_set_zone_highlight(child, COLOR_CLEAR)
-
-	# Limpiar zonas propias y rivales
 	var all_zones = [board.my_active_zone, board.opp_active_zone] \
 		+ board.my_bench_zones + board.opp_bench_zones
 	for z in all_zones:
@@ -261,7 +247,6 @@ func _connect_zone_click(zone: Control, zone_name: String, zone_idx: int) -> voi
 		area.flat = true
 		area.mouse_default_cursor_shape = Control.CURSOR_POINTING_HAND
 		zone.add_child(area)
-
 	if area.pressed.is_connected(on_zone_clicked):
 		area.pressed.disconnect(on_zone_clicked)
 	area.pressed.connect(on_zone_clicked.bind(zone_name, zone_idx))
