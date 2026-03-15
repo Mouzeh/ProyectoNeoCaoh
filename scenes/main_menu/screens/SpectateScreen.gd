@@ -1,22 +1,6 @@
 extends Node
 # ============================================================
 # scenes/main_menu/screens/SpectateScreen.gd
-#
-# USO en MainMenu._show_screen():
-#   Screen.SPECTATE:
-#       var ss = SpectateScreen.new()
-#       _screen_container.add_child(ss)
-#       ss.build(_screen_container, self, _gym_params)
-#
-# FIXES aplicados:
-#   1. Fondo: se eliminó el fondo duplicado en build(), y en
-#      _build_live_board() el TextureRect se agrega como hijo
-#      directo de board_area con tamaño explícito (no dentro
-#      del Node2D con offset -46).
-#   2. Chat: se conecta también a NetworkManager.chat_received
-#      (el chat de los jugadores en batalla), además del canal
-#      spectator_chat_received. Se cachea el último estado para
-#      resolver UUIDs a nombres legibles.
 # ============================================================
 
 var _current_room_id:     String     = ""
@@ -35,11 +19,17 @@ func build(container: Control, menu, room: Dictionary) -> void:
 	_processed_log_count = 0
 	_last_state          = {}
 
+	var vp_size = menu.get_viewport().get_visible_rect().size
+	var W = vp_size.x
+	var H = vp_size.y
+
 	# ── Header ────────────────────────────────────────────────
 	var header = Panel.new()
 	header.set_anchors_preset(Control.PRESET_TOP_WIDE)
 	header.custom_minimum_size = Vector2(0, 46)
-	header.z_index = 50
+	header.z_index = 200   # alto para estar siempre encima del BattleLog
+	header.mouse_filter = Control.MOUSE_FILTER_PASS # <--- NUEVO: Deja pasar el clic si no le das al botón
+	
 	var hs = StyleBoxFlat.new()
 	hs.bg_color            = Color(0.05, 0.07, 0.09, 0.97)
 	hs.border_color        = Color(0.55, 0.45, 0.18, 0.6)
@@ -51,25 +41,51 @@ func build(container: Control, menu, room: Dictionary) -> void:
 	hm.set_anchors_preset(Control.PRESET_FULL_RECT)
 	hm.add_theme_constant_override("margin_left",  14)
 	hm.add_theme_constant_override("margin_right", 14)
+	hm.mouse_filter = Control.MOUSE_FILTER_PASS # <--- NUEVO
 	header.add_child(hm)
 
 	var hrow = HBoxContainer.new()
 	hrow.add_theme_constant_override("separation", 16)
+	hrow.set_anchors_preset(Control.PRESET_FULL_RECT)
+	hrow.mouse_filter = Control.MOUSE_FILTER_PASS # <--- NUEVO
 	hm.add_child(hrow)
 
+	# ── Botón "✕ Dejar de ver" — rojo sólido, más grande ─────
 	var back_btn = Button.new()
-	back_btn.text = "<- Lobby"
-	back_btn.flat = true
-	back_btn.add_theme_color_override("font_color", Color("#7eb8e8"))
-	back_btn.add_theme_font_size_override("font_size", 12)
+	back_btn.text = "✕  Dejar de ver"
+	back_btn.custom_minimum_size = Vector2(148, 34)
+	back_btn.mouse_default_cursor_shape = Control.CURSOR_POINTING_HAND
+	back_btn.z_index = 210
+	
+	var s_n = StyleBoxFlat.new()
+	s_n.bg_color     = Color(0.75, 0.08, 0.08, 1.0)
+	s_n.border_color = Color(1.0, 0.20, 0.20, 1.0)
+	s_n.border_width_left = 1; s_n.border_width_right  = 1
+	s_n.border_width_top  = 1; s_n.border_width_bottom = 1
+	s_n.corner_radius_top_left    = 6; s_n.corner_radius_top_right    = 6
+	s_n.corner_radius_bottom_left = 6; s_n.corner_radius_bottom_right = 6
+	back_btn.add_theme_stylebox_override("normal", s_n)
+	
+	var s_h = StyleBoxFlat.new()
+	s_h.bg_color     = Color(0.95, 0.12, 0.12, 1.0)
+	s_h.border_color = Color(1.0, 0.40, 0.40, 1.0)
+	s_h.border_width_left = 1; s_h.border_width_right  = 1
+	s_h.border_width_top  = 1; s_h.border_width_bottom = 1
+	s_h.corner_radius_top_left    = 6; s_h.corner_radius_top_right    = 6
+	s_h.corner_radius_bottom_left = 6; s_h.corner_radius_bottom_right = 6
+	back_btn.add_theme_stylebox_override("hover", s_h)
+	
+	back_btn.add_theme_color_override("font_color", Color(1.0, 1.0, 1.0))
+	back_btn.add_theme_font_size_override("font_size", 13)
+	
 	back_btn.pressed.connect(func():
 		_disconnect_signals()
 		NetworkManager.stop_spectating(_current_room_id)
-		_menu._show_screen(_menu.Screen.LOBBY)
+		_menu._show_screen(_menu.Screen.HOME) 
 	)
 	hrow.add_child(back_btn)
 
-	# Nombre de sala: preferir host_username si el name parece un UUID
+	# Nombre de sala
 	var raw_name  = room.get("name", "")
 	var host_user = room.get("host_username", room.get("host", ""))
 	var room_name: String
@@ -112,7 +128,6 @@ func build(container: Control, menu, room: Dictionary) -> void:
 
 	var status = room.get("status", "waiting")
 	if status == "waiting":
-		# Fondo oscuro solo para la pantalla de espera
 		var bg = ColorRect.new()
 		bg.set_anchors_preset(Control.PRESET_FULL_RECT)
 		bg.color        = Color(0.05, 0.07, 0.10, 1)
@@ -122,14 +137,15 @@ func build(container: Control, menu, room: Dictionary) -> void:
 	else:
 		_build_live_board(board_area, room.get("initial_state", {}))
 
-	# ── BattleLog ─────────────────────────────────────────────
-	var vp_size  = menu.get_viewport().get_visible_rect().size
+	# ── BattleLog — z_index bajo para no tapar el header ─────
 	_battle_log          = BattleLog.new()
 	_battle_log.name     = "BattleLog"
-	_battle_log.z_index  = 60
+	_battle_log.z_index  = 20   
 	container.add_child(_battle_log)
-	_battle_log.setup(vp_size.x, vp_size.y - 46)
-	_battle_log.position = Vector2(0, 46)
+
+	var log_offset: float = 100.0
+	_battle_log.setup(W, H - 46 - log_offset)
+	_battle_log.position = Vector2(0, 46 + log_offset)
 
 	var my_name: String = "Espectador"
 	if PlayerData.get("username") != null and str(PlayerData.get("username")) != "":
@@ -140,6 +156,9 @@ func build(container: Control, menu, room: Dictionary) -> void:
 	)
 
 	_connect_signals()
+
+	# <--- NUEVO: Aseguramos que el header se dibuje al final para que intercepte los clics primero
+	container.move_child(header, -1) 
 
 
 # ─────────────────────────────────────────────────────────────
@@ -169,19 +188,13 @@ func _add_wait_message(parent: Control) -> void:
 
 
 # ─────────────────────────────────────────────────────────────
-# FIX 1: Fondo se agrega como hijo directo de board_area con
-#         tamaño explícito. El Node2D con offset -46 solo
-#         contiene las zonas del BoardBuilder, no el fondo.
-# ─────────────────────────────────────────────────────────────
 func _build_live_board(board_area: Control, initial_state: Dictionary) -> void:
-	# Limpiar todo lo previo
 	for child in board_area.get_children():
 		child.queue_free()
 
 	var vp_size  = board_area.get_viewport().get_visible_rect().size
 	var board_vp = Vector2(vp_size.x, vp_size.y - 46)
 
-	# ── Fondo — hijo directo de board_area, tamaño explícito ──
 	if ResourceLoader.exists("res://assets/imagen/tablero/tablero1.png"):
 		var bg_tex = TextureRect.new()
 		bg_tex.name         = "BoardBg"
@@ -201,18 +214,13 @@ func _build_live_board(board_area: Control, initial_state: Dictionary) -> void:
 		bg.mouse_filter = Control.MOUSE_FILTER_IGNORE
 		board_area.add_child(bg)
 
-	# ── BoardBuilder espera un Node2D como parent ─────────────
-	# Compensamos el header con position.y = -46 para que las
-	# zonas queden en coordenadas absolutas iguales a BattleBoard.
 	var board_node = Node2D.new()
 	board_node.name     = "SpectateBoard"
-	board_node.position = Vector2(0, -46)  # compensar el header
+	board_node.position = Vector2(0, -46)
 	board_area.add_child(board_node)
 
-	# BoardBuilder recibe el viewport COMPLETO (como BattleBoard)
 	var zones: Dictionary = BoardBuilder.build_all(board_node, vp_size)
 
-	# Ocultar mano propia — espectador no ve sus cartas
 	var my_hand = zones.get("my_hand")
 	if my_hand: my_hand.visible = false
 
@@ -229,21 +237,15 @@ func _build_live_board(board_area: Control, initial_state: Dictionary) -> void:
 
 
 # ─────────────────────────────────────────────────────────────
-# FIX 2: Se conecta tanto a spectator_chat_received como a
-#         chat_received (chat de los jugadores en batalla).
-#         Se cachea _last_state para resolver UUIDs → nombres.
-# ─────────────────────────────────────────────────────────────
 func _connect_signals() -> void:
 	_disconnect_signals()
 
-	# ── Chat de espectadores ──────────────────────────────────
 	var c1 = func(rid, _uid, uname, text):
 		if rid != _current_room_id and rid != "": return
 		if _battle_log: _battle_log.add_chat_message(uname, text, Color("#7eb8e8"), false)
 	NetworkManager.spectator_chat_received.connect(c1)
 	_signal_callables.append([NetworkManager.spectator_chat_received, c1])
 
-	# ── Chat de los jugadores (canal CHAT de la partida) ──────
 	var c_battle_chat = func(pid: String, text: String):
 		if not _battle_log: return
 		var display_name = _resolve_player_name(pid)
@@ -251,7 +253,6 @@ func _connect_signals() -> void:
 	NetworkManager.chat_received.connect(c_battle_chat)
 	_signal_callables.append([NetworkManager.chat_received, c_battle_chat])
 
-	# ── Espectador se unió / salió ────────────────────────────
 	var c2 = func(rid, _uid, count):
 		if rid != _current_room_id: return
 		_update_spectator_count(count)
@@ -264,7 +265,6 @@ func _connect_signals() -> void:
 	NetworkManager.spectator_left.connect(c3)
 	_signal_callables.append([NetworkManager.spectator_left, c3])
 
-	# ── Partida comienza ──────────────────────────────────────
 	var c4 = func(rid, _mode):
 		if rid != "": _current_room_id = rid
 		var board_area = _container.get_node_or_null("BoardArea")
@@ -273,7 +273,6 @@ func _connect_signals() -> void:
 	NetworkManager.spectate_game_start.connect(c4)
 	_signal_callables.append([NetworkManager.spectate_game_start, c4])
 
-	# ── Estado actualizado ────────────────────────────────────
 	var c5 = func(state: Dictionary, log_arr):
 		var board_area = _container.get_node_or_null("BoardArea")
 		if not board_area: return
@@ -288,7 +287,6 @@ func _connect_signals() -> void:
 				"opponent":       state.get("player2", {}),
 			}
 
-		# Cachear el estado para resolver nombres en el chat
 		_last_state = render_state
 
 		var board_node = board_area.get_node_or_null("SpectateBoard")
@@ -313,17 +311,15 @@ func _connect_signals() -> void:
 	NetworkManager.spectate_state_updated.connect(c5)
 	_signal_callables.append([NetworkManager.spectate_state_updated, c5])
 
-	# ── Game over ─────────────────────────────────────────────
 	var c6 = func(winner):
 		if _battle_log: _battle_log.add_message("🏆  Partida terminada · Ganador: " + str(winner))
 	NetworkManager.spectate_game_over.connect(c6)
 	_signal_callables.append([NetworkManager.spectate_game_over, c6])
 
-	# ── Spectate ended ────────────────────────────────────────
 	var c7 = func(rid):
 		if rid != _current_room_id: return
 		_disconnect_signals()
-		_menu._show_screen(_menu.Screen.LOBBY)
+		_menu._show_screen(_menu.Screen.HOME) 
 	NetworkManager.spectate_ended.connect(c7)
 	_signal_callables.append([NetworkManager.spectate_ended, c7])
 
@@ -336,9 +332,6 @@ func _disconnect_signals() -> void:
 	_signal_callables.clear()
 
 
-# ─────────────────────────────────────────────────────────────
-# Resolver UUID de jugador a nombre legible usando _last_state
-# ─────────────────────────────────────────────────────────────
 func _resolve_player_name(pid: String) -> String:
 	var p1 = _last_state.get("my",       {})
 	var p2 = _last_state.get("opponent", {})
@@ -346,13 +339,11 @@ func _resolve_player_name(pid: String) -> String:
 		return p1.get("username", p1.get("display_name", "J1"))
 	if p2.get("id", "") == pid:
 		return p2.get("username", p2.get("display_name", "J2"))
-	# Fallback: si el pid parece un UUID largo, mostrar genérico
 	if pid.length() > 20 and "-" in pid:
 		return "Jugador"
 	return pid
 
 
-# Reemplaza UUIDs de jugadores por sus nombres legibles
 func _clean_log(msg: String, state: Dictionary) -> String:
 	var p1 = state.get("my", {})
 	var p2 = state.get("opponent", {})

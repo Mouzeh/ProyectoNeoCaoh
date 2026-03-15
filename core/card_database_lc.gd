@@ -7,7 +7,7 @@ var CARDS: Dictionary = {
 	"lc_alakazam": {
 		"id": "lc_alakazam", "name": "Alakazam", "number": "1/110",
 		"image": "res://assets/cards/Legendary Collection/lc_alakazam_001.jpg",
-		"image_es": "res://assets/cards/Legendary Collection ES/lc_alakazam_ES_001.jpg",
+		"image_es": "res://assets/cards/Legendary Collection ES/lc_alakazam_ES_001.png",
 		"type": "POKEMON", "pokemon_type": "PSYCHIC",
 		"hp": 80, "stage": 2, "evolves_from": "kadabra",
 		"retreat_cost": 3, "weakness": "PSYCHIC", "resistance": "",
@@ -1007,7 +1007,7 @@ var CARDS: Dictionary = {
 		"hp": 50, "stage": 0, "evolves_from": "",
 		"retreat_cost": 1, "weakness": "PSYCHIC", "resistance": "",
 		"rarity": "COMMON",
-		"pokemon_power": {"name": "Long-Distance Hypnosis", "effect": "Once during your turn (before your attack), you may flip a coin. If heads, the Defending Pokemon is now Asleep; if tails, your Active Pokemon is now Asleep. This power can't be used if Drowzee is affected by a Special Condition."},
+		"pokemon_power": {"name": "Long Distance Hypnosis", "effect": "Once during your turn (before your attack), you may flip a coin. If heads, the Defending Pokemon is now Asleep; if tails, your Active Pokemon is now Asleep. This power can't be used if Drowzee is affected by a Special Condition."},
 		"attacks": [
 			{"name": "Nightmare", "cost": {"PSYCHIC": 1, "COLORLESS": 1}, "damage": 10, "effect": "The Defending Pokemon is now Asleep."},
 		]
@@ -1050,7 +1050,7 @@ var CARDS: Dictionary = {
 		"rarity": "COMMON",
 		"pokemon_power": null,
 		"attacks": [
-			{"name": "Lick", "cost": {"COLORLESS": 1}, "damage": 10, "effect": "Flip a coin. If heads, the Defending Pokemon is now Paralyzed."},
+			{"name": "Lick", "cost": {"PSYCHIC": 1}, "damage": 10, "effect": "Flip a coin. If heads, the Defending Pokemon is now Paralyzed."},
 			{"name": "Energy Conversion", "cost": {"PSYCHIC": 1}, "damage": 0, "effect": "Put up to 2 Energy cards from your discard pile into your hand. Gastly does 10 damage to itself."},
 		]
 	},

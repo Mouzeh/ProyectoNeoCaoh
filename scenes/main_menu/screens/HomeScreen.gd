@@ -2,7 +2,8 @@ extends Node
 
 # ============================================================
 # HomeScreen.gd
-# Banner rotativo Premium + Comunidad Centrada + Cortina de Noticias
+# Banner rotativo + Comunidad + Cortina de Noticias
+# Sin header — botón Novedades flotante con dot pulsante
 # ============================================================
 
 const API_URL = "NetworkManager.BASE_URL/api/social"
@@ -48,37 +49,34 @@ const SERVER_NOTICES = [
 	{"date": "02/03", "text": "¡Nueva temporada de Ranked! Reinicio de ELO en 3 días. Prepárate."},
 ]
 
+# Iconos reales con rutas de textura
 const LINKS = [
-	{ "icon": "💬", "label": "Discord Oficial", "url": "https://discord.gg/hkUVgjT6" },
-	{ "icon": "📋", "label": "Foro de Jugadores", "url": "https://forum.pokemon-tcg.com" },
-	{ "icon": "🐦", "label": "Twitter / X",     "url": "https://twitter.com/pokemon_tcg" },
-	{ "icon": "📖", "label": "Wiki del Juego",  "url": "https://wiki.pokemon-tcg.com" },
+	{ "icon_path": "res://assets/iconos/discord.png",   "label": "Discord Oficial",   "url": "https://discord.gg/hkUVgjT6" },
+	{ "icon_path": "res://assets/iconos/fb.png",        "label": "Facebook",          "url": "https://www.facebook.com/profile.php?id=61586292251689" },
+	{ "icon_path": "res://assets/iconos/instagram.png", "label": "Instagram",         "url": "https://www.instagram.com" },
+	{ "icon_path": "res://assets/iconos/web.png",       "label": "neocaoh.cl",        "url": "https://www.neocaoh.cl" },
 ]
 
 # ============================================================
-# CACHÉ ESTÁTICO — persiste mientras el juego esté corriendo.
-# Llamar clear_cache() si necesitas liberar memoria (ej: al cerrar sesión).
+# CACHÉ ESTÁTICO
 # ============================================================
-static var _tex_cache:        Dictionary = {}   # path → Texture2D
-static var _custom_font:      Font       = null
-static var _font_checked:     bool       = false # para no llamar exists() cada vez
-
-# Estilos compartidos entre slides y botones de comunidad
-static var _st_link_normal:   StyleBoxFlat = null
-static var _st_link_hover:    StyleBoxFlat = null
-static var _st_curtain:       StyleBoxFlat = null
-static var _st_notice:        StyleBoxFlat = null
+static var _tex_cache:      Dictionary   = {}
+static var _custom_font:    Font         = null
+static var _font_checked:   bool         = false
+static var _st_link_normal: StyleBoxFlat = null
+static var _st_link_hover:  StyleBoxFlat = null
+static var _st_curtain:     StyleBoxFlat = null
+static var _st_notice:      StyleBoxFlat = null
 
 static func clear_cache() -> void:
 	_tex_cache.clear()
-	_custom_font  = null
-	_font_checked = false
-	_st_link_normal  = null
-	_st_link_hover   = null
-	_st_curtain      = null
-	_st_notice       = null
+	_custom_font    = null
+	_font_checked   = false
+	_st_link_normal = null
+	_st_link_hover  = null
+	_st_curtain     = null
+	_st_notice      = null
 
-# ── Helpers de caché ──────────────────────────────────────
 static func _get_tex(path: String) -> Texture2D:
 	if path not in _tex_cache:
 		_tex_cache[path] = load(path) if ResourceLoader.exists(path) else null
@@ -128,7 +126,7 @@ static func _get_st_notice() -> StyleBoxFlat:
 	if not _st_notice:
 		var st = StyleBoxFlat.new()
 		st.bg_color = Color(1, 1, 1, 0.05)
-		st.corner_radius_top_left = 8; st.corner_radius_top_right = 8
+		st.corner_radius_top_left    = 8; st.corner_radius_top_right    = 8
 		st.corner_radius_bottom_left = 8; st.corner_radius_bottom_right = 8
 		st.content_margin_left = 15; st.content_margin_right  = 15
 		st.content_margin_top  = 15; st.content_margin_bottom = 15
@@ -150,83 +148,14 @@ static func build(container: Control, menu) -> void:
 	bg_image.expand_mode  = TextureRect.EXPAND_IGNORE_SIZE
 	bg_image.stretch_mode = TextureRect.STRETCH_KEEP_ASPECT_COVERED
 	bg_image.mouse_filter = Control.MOUSE_FILTER_IGNORE
-	bg_image.modulate = Color(0.2, 0.2, 0.22, 1)
+	bg_image.modulate     = Color(0.2, 0.2, 0.22, 1)
 	container.add_child(bg_image)
 
-	# ── 2. Header ──
-	var header = Panel.new()
-	header.anchor_left = 0; header.anchor_right  = 1
-	header.anchor_top  = 0; header.anchor_bottom = 0
-	header.offset_top  = 40; header.offset_bottom = 120
-	var hs = StyleBoxFlat.new()
-	hs.bg_color = Color(C.COLOR_PANEL.r, C.COLOR_PANEL.g, C.COLOR_PANEL.b, 0.90)
-	hs.border_color = Color(C.COLOR_GOLD.r, C.COLOR_GOLD.g, C.COLOR_GOLD.b, 0.5)
-	hs.border_width_bottom = 2
-	hs.shadow_color = Color(0, 0, 0, 0.4); hs.shadow_size = 25
-	header.add_theme_stylebox_override("panel", hs)
-	container.add_child(header)
-
-	var hbox = HBoxContainer.new()
-	hbox.set_anchors_preset(Control.PRESET_FULL_RECT)
-	header.add_child(hbox)
-
-	var accent = ColorRect.new()
-	accent.color = C.COLOR_GOLD
-	accent.custom_minimum_size = Vector2(8, 0)
-	hbox.add_child(accent)
-
-	var title_m = MarginContainer.new()
-	title_m.add_theme_constant_override("margin_left", 30)
-	title_m.size_flags_horizontal = Control.SIZE_EXPAND_FILL
-	hbox.add_child(title_m)
-
-	var title_v = VBoxContainer.new()
-	title_v.alignment = BoxContainer.ALIGNMENT_CENTER
-	title_m.add_child(title_v)
-
-	var title_lbl = Label.new()
-	title_lbl.text = "◈ POKÉMON TCG · HOME"
-	title_lbl.add_theme_font_size_override("font_size", 18)
-	title_lbl.add_theme_color_override("font_color", C.COLOR_GOLD)
-	title_lbl.add_theme_color_override("font_shadow_color", Color(0, 0, 0, 0.5))
-	title_v.add_child(title_lbl)
-
-	var sub_lbl = Label.new()
-	sub_lbl.text = "Bienvenido, " + PlayerData.username + "  ·  " + str(PlayerData.coins) + " 🪙  ·  ELO " + str(PlayerData.elo)
-	sub_lbl.add_theme_font_size_override("font_size", 13)
-	sub_lbl.add_theme_color_override("font_color", Color(0.8, 0.8, 0.8))
-	title_v.add_child(sub_lbl)
-
-	# ── Botón Cortina ──
-	var news_btn_m = MarginContainer.new()
-	news_btn_m.add_theme_constant_override("margin_right",  40)
-	news_btn_m.add_theme_constant_override("margin_top",    20)
-	news_btn_m.add_theme_constant_override("margin_bottom", 20)
-	hbox.add_child(news_btn_m)
-
-	var news_btn = Button.new()
-	news_btn.text = "🔔 Novedades del Server"
-	news_btn.custom_minimum_size = Vector2(180, 40)
-	news_btn.mouse_default_cursor_shape = Control.CURSOR_POINTING_HAND
-	var nb_style = StyleBoxFlat.new()
-	nb_style.bg_color = Color(C.COLOR_GOLD.r, C.COLOR_GOLD.g, C.COLOR_GOLD.b, 0.15)
-	nb_style.border_color = C.COLOR_GOLD
-	nb_style.border_width_left = 1; nb_style.border_width_right  = 1
-	nb_style.border_width_top  = 1; nb_style.border_width_bottom = 1
-	nb_style.corner_radius_top_left    = 20; nb_style.corner_radius_top_right    = 20
-	nb_style.corner_radius_bottom_left = 20; nb_style.corner_radius_bottom_right = 20
-	var nb_hov = nb_style.duplicate()
-	nb_hov.bg_color = Color(C.COLOR_GOLD.r, C.COLOR_GOLD.g, C.COLOR_GOLD.b, 0.3)
-	news_btn.add_theme_stylebox_override("normal", nb_style)
-	news_btn.add_theme_stylebox_override("hover",  nb_hov)
-	news_btn.add_theme_color_override("font_color", C.COLOR_GOLD)
-	news_btn_m.add_child(news_btn)
-
-	# ── 3. Scroll y Contenedor Central ──
+	# ── 2. Scroll — empieza justo bajo la navbar (92px) ──
 	var scroll = ScrollContainer.new()
-	scroll.anchor_left = 0; scroll.anchor_right  = 1
-	scroll.anchor_top  = 0; scroll.anchor_bottom = 1
-	scroll.offset_top  = 120
+	scroll.anchor_left  = 0; scroll.anchor_right  = 1
+	scroll.anchor_top   = 0; scroll.anchor_bottom = 1
+	scroll.offset_top   = 92
 	scroll.horizontal_scroll_mode = ScrollContainer.SCROLL_MODE_DISABLED
 	UITheme.apply_scrollbar_theme(scroll)
 	container.add_child(scroll)
@@ -242,10 +171,10 @@ static func build(container: Control, menu) -> void:
 	center_wrap.add_child(inner_v)
 
 	var spacer_top = Control.new()
-	spacer_top.custom_minimum_size = Vector2(0, 10)
+	spacer_top.custom_minimum_size = Vector2(0, 18)
 	inner_v.add_child(spacer_top)
 
-	# ── 4. Banner Rotativo ──
+	# ── 3. Banner Rotativo ──
 	var banner_container = Control.new()
 	banner_container.custom_minimum_size = Vector2(1050, 340)
 	banner_container.clip_contents = true
@@ -292,12 +221,12 @@ static func build(container: Control, menu) -> void:
 	)
 
 	var separator = ColorRect.new()
-	separator.custom_minimum_size = Vector2(200, 2)
+	separator.custom_minimum_size   = Vector2(200, 2)
 	separator.size_flags_horizontal = Control.SIZE_SHRINK_CENTER
 	separator.color = Color(C.COLOR_GOLD_DIM.r, C.COLOR_GOLD_DIM.g, C.COLOR_GOLD_DIM.b, 0.3)
 	inner_v.add_child(separator)
 
-	# ── 5. Comunidad ──
+	# ── 4. Comunidad ──
 	var links_title = Label.new()
 	links_title.text = "ÚNETE A LA COMUNIDAD"
 	links_title.horizontal_alignment = HORIZONTAL_ALIGNMENT_CENTER
@@ -311,7 +240,6 @@ static func build(container: Control, menu) -> void:
 	links_hb.add_theme_constant_override("separation", 25)
 	inner_v.add_child(links_hb)
 
-	# Estilos compartidos entre los 4 botones (cacheados)
 	var st_normal = _get_st_link_normal(C)
 	var st_hover  = _get_st_link_hover(C)
 
@@ -325,16 +253,30 @@ static func build(container: Control, menu) -> void:
 
 		var card_v = VBoxContainer.new()
 		card_v.set_anchors_preset(Control.PRESET_FULL_RECT)
-		card_v.alignment = BoxContainer.ALIGNMENT_CENTER
+		card_v.alignment    = BoxContainer.ALIGNMENT_CENTER
 		card_v.mouse_filter = Control.MOUSE_FILTER_IGNORE
 		card_v.add_theme_constant_override("separation", 10)
 		btn.add_child(card_v)
 
-		var icon_lbl = Label.new()
-		icon_lbl.text = link["icon"]
-		icon_lbl.horizontal_alignment = HORIZONTAL_ALIGNMENT_CENTER
-		icon_lbl.add_theme_font_size_override("font_size", 48)
-		card_v.add_child(icon_lbl)
+		# Icono desde textura
+		var icon_tex = _get_tex(link["icon_path"])
+		if icon_tex:
+			var tex_rect = TextureRect.new()
+			tex_rect.texture              = icon_tex
+			tex_rect.custom_minimum_size  = Vector2(48, 48)
+			tex_rect.size                 = Vector2(48, 48)
+			tex_rect.stretch_mode         = TextureRect.STRETCH_KEEP_ASPECT_CENTERED
+			tex_rect.expand_mode          = TextureRect.EXPAND_IGNORE_SIZE
+			tex_rect.size_flags_horizontal = Control.SIZE_SHRINK_CENTER
+			tex_rect.mouse_filter         = Control.MOUSE_FILTER_IGNORE
+			card_v.add_child(tex_rect)
+		else:
+			# Fallback emoji si no carga la textura
+			var icon_lbl = Label.new()
+			icon_lbl.text = "🔗"
+			icon_lbl.horizontal_alignment = HORIZONTAL_ALIGNMENT_CENTER
+			icon_lbl.add_theme_font_size_override("font_size", 48)
+			card_v.add_child(icon_lbl)
 
 		var txt_lbl = Label.new()
 		txt_lbl.text = link["label"]
@@ -351,28 +293,124 @@ static func build(container: Control, menu) -> void:
 	spacer_bot.custom_minimum_size = Vector2(0, 40)
 	inner_v.add_child(spacer_bot)
 
-	# ── 6. Cortina de Noticias ──
-	_build_curtain(container, C, news_btn)
+	# ── 5. Botón Novedades flotante + Cortina ──
+	# IMPORTANTE: se construye al final para que su z_index quede
+	# por encima del scroll pero la cortina use z_index >= 200
+	# para superar la navbar (z_index 100 de MainMenu)
+	_build_news_fab(container, C)
+
+
+# ============================================================
+# BOTÓN FLOTANTE "NOVEDADES" — esquina superior derecha
+# ============================================================
+static func _build_news_fab(container: Control, C) -> void:
+	var fab = PanelContainer.new()
+	fab.anchor_left   = 1.0
+	fab.anchor_right  = 1.0
+	fab.anchor_top    = 0.0
+	fab.anchor_bottom = 0.0
+	fab.offset_left   = -224
+	fab.offset_right  = -16
+	fab.offset_top    = 100
+	fab.offset_bottom = 142
+	fab.z_index       = 50
+	fab.mouse_default_cursor_shape = Control.CURSOR_POINTING_HAND
+
+	var st_normal = StyleBoxFlat.new()
+	st_normal.bg_color             = Color(0.07, 0.055, 0.02, 0.90)
+	st_normal.border_color         = C.COLOR_GOLD
+	st_normal.border_width_left    = 1
+	st_normal.border_width_right   = 1
+	st_normal.border_width_top     = 1
+	st_normal.border_width_bottom  = 2
+	st_normal.corner_radius_top_left     = 21
+	st_normal.corner_radius_top_right    = 21
+	st_normal.corner_radius_bottom_left  = 21
+	st_normal.corner_radius_bottom_right = 21
+	st_normal.shadow_color = Color(C.COLOR_GOLD.r, C.COLOR_GOLD.g, C.COLOR_GOLD.b, 0.15)
+	st_normal.shadow_size  = 12
+	st_normal.content_margin_left   = 16
+	st_normal.content_margin_right  = 16
+	st_normal.content_margin_top    = 0
+	st_normal.content_margin_bottom = 0
+	fab.add_theme_stylebox_override("panel", st_normal)
+
+	var st_hover = st_normal.duplicate()
+	st_hover.bg_color     = Color(0.12, 0.09, 0.03, 0.97)
+	st_hover.shadow_size  = 22
+	st_hover.shadow_color = Color(C.COLOR_GOLD.r, C.COLOR_GOLD.g, C.COLOR_GOLD.b, 0.30)
+
+	var hbox = HBoxContainer.new()
+	hbox.alignment = BoxContainer.ALIGNMENT_CENTER
+	hbox.add_theme_constant_override("separation", 10)
+	fab.add_child(hbox)
+
+	var dot_panel = Panel.new()
+	dot_panel.custom_minimum_size = Vector2(9, 9)
+	dot_panel.size_flags_vertical = Control.SIZE_SHRINK_CENTER
+	var dot_st = StyleBoxFlat.new()
+	dot_st.bg_color = C.COLOR_GOLD
+	dot_st.corner_radius_top_left     = 5
+	dot_st.corner_radius_top_right    = 5
+	dot_st.corner_radius_bottom_left  = 5
+	dot_st.corner_radius_bottom_right = 5
+	dot_panel.add_theme_stylebox_override("panel", dot_st)
+	hbox.add_child(dot_panel)
+
+	var lbl = Label.new()
+	lbl.text = "Novedades del servidor"
+	lbl.add_theme_font_size_override("font_size", 13)
+	lbl.add_theme_color_override("font_color", C.COLOR_GOLD)
+	lbl.vertical_alignment = VERTICAL_ALIGNMENT_CENTER
+	hbox.add_child(lbl)
+
+	var arrow = Label.new()
+	arrow.text = "›"
+	arrow.add_theme_font_size_override("font_size", 18)
+	arrow.add_theme_color_override("font_color", Color(C.COLOR_GOLD.r, C.COLOR_GOLD.g, C.COLOR_GOLD.b, 0.6))
+	arrow.vertical_alignment = VERTICAL_ALIGNMENT_CENTER
+	hbox.add_child(arrow)
+
+	container.add_child(fab)
+
+	var pulse = container.create_tween().set_loops()
+	pulse.tween_property(dot_panel, "modulate:a", 0.25, 1.0).set_trans(Tween.TRANS_SINE)
+	pulse.tween_property(dot_panel, "modulate:a", 1.0,  1.0).set_trans(Tween.TRANS_SINE)
+
+	fab.mouse_entered.connect(func():
+		fab.add_theme_stylebox_override("panel", st_hover)
+		lbl.add_theme_color_override("font_color", Color(1.0, 0.95, 0.75))
+		arrow.add_theme_color_override("font_color", C.COLOR_GOLD)
+	)
+	fab.mouse_exited.connect(func():
+		fab.add_theme_stylebox_override("panel", st_normal)
+		lbl.add_theme_color_override("font_color", C.COLOR_GOLD)
+		arrow.add_theme_color_override("font_color", Color(C.COLOR_GOLD.r, C.COLOR_GOLD.g, C.COLOR_GOLD.b, 0.6))
+	)
+
+	_build_curtain(container, C, fab)
 
 
 # ============================================================
 # CORTINA (DRAWER)
+# z_index 200/201 para superar la navbar de MainMenu (z 100)
 # ============================================================
-static func _build_curtain(container: Control, C, trigger_btn: Button) -> void:
+static func _build_curtain(container: Control, C, trigger: Control) -> void:
+	# Dimmer cubre TODO incluyendo la navbar
 	var dimmer = ColorRect.new()
 	dimmer.set_anchors_preset(Control.PRESET_FULL_RECT)
-	dimmer.color = Color(0, 0, 0, 0.0)
+	dimmer.color        = Color(0, 0, 0, 0.0)
 	dimmer.mouse_filter = Control.MOUSE_FILTER_IGNORE
-	dimmer.z_index = 100
+	dimmer.z_index      = 200   # ← por encima de la navbar (100)
 	container.add_child(dimmer)
 
-	var curtain = Panel.new()
+	var curtain   = Panel.new()
 	var curtain_w = 400.0
 	curtain.anchor_left  = 1.0; curtain.anchor_right  = 1.0
 	curtain.anchor_top   = 0.0; curtain.anchor_bottom = 1.0
 	curtain.offset_left  = 0
 	curtain.offset_right = curtain_w
-	curtain.z_index = 101
+	curtain.z_index      = 201  # ← por encima del dimmer
 	curtain.add_theme_stylebox_override("panel", _get_st_curtain(C))
 	container.add_child(curtain)
 
@@ -402,7 +440,8 @@ static func _build_curtain(container: Control, C, trigger_btn: Button) -> void:
 	close_btn.text = "✖"
 	close_btn.flat = true
 	close_btn.add_theme_font_size_override("font_size", 20)
-	close_btn.add_theme_color_override("font_color", Color(0.6, 0.6, 0.6))
+	close_btn.add_theme_color_override("font_color",       Color(0.6, 0.6, 0.6))
+	close_btn.add_theme_color_override("font_hover_color", Color(1.0, 1.0, 1.0))
 	close_btn.mouse_default_cursor_shape = Control.CURSOR_POINTING_HAND
 	top_hbox.add_child(close_btn)
 
@@ -411,7 +450,6 @@ static func _build_curtain(container: Control, C, trigger_btn: Button) -> void:
 	c_sep.color = Color(C.COLOR_GOLD_DIM.r, C.COLOR_GOLD_DIM.g, C.COLOR_GOLD_DIM.b, 0.5)
 	c_vbox.add_child(c_sep)
 
-	# Estilo de notice cacheado — se reutiliza entre todos los items
 	var st_notice = _get_st_notice()
 	for notice in SERVER_NOTICES:
 		var n_panel = PanelContainer.new()
@@ -441,16 +479,19 @@ static func _build_curtain(container: Control, C, trigger_btn: Button) -> void:
 		var tw = container.create_tween().set_parallel(true).set_trans(Tween.TRANS_QUART).set_ease(Tween.EASE_OUT)
 		if is_open[0]:
 			dimmer.mouse_filter = Control.MOUSE_FILTER_STOP
-			tw.tween_property(dimmer,   "color:a",      0.5,        0.3)
-			tw.tween_property(curtain,  "offset_left",  -curtain_w, 0.4)
-			tw.tween_property(curtain,  "offset_right", 0.0,        0.4)
+			tw.tween_property(dimmer,  "color:a",      0.5,        0.3)
+			tw.tween_property(curtain, "offset_left",  -curtain_w, 0.4)
+			tw.tween_property(curtain, "offset_right", 0.0,        0.4)
 		else:
 			dimmer.mouse_filter = Control.MOUSE_FILTER_IGNORE
-			tw.tween_property(dimmer,   "color:a",      0.0,       0.3)
-			tw.tween_property(curtain,  "offset_left",  0.0,       0.4)
-			tw.tween_property(curtain,  "offset_right", curtain_w, 0.4)
+			tw.tween_property(dimmer,  "color:a",      0.0,       0.3)
+			tw.tween_property(curtain, "offset_left",  0.0,       0.4)
+			tw.tween_property(curtain, "offset_right", curtain_w, 0.4)
 
-	trigger_btn.pressed.connect(toggle_curtain)
+	trigger.gui_input.connect(func(event):
+		if event is InputEventMouseButton and event.pressed and event.button_index == MOUSE_BUTTON_LEFT:
+			toggle_curtain.call()
+	)
 	close_btn.pressed.connect(toggle_curtain)
 	dimmer.gui_input.connect(func(event):
 		if event is InputEventMouseButton and event.pressed and event.button_index == MOUSE_BUTTON_LEFT:
@@ -460,7 +501,6 @@ static func _build_curtain(container: Control, C, trigger_btn: Button) -> void:
 
 # ============================================================
 # SLIDE DEL BANNER
-# Texturas y fuente se obtienen del caché estático.
 # ============================================================
 static func _make_slide(news: Dictionary, C) -> Panel:
 	var panel = Panel.new()
@@ -474,10 +514,10 @@ static func _make_slide(news: Dictionary, C) -> Panel:
 	panel.add_theme_stylebox_override("panel", st)
 
 	if news.has("image") and news["image"] != "":
-		var tex = _get_tex(news["image"])   # ← caché, no load() directo
+		var tex = _get_tex(news["image"])
 		if tex:
 			var bg_img = TextureRect.new()
-			bg_img.texture = tex
+			bg_img.texture     = tex
 			bg_img.set_anchors_preset(Control.PRESET_FULL_RECT)
 			bg_img.expand_mode  = TextureRect.EXPAND_IGNORE_SIZE
 			bg_img.stretch_mode = TextureRect.STRETCH_KEEP_ASPECT_COVERED
@@ -507,7 +547,7 @@ static func _make_slide(news: Dictionary, C) -> Panel:
 	v.add_theme_constant_override("separation", 15)
 	m.add_child(v)
 
-	var custom_font = _get_font()   # ← caché, no exists() + load() cada vez
+	var custom_font = _get_font()
 
 	var tag_lbl = Label.new()
 	tag_lbl.text = news["tag"]
@@ -525,8 +565,8 @@ static func _make_slide(news: Dictionary, C) -> Panel:
 	if custom_font: title_lbl.add_theme_font_override("font", custom_font)
 	title_lbl.add_theme_color_override("font_color",        Color(1, 1, 1, 1))
 	title_lbl.add_theme_color_override("font_shadow_color", Color(0, 0, 0, 0.8))
-	title_lbl.add_theme_constant_override("shadow_offset_x",   2)
-	title_lbl.add_theme_constant_override("shadow_offset_y",   2)
+	title_lbl.add_theme_constant_override("shadow_offset_x",     2)
+	title_lbl.add_theme_constant_override("shadow_offset_y",     2)
 	title_lbl.add_theme_constant_override("shadow_outline_size", 4)
 	v.add_child(title_lbl)
 
@@ -544,13 +584,13 @@ static func _make_slide(news: Dictionary, C) -> Panel:
 	if news.has("url") and news["url"] != "":
 		var btn = Button.new()
 		btn.text = "Saber más"
-		btn.custom_minimum_size = Vector2(140, 42)
+		btn.custom_minimum_size   = Vector2(140, 42)
 		btn.size_flags_horizontal = Control.SIZE_SHRINK_CENTER
 		btn.add_theme_font_size_override("font_size", 14)
 		if custom_font: btn.add_theme_font_override("font", custom_font)
 
 		var st_btn = StyleBoxFlat.new()
-		st_btn.bg_color = Color(1, 1, 1, 0.2)
+		st_btn.bg_color     = Color(1, 1, 1, 0.2)
 		st_btn.border_color = Color(1, 1, 1, 0.5)
 		st_btn.border_width_left = 1; st_btn.border_width_right  = 1
 		st_btn.border_width_top  = 1; st_btn.border_width_bottom = 1

@@ -13,7 +13,7 @@ config_version=5
 config/name="Pokemon Tcg"
 run/main_scene="uid://mi4i2mhecxf8"
 config/features=PackedStringArray("4.6", "Forward Plus")
-config/icon="res://icon.svg"
+config/icon="uid://blg74xoo2akcd"
 
 [autoload]
 
@@ -29,6 +29,7 @@ MiniCard="*uid://ectku4e87pnt"
 RoomCard="*uid://c8lkfadjdilel"
 LanguageManager="*uid://cs4y6p3yfcnpf"
 AutoUpdater="*uid://dihfu57y7agvy"
+SoundManager="*uid://cl84sl6eqjyng"
 
 [display]
 

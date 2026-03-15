@@ -1,0 +1,19 @@
+[remap]
+
+importer="mp3"
+type="AudioStreamMP3"
+uid="uid://cl6byhwsytc8f"
+path="res://.godot/imported/robo de cartas.mp3-ae8b92379d5167c4c349e1016d7a764d.mp3str"
+
+[deps]
+
+source_file="res://assets/sounds/robo de cartas.mp3"
+dest_files=["res://.godot/imported/robo de cartas.mp3-ae8b92379d5167c4c349e1016d7a764d.mp3str"]
+
+[params]
+
+loop=false
+loop_offset=0
+bpm=0
+beat_count=0
+bar_beats=4

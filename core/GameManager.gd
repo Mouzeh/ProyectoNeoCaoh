@@ -34,7 +34,7 @@ func _on_state_updated(state: Dictionary, logs: Array) -> void:
 		battle_logs.append_array(logs)
 	get_tree().call_group("battle_ui", "update_board", current_battle_state, battle_logs)
 
-func _on_game_over(winner: String, you_won: bool) -> void:
+func _on_game_over(winner: String, you_won: bool, rewards: Dictionary) -> void:
 	print("[GameManager] Fin de la partida. Ganador: ", winner)
 	get_tree().call_group("battle_ui", "show_game_over", winner, you_won)
 	# Limpia estado tras un frame para que la UI tenga tiempo de leerlo

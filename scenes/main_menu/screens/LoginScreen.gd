@@ -2,14 +2,96 @@ extends Node
 
 # ============================================================
 # LoginScreen.gd — con email + verificación 6 dígitos
+#                  + recordar sesión (ConfigFile)
 # ============================================================
 
-const API_URL = "https://caoh-tcg.fly.dev/api/auth"
+const API_URL      = "https://caoh-tcg.fly.dev/api/auth"
+const SESSION_FILE = "user://session.cfg"
+const SESSION_SEC  = "session"
+
+
+# ── Guardar sesión en disco ──────────────────────────────────
+static func _save_session(username: String, token: String) -> void:
+	var cfg = ConfigFile.new()
+	cfg.set_value(SESSION_SEC, "username", username)
+	cfg.set_value(SESSION_SEC, "token",    token)
+	cfg.save(SESSION_FILE)
+
+
+# ── Cargar sesión desde disco ────────────────────────────────
+static func _load_session() -> Dictionary:
+	var cfg = ConfigFile.new()
+	if cfg.load(SESSION_FILE) != OK:
+		return {}
+	return {
+		"username": cfg.get_value(SESSION_SEC, "username", ""),
+		"token":    cfg.get_value(SESSION_SEC, "token",    ""),
+	}
+
+
+# ── Borrar sesión (logout) ───────────────────────────────────
+static func _clear_session() -> void:
+	var dir = DirAccess.open("user://")
+	if dir and dir.file_exists("session.cfg"):
+		dir.remove("session.cfg")
+
+
+# ── Validar token guardado contra el servidor ────────────────
+static func _try_auto_login(saved: Dictionary, menu, on_fail: Callable) -> void:
+	var http = HTTPRequest.new()
+	menu.add_child(http)
+	http.request_completed.connect(func(result, code, _h, body):
+		http.queue_free()
+		if not is_instance_valid(menu): return
+		if result != HTTPRequest.RESULT_SUCCESS or code != 200:
+			_clear_session()
+			on_fail.call()
+			return
+		var data = JSON.parse_string(body.get_string_from_utf8())
+		if not data:
+			_clear_session(); on_fail.call(); return
+		var token  = data.get("token",  saved.token)
+		var player = data.get("player", {})
+		PlayerData.load_from_server(player)
+		PlayerData.token         = token
+		NetworkManager.token     = token
+		menu.player_id           = PlayerData.player_id
+		NetworkManager.player_id = PlayerData.player_id
+		_save_session(PlayerData.username, token)
+		_go_to_lobby(menu)
+	)
+	http.request(API_URL + "/refresh",
+		["Content-Type: application/json",
+		 "Authorization: Bearer " + saved.token],
+		HTTPClient.METHOD_POST, "")
+
 
 static func build(container: Control, menu) -> void:
 	var C = menu
 
-	# ── Fondo animado ────────────────────────────────────────
+	# ── Intentar auto-login antes de mostrar UI ───────────────
+	var saved = _load_session()
+	if saved.get("token", "") != "":
+		var loading_lbl = Label.new()
+		loading_lbl.name = "AutoLoginLbl"
+		loading_lbl.text = "⏳ Iniciando sesión..."
+		loading_lbl.set_anchors_preset(Control.PRESET_CENTER)
+		loading_lbl.add_theme_font_size_override("font_size", 16)
+		loading_lbl.add_theme_color_override("font_color", C.COLOR_GOLD)
+		container.add_child(loading_lbl)
+
+		_try_auto_login(saved, menu, func():
+			if is_instance_valid(loading_lbl): loading_lbl.queue_free()
+			_build_login_ui(container, menu, saved.get("username", ""))
+		)
+		return
+
+	_build_login_ui(container, menu, "")
+
+
+static func _build_login_ui(container: Control, menu, prefill_username: String) -> void:
+	var C = menu
+
 	var bg_image = TextureRect.new()
 	var bg_tex = load("res://assets/imagen/loginbackgraund.png")
 	if bg_tex: bg_image.texture = bg_tex
@@ -32,7 +114,6 @@ static func build(container: Control, menu) -> void:
 	center.set_anchors_preset(Control.PRESET_FULL_RECT)
 	container.add_child(center)
 
-	# ── Card principal ───────────────────────────────────────
 	var card = PanelContainer.new()
 	card.name = "LoginCard"
 	card.custom_minimum_size = Vector2(920, 560)
@@ -53,7 +134,6 @@ static func build(container: Control, menu) -> void:
 	card_hbox.add_theme_constant_override("separation", 0)
 	card.add_child(card_hbox)
 
-	# ── Panel izquierdo con banner ───────────────────────────
 	var left_panel = PanelContainer.new()
 	left_panel.custom_minimum_size = Vector2(380, 0)
 	left_panel.clip_contents = true
@@ -62,7 +142,6 @@ static func build(container: Control, menu) -> void:
 	left_panel.add_theme_stylebox_override("panel", st_left_bg)
 	card_hbox.add_child(left_panel)
 
-	# Imagen banner cubriendo todo el panel
 	var banner_img = TextureRect.new()
 	banner_img.name = "BannerImg"
 	var banner_tex = load("res://assets/imagen/banner/banner1.png")
@@ -73,12 +152,11 @@ static func build(container: Control, menu) -> void:
 	banner_img.mouse_filter = Control.MOUSE_FILTER_IGNORE
 	left_panel.add_child(banner_img)
 
-	# Overlay oscuro para legibilidad del texto
-	var overlay = ColorRect.new()
-	overlay.set_anchors_preset(Control.PRESET_FULL_RECT)
-	overlay.color = Color(0, 0, 0, 0.45)
-	overlay.mouse_filter = Control.MOUSE_FILTER_IGNORE
-	left_panel.add_child(overlay)
+	var overlay_l = ColorRect.new()
+	overlay_l.set_anchors_preset(Control.PRESET_FULL_RECT)
+	overlay_l.color = Color(0, 0, 0, 0.45)
+	overlay_l.mouse_filter = Control.MOUSE_FILTER_IGNORE
+	left_panel.add_child(overlay_l)
 
 	var left_m = MarginContainer.new()
 	left_m.set_anchors_preset(Control.PRESET_FULL_RECT)
@@ -121,7 +199,6 @@ static func build(container: Control, menu) -> void:
 	ver_msg.add_theme_color_override("font_color", Color(1, 1, 1, 0.4))
 	left_v.add_child(ver_msg)
 
-	# ── Panel derecho ────────────────────────────────────────
 	var right_m = MarginContainer.new()
 	right_m.size_flags_horizontal = Control.SIZE_EXPAND_FILL
 	right_m.add_theme_constant_override("margin_left",   32)
@@ -130,8 +207,7 @@ static func build(container: Control, menu) -> void:
 	right_m.add_theme_constant_override("margin_bottom", 40)
 	card_hbox.add_child(right_m)
 
-	# ── Las dos vistas van directo en right_m, alternando visible
-	var form_view = _build_form_view(right_m, menu, C)
+	var form_view = _build_form_view(right_m, menu, C, prefill_username)
 	form_view.size_flags_horizontal = Control.SIZE_EXPAND_FILL
 	form_view.size_flags_vertical   = Control.SIZE_EXPAND_FILL
 	right_m.add_child(form_view)
@@ -142,12 +218,11 @@ static func build(container: Control, menu) -> void:
 	verify_view.visible = false
 	right_m.add_child(verify_view)
 
-	# Estado compartido
 	var state = {
-		"is_login":       true,
-		"pending_email":  "",
-		"pending_user":   "",
-		"pending_pass":   "",
+		"is_login":      true,
+		"pending_email": "",
+		"pending_user":  "",
+		"pending_pass":  "",
 	}
 
 	_wire_form(form_view, verify_view, state, menu, C, card)
@@ -155,7 +230,7 @@ static func build(container: Control, menu) -> void:
 
 
 # ─── VISTA FORMULARIO ────────────────────────────────────────
-static func _build_form_view(parent: Node, menu, C) -> Control:
+static func _build_form_view(parent: Node, menu, C, prefill_username: String = "") -> Control:
 	var v = VBoxContainer.new()
 	v.name = "FormView"
 	v.alignment = BoxContainer.ALIGNMENT_CENTER
@@ -176,7 +251,6 @@ static func _build_form_view(parent: Node, menu, C) -> Control:
 	title.add_theme_color_override("font_color", C.COLOR_TEXT)
 	v.add_child(title)
 
-	# Toggle login / registro
 	var toggle_hb = HBoxContainer.new()
 	toggle_hb.alignment = BoxContainer.ALIGNMENT_CENTER
 	toggle_hb.add_theme_constant_override("separation", 0)
@@ -198,13 +272,13 @@ static func _build_form_view(parent: Node, menu, C) -> Control:
 
 	_style_toggle(btn_login, btn_register, true, C)
 
-	# Campo: Trainer Name
 	v.add_child(_make_label("Trainer Name", C))
 	var name_input = _make_input("ej: AshKetchum", false, C)
 	name_input.name = "NameInput"
+	if prefill_username != "":
+		name_input.text = prefill_username
 	v.add_child(name_input)
 
-	# Campo: Email (solo en registro)
 	var email_row = VBoxContainer.new()
 	email_row.name = "EmailRow"
 	email_row.visible = false
@@ -214,13 +288,11 @@ static func _build_form_view(parent: Node, menu, C) -> Control:
 	email_row.add_child(email_input)
 	v.add_child(email_row)
 
-	# Campo: Password
 	v.add_child(_make_label("Password", C))
 	var pass_input = _make_input("••••••••", true, C)
 	pass_input.name = "PassInput"
 	v.add_child(pass_input)
 
-	# Campo: Confirmar contraseña (solo en registro)
 	var confirm_row = VBoxContainer.new()
 	confirm_row.name = "ConfirmRow"
 	confirm_row.visible = false
@@ -230,7 +302,6 @@ static func _build_form_view(parent: Node, menu, C) -> Control:
 	confirm_row.add_child(confirm_input)
 	v.add_child(confirm_row)
 
-	# Status
 	var status_lbl = Label.new()
 	status_lbl.name = "StatusLabel"
 	status_lbl.text = ""
@@ -240,20 +311,30 @@ static func _build_form_view(parent: Node, menu, C) -> Control:
 	status_lbl.autowrap_mode = TextServer.AUTOWRAP_WORD
 	v.add_child(status_lbl)
 
-	# Botón principal
 	var btn_main = _make_primary_button("Entrar", C)
 	btn_main.name = "BtnMain"
 	v.add_child(btn_main)
 
-	# Separador
+	# ── Checkbox "Recordar sesión" ────────────────────────────
+	var remember_hb = HBoxContainer.new()
+	remember_hb.alignment = BoxContainer.ALIGNMENT_CENTER
+	remember_hb.add_theme_constant_override("separation", 6)
+	v.add_child(remember_hb)
+
+	var remember_chk = CheckBox.new()
+	remember_chk.name = "RememberChk"
+	remember_chk.button_pressed = true
+	remember_chk.text = "Recordar sesión"
+	remember_chk.add_theme_font_size_override("font_size", 11)
+	remember_chk.add_theme_color_override("font_color", C.COLOR_TEXT_DIM)
+	remember_hb.add_child(remember_chk)
+
 	v.add_child(_make_divider(C))
 
-	# Botón local
 	var btn_local = _make_ghost_button("Juego Local (Sin Servidor)", C)
 	v.add_child(btn_local)
 	btn_local.pressed.connect(func(): _on_local_pressed(name_input, menu))
 
-	# Indicador conexión
 	var conn_text  = "● Servidor conectado" if NetworkManager.ws_connected else "○ Sin conexión"
 	var conn_color = C.COLOR_GREEN if NetworkManager.ws_connected else C.COLOR_TEXT_DIM
 	var srv_lbl = Label.new()
@@ -263,6 +344,9 @@ static func _build_form_view(parent: Node, menu, C) -> Control:
 	srv_lbl.add_theme_font_size_override("font_size", 10)
 	srv_lbl.add_theme_color_override("font_color", conn_color)
 	v.add_child(srv_lbl)
+
+	if prefill_username != "":
+		pass_input.call_deferred("grab_focus")
 
 	return v
 
@@ -299,7 +383,6 @@ static func _build_verify_view(parent: Node, menu, C) -> Control:
 	desc.add_theme_color_override("font_color", C.COLOR_TEXT_DIM)
 	v.add_child(desc)
 
-	# Inputs de 6 dígitos individuales
 	var digits_hb = HBoxContainer.new()
 	digits_hb.name = "DigitsBox"
 	digits_hb.alignment = BoxContainer.ALIGNMENT_CENTER
@@ -332,7 +415,6 @@ static func _build_verify_view(parent: Node, menu, C) -> Control:
 		d.add_theme_stylebox_override("focus",  st_focus)
 		digits_hb.add_child(d)
 
-	# Status verificación
 	var status_lbl = Label.new()
 	status_lbl.name = "VerifyStatus"
 	status_lbl.text = ""
@@ -341,17 +423,14 @@ static func _build_verify_view(parent: Node, menu, C) -> Control:
 	status_lbl.add_theme_color_override("font_color", C.COLOR_TEXT_DIM)
 	v.add_child(status_lbl)
 
-	# Botón verificar
 	var btn_verify = _make_primary_button("Verificar código", C)
 	btn_verify.name = "BtnVerify"
 	v.add_child(btn_verify)
 
-	# Reenviar código
 	var btn_resend = _make_ghost_button("Reenviar código", C)
 	btn_resend.name = "BtnResend"
 	v.add_child(btn_resend)
 
-	# Volver
 	var btn_back = Button.new()
 	btn_back.name = "BtnBack"
 	btn_back.text = "← Volver"
@@ -376,7 +455,6 @@ static func _wire_form(form: Control, verify: Control, state: Dictionary, menu, 
 	var btn_main     = form.find_child("BtnMain",      true, false)
 	var confirm_row2 = form.find_child("ConfirmRow",   true, false)
 
-	# Overlay negro para fade-through
 	var fade_overlay = ColorRect.new()
 	fade_overlay.set_anchors_preset(Control.PRESET_FULL_RECT)
 	fade_overlay.color = Color(0, 0, 0, 0)
@@ -439,7 +517,6 @@ static func _wire_verify(verify: Control, form: Control, state: Dictionary, menu
 	var btn_resend = verify.find_child("BtnResend",    true, false)
 	var btn_back   = verify.find_child("BtnBack",      true, false)
 
-	# Auto-avance entre cajas de dígito
 	for i in range(6):
 		var d = digits_hb.get_child(i)
 		d.text_changed.connect(func(new_text: String):
@@ -472,14 +549,9 @@ static func _wire_verify(verify: Control, form: Control, state: Dictionary, menu
 
 # ─── ACCIÓN PRINCIPAL ────────────────────────────────────────
 static func _on_main_pressed(
-	name_input:   LineEdit,
-	email_input:  LineEdit,
-	pass_input:   LineEdit,
-	status_lbl:   Label,
-	btn_main:     Button,
-	state:        Dictionary,
-	form:         Control,
-	verify:       Control,
+	name_input: LineEdit, email_input: LineEdit, pass_input: LineEdit,
+	status_lbl: Label, btn_main: Button,
+	state: Dictionary, form: Control, verify: Control,
 	menu, C
 ) -> void:
 	var username = name_input.text.strip_edges()
@@ -503,8 +575,11 @@ static func _on_main_pressed(
 	btn_main.disabled = true
 	_set_status(status_lbl, "Conectando...", C.COLOR_TEXT_DIM)
 
+	var remember_chk = form.find_child("RememberChk", true, false)
+	var should_remember = remember_chk != null and remember_chk.button_pressed
+
 	if state.is_login:
-		_do_login_request(username, password, status_lbl, btn_main, menu, C)
+		_do_login_request(username, password, should_remember, status_lbl, btn_main, menu, C)
 	else:
 		state.pending_email = email
 		state.pending_user  = username
@@ -514,27 +589,21 @@ static func _on_main_pressed(
 
 # ─── HTTP: LOGIN ─────────────────────────────────────────────
 static func _do_login_request(
-	username: String, password: String,
+	username: String, password: String, should_remember: bool,
 	status_lbl: Label, btn_main: Button,
 	menu, C
 ) -> void:
 	var http = HTTPRequest.new()
 	menu.add_child(http)
-
 	http.request_completed.connect(func(result, code, _headers, response_bytes):
 		http.queue_free()
-		# GUARD: el menu o btn_main pueden haberse liberado si el jugador
-		# cambió de pantalla mientras esperaba la respuesta HTTP
 		if not is_instance_valid(menu): return
 		if is_instance_valid(btn_main): btn_main.disabled = false
-
 		if result != HTTPRequest.RESULT_SUCCESS:
 			_set_status(status_lbl, "⚠ No se pudo conectar al servidor", C.COLOR_RED); return
-
 		var json = JSON.new()
 		if json.parse(response_bytes.get_string_from_utf8()) != OK:
 			_set_status(status_lbl, "⚠ Respuesta inválida del servidor", C.COLOR_RED); return
-
 		var data = json.get_data()
 		if code == 200:
 			var token  = data.get("token", "")
@@ -544,18 +613,21 @@ static func _do_login_request(
 			NetworkManager.token     = token
 			menu.player_id           = PlayerData.player_id
 			NetworkManager.player_id = PlayerData.player_id
+			if should_remember:
+				_save_session(PlayerData.username, token)
+			else:
+				_clear_session()
 			_set_status(status_lbl, "✓ Bienvenido, " + PlayerData.username + "!", C.COLOR_GREEN)
 			_go_to_lobby(menu)
 		else:
 			_set_status(status_lbl, "⚠ " + data.get("error", "Error desconocido"), C.COLOR_RED)
 	)
-
 	http.request(API_URL + "/login", ["Content-Type: application/json"],
 		HTTPClient.METHOD_POST,
 		JSON.stringify({"username": username, "password": password}))
 
 
-# ─── HTTP: REGISTRO (envía código al email) ──────────────────
+# ─── HTTP: REGISTRO ──────────────────────────────────────────
 static func _do_register_request(
 	username: String, email: String, password: String,
 	status_lbl: Label, btn_main: Button,
@@ -564,26 +636,19 @@ static func _do_register_request(
 ) -> void:
 	var http = HTTPRequest.new()
 	menu.add_child(http)
-
 	http.request_completed.connect(func(result, code, _headers, response_bytes):
 		http.queue_free()
-		# GUARD
 		if not is_instance_valid(menu): return
 		if is_instance_valid(btn_main): btn_main.disabled = false
-
 		if result != HTTPRequest.RESULT_SUCCESS:
 			_set_status(status_lbl, "⚠ No se pudo conectar al servidor", C.COLOR_RED); return
-
 		var json = JSON.new()
 		if json.parse(response_bytes.get_string_from_utf8()) != OK:
 			_set_status(status_lbl, "⚠ Respuesta inválida del servidor", C.COLOR_RED); return
-
 		var data = json.get_data()
 		if code == 200 or code == 201:
-			# Transición a pantalla de verificación
 			var desc = verify.find_child("VerifyDesc", true, false)
 			desc.text = "Enviamos un código de 6 dígitos a\n" + email
-			# Limpiar dígitos
 			var digits_hb = verify.find_child("DigitsBox", true, false)
 			for i in range(6):
 				digits_hb.get_child(i).text = ""
@@ -592,7 +657,6 @@ static func _do_register_request(
 		else:
 			_set_status(status_lbl, "⚠ " + data.get("error", "Error desconocido"), C.COLOR_RED)
 	)
-
 	http.request(API_URL + "/register", ["Content-Type: application/json"],
 		HTTPClient.METHOD_POST,
 		JSON.stringify({"username": username, "email": email, "password": password}))
@@ -606,23 +670,17 @@ static func _submit_verification(
 ) -> void:
 	btn_verify.disabled = true
 	_set_status(status_lbl, "Verificando...", C.COLOR_TEXT_DIM)
-
 	var http = HTTPRequest.new()
 	menu.add_child(http)
-
 	http.request_completed.connect(func(result, code_http, _headers, response_bytes):
 		http.queue_free()
-		# GUARD
 		if not is_instance_valid(menu): return
 		if is_instance_valid(btn_verify): btn_verify.disabled = false
-
 		if result != HTTPRequest.RESULT_SUCCESS:
 			_set_status(status_lbl, "⚠ Error de conexión", C.COLOR_RED); return
-
 		var json = JSON.new()
 		if json.parse(response_bytes.get_string_from_utf8()) != OK:
 			_set_status(status_lbl, "⚠ Respuesta inválida", C.COLOR_RED); return
-
 		var data = json.get_data()
 		if code_http == 200:
 			var token  = data.get("token", "")
@@ -631,12 +689,12 @@ static func _submit_verification(
 			NetworkManager.token     = token
 			menu.player_id           = PlayerData.player_id
 			NetworkManager.player_id = PlayerData.player_id
+			_save_session(PlayerData.username, token)
 			_set_status(status_lbl, "✓ ¡Cuenta verificada!", C.COLOR_GREEN)
 			_go_to_lobby(menu)
 		else:
 			_set_status(status_lbl, "⚠ " + data.get("error", "Código incorrecto"), C.COLOR_RED)
 	)
-
 	http.request(API_URL + "/verify-email", ["Content-Type: application/json"],
 		HTTPClient.METHOD_POST,
 		JSON.stringify({"email": state.pending_email, "code": code}))
@@ -646,7 +704,6 @@ static func _submit_verification(
 static func _request_resend(email: String, status_lbl: Label, C, menu) -> void:
 	var http = HTTPRequest.new()
 	menu.add_child(http)
-
 	http.request_completed.connect(func(result, code, _headers, response_bytes):
 		http.queue_free()
 		if not is_instance_valid(menu): return
@@ -654,7 +711,6 @@ static func _request_resend(email: String, status_lbl: Label, C, menu) -> void:
 			_set_status(status_lbl, "⚠ No se pudo reenviar el código", C.COLOR_RED); return
 		_set_status(status_lbl, "✓ Código reenviado a " + email, C.COLOR_GREEN)
 	)
-
 	http.request(API_URL + "/resend-code", ["Content-Type: application/json"],
 		HTTPClient.METHOD_POST,
 		JSON.stringify({"email": email}))
@@ -666,14 +722,12 @@ static func _go_to_lobby(menu) -> void:
 	if NetworkManager.ws_connected:
 		NetworkManager.authenticate(PlayerData.player_id, NetworkManager.token)
 		NetworkManager.auth_ok.connect(func(_p):
-			if is_instance_valid(menu):
-				menu._show_screen(menu.Screen.LOBBY)
+			if is_instance_valid(menu): menu._show_screen(menu.Screen.LOBBY)
 			, CONNECT_ONE_SHOT)
 	else:
 		NetworkManager.connect_to_server()
 		NetworkManager.auth_ok.connect(func(_p):
-			if is_instance_valid(menu):
-				menu._show_screen(menu.Screen.LOBBY)
+			if is_instance_valid(menu): menu._show_screen(menu.Screen.LOBBY)
 			, CONNECT_ONE_SHOT)
 
 
@@ -692,18 +746,12 @@ static func _on_local_pressed(name_input: LineEdit, menu) -> void:
 static func _animate_card_height(card: Control, target_h: float, parent: Node) -> void:
 	var from_h = card.custom_minimum_size.y
 	var tween  = parent.create_tween()
-	tween.set_parallel(true)
-	tween.set_ease(Tween.EASE_OUT)
-	tween.set_trans(Tween.TRANS_QUART)
-	tween.tween_method(
-		func(h: float): card.custom_minimum_size = Vector2(920, h),
-		from_h, target_h, 0.30
-	)
+	tween.set_parallel(true); tween.set_ease(Tween.EASE_OUT); tween.set_trans(Tween.TRANS_QUART)
+	tween.tween_method(func(h: float): card.custom_minimum_size = Vector2(920, h), from_h, target_h, 0.30)
 
 static func _fade_switch_content(overlay: ColorRect, parent: Node, swap_fn: Callable) -> void:
 	var tween = parent.create_tween()
-	tween.set_ease(Tween.EASE_IN_OUT)
-	tween.set_trans(Tween.TRANS_SINE)
+	tween.set_ease(Tween.EASE_IN_OUT); tween.set_trans(Tween.TRANS_SINE)
 	tween.tween_property(overlay, "color", Color(0, 0, 0, 0.85), 0.12)
 	tween.tween_callback(swap_fn)
 	tween.tween_property(overlay, "color", Color(0, 0, 0, 0.0),  0.15)
@@ -711,151 +759,92 @@ static func _fade_switch_content(overlay: ColorRect, parent: Node, swap_fn: Call
 static func _animate_switch(from_view: Control, to_view: Control, parent: Node) -> void:
 	var panel   = from_view.get_parent()
 	var overlay = ColorRect.new()
-	overlay.color        = Color(0, 0, 0, 0)
-	overlay.mouse_filter = Control.MOUSE_FILTER_IGNORE
-	overlay.z_index      = 10
-	if panel:
-		overlay.set_anchors_preset(Control.PRESET_FULL_RECT)
-		panel.add_child(overlay)
+	overlay.color = Color(0, 0, 0, 0); overlay.mouse_filter = Control.MOUSE_FILTER_IGNORE; overlay.z_index = 10
+	if panel: overlay.set_anchors_preset(Control.PRESET_FULL_RECT); panel.add_child(overlay)
 	var tween = parent.create_tween()
-	tween.set_ease(Tween.EASE_IN_OUT)
-	tween.set_trans(Tween.TRANS_SINE)
+	tween.set_ease(Tween.EASE_IN_OUT); tween.set_trans(Tween.TRANS_SINE)
 	tween.tween_property(overlay, "color", Color(0, 0, 0, 0.85), 0.13)
-	tween.tween_callback(func():
-		from_view.visible = false
-		to_view.visible   = true
-		to_view.modulate  = Color(1, 1, 1, 1)
-	)
+	tween.tween_callback(func(): from_view.visible = false; to_view.visible = true; to_view.modulate = Color(1,1,1,1))
 	tween.tween_property(overlay, "color", Color(0, 0, 0, 0.0), 0.16)
 	tween.tween_callback(func(): overlay.queue_free())
 
 
 # ─── HELPERS UI ──────────────────────────────────────────────
 static func _make_label(text: String, C) -> Label:
-	var lbl = Label.new()
-	lbl.text = text
-	lbl.add_theme_font_size_override("font_size", 11)
-	lbl.add_theme_color_override("font_color", C.COLOR_TEXT)
+	var lbl = Label.new(); lbl.text = text
+	lbl.add_theme_font_size_override("font_size", 11); lbl.add_theme_color_override("font_color", C.COLOR_TEXT)
 	return lbl
 
 static func _make_input(placeholder: String, secret: bool, C) -> LineEdit:
-	var input = LineEdit.new()
-	input.placeholder_text = placeholder
-	input.secret = secret
-	input.custom_minimum_size = Vector2(0, 44)
-	input.add_theme_font_size_override("font_size", 14)
-	input.add_theme_color_override("font_color", C.COLOR_TEXT)
-	input.add_theme_color_override("caret_color", C.COLOR_GOLD)
-	_apply_input_style(input, C)
-	return input
+	var input = LineEdit.new(); input.placeholder_text = placeholder; input.secret = secret
+	input.custom_minimum_size = Vector2(0, 44); input.add_theme_font_size_override("font_size", 14)
+	input.add_theme_color_override("font_color", C.COLOR_TEXT); input.add_theme_color_override("caret_color", C.COLOR_GOLD)
+	_apply_input_style(input, C); return input
 
 static func _make_primary_button(text: String, C) -> Button:
-	var btn = Button.new()
-	btn.text = text
-	btn.custom_minimum_size = Vector2(0, 46)
-	btn.add_theme_font_size_override("font_size", 15)
-	btn.add_theme_color_override("font_color", C.COLOR_PANEL)
-	var st = StyleBoxFlat.new()
-	st.bg_color = C.COLOR_GOLD
-	st.corner_radius_top_left    = 8; st.corner_radius_top_right    = 8
+	var btn = Button.new(); btn.text = text; btn.custom_minimum_size = Vector2(0, 46)
+	btn.add_theme_font_size_override("font_size", 15); btn.add_theme_color_override("font_color", C.COLOR_PANEL)
+	var st = StyleBoxFlat.new(); st.bg_color = C.COLOR_GOLD
+	st.corner_radius_top_left = 8; st.corner_radius_top_right = 8
 	st.corner_radius_bottom_left = 8; st.corner_radius_bottom_right = 8
-	st.shadow_color = Color(C.COLOR_GOLD.r, C.COLOR_GOLD.g, C.COLOR_GOLD.b, 0.2)
-	st.shadow_size = 15; st.shadow_offset = Vector2(0, 4)
-	var st_hov   = st.duplicate(); st_hov.bg_color   = C.COLOR_GOLD.lightened(0.1)
+	st.shadow_color = Color(C.COLOR_GOLD.r, C.COLOR_GOLD.g, C.COLOR_GOLD.b, 0.2); st.shadow_size = 15; st.shadow_offset = Vector2(0, 4)
+	var st_hov = st.duplicate(); st_hov.bg_color = C.COLOR_GOLD.lightened(0.1)
 	var st_press = st.duplicate(); st_press.bg_color = C.COLOR_GOLD.darkened(0.1)
-	btn.add_theme_stylebox_override("normal",  st)
-	btn.add_theme_stylebox_override("hover",   st_hov)
-	btn.add_theme_stylebox_override("pressed", st_press)
+	btn.add_theme_stylebox_override("normal", st); btn.add_theme_stylebox_override("hover", st_hov); btn.add_theme_stylebox_override("pressed", st_press)
 	return btn
 
 static func _make_ghost_button(text: String, C) -> Button:
-	var btn = Button.new()
-	btn.text = text
-	btn.custom_minimum_size = Vector2(0, 42)
-	btn.add_theme_font_size_override("font_size", 13)
-	btn.add_theme_color_override("font_color", C.COLOR_GOLD_DIM)
-	var st = StyleBoxFlat.new()
-	st.bg_color = Color(0, 0, 0, 0)
+	var btn = Button.new(); btn.text = text; btn.custom_minimum_size = Vector2(0, 42)
+	btn.add_theme_font_size_override("font_size", 13); btn.add_theme_color_override("font_color", C.COLOR_GOLD_DIM)
+	var st = StyleBoxFlat.new(); st.bg_color = Color(0,0,0,0)
 	st.border_color = Color(C.COLOR_GOLD_DIM.r, C.COLOR_GOLD_DIM.g, C.COLOR_GOLD_DIM.b, 0.4)
-	st.border_width_left = 1; st.border_width_right  = 1
-	st.border_width_top  = 1; st.border_width_bottom = 1
-	st.corner_radius_top_left    = 8; st.corner_radius_top_right    = 8
-	st.corner_radius_bottom_left = 8; st.corner_radius_bottom_right = 8
-	var st_hov = st.duplicate(); st_hov.bg_color = Color(1, 1, 1, 0.03)
-	btn.add_theme_stylebox_override("normal", st)
-	btn.add_theme_stylebox_override("hover",  st_hov)
-	return btn
+	st.border_width_left = 1; st.border_width_right = 1; st.border_width_top = 1; st.border_width_bottom = 1
+	st.corner_radius_top_left = 8; st.corner_radius_top_right = 8; st.corner_radius_bottom_left = 8; st.corner_radius_bottom_right = 8
+	var st_hov = st.duplicate(); st_hov.bg_color = Color(1,1,1,0.03)
+	btn.add_theme_stylebox_override("normal", st); btn.add_theme_stylebox_override("hover", st_hov); return btn
 
 static func _make_divider(C) -> Control:
 	var hb = HBoxContainer.new()
-	var line_color = Color(C.COLOR_GOLD_DIM.r, C.COLOR_GOLD_DIM.g, C.COLOR_GOLD_DIM.b, 0.2)
-	var l = ColorRect.new()
-	l.color = line_color
-	l.size_flags_horizontal = Control.SIZE_EXPAND_FILL
-	l.custom_minimum_size = Vector2(0, 1)
-	l.size_flags_vertical = Control.SIZE_SHRINK_CENTER
-	var lbl = Label.new()
-	lbl.text = "  o continuar sin cuenta  "
-	lbl.add_theme_font_size_override("font_size", 11)
-	lbl.add_theme_color_override("font_color", C.COLOR_TEXT_DIM)
-	var r = ColorRect.new()
-	r.color = line_color
-	r.size_flags_horizontal = Control.SIZE_EXPAND_FILL
-	r.custom_minimum_size = Vector2(0, 1)
-	r.size_flags_vertical = Control.SIZE_SHRINK_CENTER
-	hb.add_child(l); hb.add_child(lbl); hb.add_child(r)
-	return hb
+	var lc = Color(C.COLOR_GOLD_DIM.r, C.COLOR_GOLD_DIM.g, C.COLOR_GOLD_DIM.b, 0.2)
+	var l = ColorRect.new(); l.color = lc; l.size_flags_horizontal = Control.SIZE_EXPAND_FILL
+	l.custom_minimum_size = Vector2(0,1); l.size_flags_vertical = Control.SIZE_SHRINK_CENTER
+	var lbl = Label.new(); lbl.text = "  o continuar sin cuenta  "
+	lbl.add_theme_font_size_override("font_size", 11); lbl.add_theme_color_override("font_color", C.COLOR_TEXT_DIM)
+	var r = ColorRect.new(); r.color = lc; r.size_flags_horizontal = Control.SIZE_EXPAND_FILL
+	r.custom_minimum_size = Vector2(0,1); r.size_flags_vertical = Control.SIZE_SHRINK_CENTER
+	hb.add_child(l); hb.add_child(lbl); hb.add_child(r); return hb
 
 static func _apply_input_style(input: LineEdit, C) -> void:
-	var st = StyleBoxFlat.new()
-	st.bg_color = C.COLOR_BG
+	var st = StyleBoxFlat.new(); st.bg_color = C.COLOR_BG
 	st.border_color = Color(C.COLOR_GOLD_DIM.r, C.COLOR_GOLD_DIM.g, C.COLOR_GOLD_DIM.b, 0.3)
-	st.border_width_left = 1; st.border_width_right  = 1
-	st.border_width_top  = 1; st.border_width_bottom = 1
-	st.corner_radius_top_left    = 6; st.corner_radius_top_right    = 6
-	st.corner_radius_bottom_left = 6; st.corner_radius_bottom_right = 6
+	st.border_width_left = 1; st.border_width_right = 1; st.border_width_top = 1; st.border_width_bottom = 1
+	st.corner_radius_top_left = 6; st.corner_radius_top_right = 6; st.corner_radius_bottom_left = 6; st.corner_radius_bottom_right = 6
 	st.content_margin_left = 14
-	var st_focus = st.duplicate()
-	st_focus.border_color = C.COLOR_GOLD
-	input.add_theme_stylebox_override("normal", st)
-	input.add_theme_stylebox_override("focus",  st_focus)
+	var st_focus = st.duplicate(); st_focus.border_color = C.COLOR_GOLD
+	input.add_theme_stylebox_override("normal", st); input.add_theme_stylebox_override("focus", st_focus)
 
 static func _style_toggle(btn_login: Button, btn_register: Button, login_active: bool, C) -> void:
-	var st_active = StyleBoxFlat.new()
-	st_active.bg_color = C.COLOR_GOLD
-	st_active.corner_radius_top_left    = 6; st_active.corner_radius_top_right    = 6
-	st_active.corner_radius_bottom_left = 6; st_active.corner_radius_bottom_right = 6
-
-	var st_inactive = StyleBoxFlat.new()
-	st_inactive.bg_color = Color(0, 0, 0, 0)
-	st_inactive.border_color = Color(C.COLOR_GOLD_DIM.r, C.COLOR_GOLD_DIM.g, C.COLOR_GOLD_DIM.b, 0.4)
-	st_inactive.border_width_left = 1; st_inactive.border_width_right  = 1
-	st_inactive.border_width_top  = 1; st_inactive.border_width_bottom = 1
-	st_inactive.corner_radius_top_left    = 6; st_inactive.corner_radius_top_right    = 6
-	st_inactive.corner_radius_bottom_left = 6; st_inactive.corner_radius_bottom_right = 6
-
+	var st_a = StyleBoxFlat.new(); st_a.bg_color = C.COLOR_GOLD
+	st_a.corner_radius_top_left = 6; st_a.corner_radius_top_right = 6
+	st_a.corner_radius_bottom_left = 6; st_a.corner_radius_bottom_right = 6
+	var st_i = StyleBoxFlat.new(); st_i.bg_color = Color(0,0,0,0)
+	st_i.border_color = Color(C.COLOR_GOLD_DIM.r, C.COLOR_GOLD_DIM.g, C.COLOR_GOLD_DIM.b, 0.4)
+	st_i.border_width_left = 1; st_i.border_width_right = 1; st_i.border_width_top = 1; st_i.border_width_bottom = 1
+	st_i.corner_radius_top_left = 6; st_i.corner_radius_top_right = 6; st_i.corner_radius_bottom_left = 6; st_i.corner_radius_bottom_right = 6
 	if login_active:
-		btn_login.add_theme_stylebox_override("normal",   st_active)
-		btn_login.add_theme_stylebox_override("hover",    st_active)
-		btn_login.add_theme_color_override("font_color",  C.COLOR_PANEL)
-		btn_register.add_theme_stylebox_override("normal", st_inactive)
-		btn_register.add_theme_stylebox_override("hover",  st_inactive)
+		btn_login.add_theme_stylebox_override("normal", st_a); btn_login.add_theme_stylebox_override("hover", st_a)
+		btn_login.add_theme_color_override("font_color", C.COLOR_PANEL)
+		btn_register.add_theme_stylebox_override("normal", st_i); btn_register.add_theme_stylebox_override("hover", st_i)
 		btn_register.add_theme_color_override("font_color", C.COLOR_GOLD_DIM)
 	else:
-		btn_register.add_theme_stylebox_override("normal", st_active)
-		btn_register.add_theme_stylebox_override("hover",  st_active)
+		btn_register.add_theme_stylebox_override("normal", st_a); btn_register.add_theme_stylebox_override("hover", st_a)
 		btn_register.add_theme_color_override("font_color", C.COLOR_PANEL)
-		btn_login.add_theme_stylebox_override("normal",   st_inactive)
-		btn_login.add_theme_stylebox_override("hover",    st_inactive)
-		btn_login.add_theme_color_override("font_color",  C.COLOR_GOLD_DIM)
+		btn_login.add_theme_stylebox_override("normal", st_i); btn_login.add_theme_stylebox_override("hover", st_i)
+		btn_login.add_theme_color_override("font_color", C.COLOR_GOLD_DIM)
 
 static func _is_valid_email(email: String) -> bool:
-	var at_pos = email.find("@")
-	if at_pos < 1: return false
-	var domain = email.substr(at_pos + 1)
-	return domain.contains(".") and domain.length() > 2
+	var at_pos = email.find("@"); if at_pos < 1: return false
+	var domain = email.substr(at_pos + 1); return domain.contains(".") and domain.length() > 2
 
 static func _set_status(lbl: Label, text: String, color: Color) -> void:
-	if is_instance_valid(lbl):
-		lbl.text = text
-		lbl.add_theme_color_override("font_color", color)
+	if is_instance_valid(lbl): lbl.text = text; lbl.add_theme_color_override("font_color", color)

@@ -95,7 +95,7 @@ func _setup(container: Control, menu) -> void:
 
 	var root_margin = MarginContainer.new()
 	root_margin.set_anchors_preset(Control.PRESET_FULL_RECT)
-	root_margin.offset_top = 54
+	root_margin.offset_top = 0
 	root_margin.add_theme_constant_override("margin_left",   0)
 	root_margin.add_theme_constant_override("margin_right",  0)
 	root_margin.add_theme_constant_override("margin_top",    0)
@@ -722,7 +722,7 @@ func _build_input_area(menu) -> Control:
 	_send_btn.add_theme_stylebox_override("pressed", sb_st)
 	_send_btn.add_theme_color_override("font_color", Color(0.98, 0.90, 0.50))
 	_send_btn.add_theme_font_size_override("font_size", 13)
-	_send_btn.pressed.connect(func(): _on_send(_input.text))
+	_send_btn.pressed.connect(func(): _on_send(_input.text); _input.grab_focus())
 	hbox.add_child(_send_btn)
 
 	return container
@@ -781,6 +781,7 @@ func _switch_channel(channel: String) -> void:
 	for c in _msg_vbox.get_children(): c.queue_free()
 	message_nodes.clear()
 	_request_history()
+	_input.grab_focus()
 
 
 # ─── WS ──────────────────────────────────────────────────
@@ -807,6 +808,8 @@ func _on_send(text: String) -> void:
 	if text.to_lower() == "/clear":
 		_clear_local()
 		_input.text = ""
+		_input.grab_focus()
+
 		return
 
 	if text.to_lower() == "/clearall":
@@ -1295,6 +1298,8 @@ func _hide_mute_banner() -> void:
 	if _mute_banner:   _mute_banner.visible = false
 	if _input:         _input.editable      = true
 	if _send_btn:      _send_btn.disabled   = false
+	_input.grab_focus()  # ← aquí, cuando te desmutean
+
 
 func _show_mention_notification(_data: Dictionary) -> void:
 	if not _input: return
@@ -1305,6 +1310,7 @@ func _show_mention_notification(_data: Dictionary) -> void:
 func _scroll_to_bottom() -> void:
 	if not _scroll: return
 	await get_tree().process_frame
+	_input.grab_focus()
 	_scroll.scroll_vertical = _scroll.get_v_scroll_bar().max_value
 
 func _process(delta: float) -> void:

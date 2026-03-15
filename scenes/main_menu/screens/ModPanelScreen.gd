@@ -57,32 +57,54 @@ func _setup(container: Control, menu) -> void:
 	var header = Panel.new()
 	header.anchor_left = 0; header.anchor_right  = 1
 	header.anchor_top  = 0; header.anchor_bottom = 0
-	header.offset_top  = 50; header.offset_bottom = 110
+	header.offset_top  = 0; header.offset_bottom = 80
 	var hs = StyleBoxFlat.new()
-	hs.bg_color = Color(0.08, 0.06, 0.04, 0.95)
-	hs.border_color = Color(1.0, 0.60, 0.0, 0.5)
-	hs.border_width_bottom = 2
+	hs.bg_color = Color(0.07, 0.05, 0.03, 0.98)
+	hs.border_color = Color(1.0, 0.65, 0.0, 0.6)
+	hs.border_width_bottom = 3
+	hs.shadow_color = Color(1.0, 0.55, 0.0, 0.12)
+	hs.shadow_size  = 12
 	header.add_theme_stylebox_override("panel", hs)
 	container.add_child(header)
 
+	# Línea decorativa de acento izquierda
+	var accent_bar = ColorRect.new()
+	accent_bar.color = Color(1.0, 0.65, 0.0, 1.0)
+	accent_bar.anchor_left = 0; accent_bar.anchor_right  = 0
+	accent_bar.anchor_top  = 0; accent_bar.anchor_bottom = 1
+	accent_bar.offset_right = 5
+	header.add_child(accent_bar)
+
 	var hbox = HBoxContainer.new()
 	hbox.set_anchors_preset(Control.PRESET_FULL_RECT)
+	hbox.add_theme_constant_override("separation", 16)
 	var hm = MarginContainer.new()
-	hm.add_theme_constant_override("margin_left", 24)
+	hm.add_theme_constant_override("margin_left",  20)
+	hm.add_theme_constant_override("margin_right", 24)
 	header.add_child(hm)
 	hm.add_child(hbox)
 
+	var title_vbox = VBoxContainer.new()
+	title_vbox.add_theme_constant_override("separation", 3)
+	title_vbox.size_flags_vertical = Control.SIZE_SHRINK_CENTER
+	hbox.add_child(title_vbox)
+
 	var title = Label.new()
-	title.text = "⚙️ PANEL DE MODERACIÓN  —  " + ROLE_NAMES.get(role, "Staff")
-	title.add_theme_font_size_override("font_size", 18)
-	title.add_theme_color_override("font_color", Color(1.0, 0.65, 0.0))
-	title.vertical_alignment = VERTICAL_ALIGNMENT_CENTER
-	hbox.add_child(title)
+	title.text = "⚙️  PANEL DE MODERACIÓN"
+	title.add_theme_font_size_override("font_size", 22)
+	title.add_theme_color_override("font_color", Color(1.0, 0.72, 0.15))
+	title_vbox.add_child(title)
+
+	var role_badge_lbl = Label.new()
+	role_badge_lbl.text = "Acceso: " + ROLE_NAMES.get(role, "Staff")
+	role_badge_lbl.add_theme_font_size_override("font_size", 12)
+	role_badge_lbl.add_theme_color_override("font_color", Color(1.0, 0.65, 0.0, 0.60))
+	title_vbox.add_child(role_badge_lbl)
 
 	var layout = HBoxContainer.new()
 	layout.anchor_left   = 0; layout.anchor_right  = 1
 	layout.anchor_top    = 0; layout.anchor_bottom = 1
-	layout.offset_top    = 110; layout.offset_bottom = -8
+	layout.offset_top    = 80; layout.offset_bottom = -8
 	layout.offset_left   = 8;  layout.offset_right  = -8
 	layout.add_theme_constant_override("separation", 0)
 	container.add_child(layout)
@@ -94,8 +116,8 @@ func _setup(container: Control, menu) -> void:
 	content_wrapper.size_flags_horizontal = Control.SIZE_EXPAND_FILL
 	content_wrapper.size_flags_vertical   = Control.SIZE_EXPAND_FILL
 	var cw_st = StyleBoxFlat.new()
-	cw_st.bg_color = Color(0.06, 0.07, 0.10, 0.97)
-	cw_st.border_color = Color(0.2, 0.2, 0.25)
+	cw_st.bg_color = Color(0.05, 0.06, 0.09, 0.98)
+	cw_st.border_color = Color(1.0, 0.55, 0.0, 0.14)
 	cw_st.border_width_left = 1; cw_st.border_width_right  = 1
 	cw_st.border_width_top  = 1; cw_st.border_width_bottom = 1
 	cw_st.corner_radius_top_right    = 12; cw_st.corner_radius_bottom_right = 12
@@ -108,23 +130,43 @@ func _setup(container: Control, menu) -> void:
 # ─── SIDEBAR ────────────────────────────────────────────
 func _build_sidebar(parent: Control, role: int, C) -> Control:
 	var sidebar = PanelContainer.new()
-	sidebar.custom_minimum_size = Vector2(180, 0)
+	sidebar.custom_minimum_size = Vector2(290, 0)
 	var sb_st = StyleBoxFlat.new()
-	sb_st.bg_color = Color(0.05, 0.05, 0.08, 0.98)
-	sb_st.border_color = Color(0.15, 0.15, 0.2)
+	sb_st.bg_color = Color(0.05, 0.04, 0.03, 0.99)
+	sb_st.border_color = Color(1.0, 0.60, 0.0, 0.18)
 	sb_st.border_width_right = 1
 	sb_st.corner_radius_top_left    = 12; sb_st.corner_radius_bottom_left = 12
 	sidebar.add_theme_stylebox_override("panel", sb_st)
 
 	var sv = VBoxContainer.new()
-	sv.add_theme_constant_override("separation", 4)
+	sv.add_theme_constant_override("separation", 3)
 	var sm = MarginContainer.new()
-	sm.add_theme_constant_override("margin_left",   8)
-	sm.add_theme_constant_override("margin_right",  8)
-	sm.add_theme_constant_override("margin_top",   16)
-	sm.add_theme_constant_override("margin_bottom", 16)
+	sm.add_theme_constant_override("margin_left",   10)
+	sm.add_theme_constant_override("margin_right",  10)
+	sm.add_theme_constant_override("margin_top",    18)
+	sm.add_theme_constant_override("margin_bottom", 18)
 	sidebar.add_child(sm)
 	sm.add_child(sv)
+
+	# Mini header de la sidebar
+	var nav_lbl = Label.new()
+	nav_lbl.text = "NAVEGACIÓN"
+	nav_lbl.add_theme_font_size_override("font_size", 10)
+	nav_lbl.add_theme_color_override("font_color", Color(1.0, 0.65, 0.0, 0.45))
+	var nav_m = MarginContainer.new()
+	nav_m.add_theme_constant_override("margin_left", 12)
+	nav_m.add_theme_constant_override("margin_bottom", 6)
+	nav_m.add_child(nav_lbl)
+	sv.add_child(nav_m)
+
+	var sep_line = ColorRect.new()
+	sep_line.custom_minimum_size = Vector2(0, 1)
+	sep_line.color = Color(1.0, 0.60, 0.0, 0.12)
+	sv.add_child(sep_line)
+
+	var spacer_top = Control.new()
+	spacer_top.custom_minimum_size = Vector2(0, 6)
+	sv.add_child(spacer_top)
 
 	var tabs = []
 	if role >= 3:
@@ -147,26 +189,32 @@ func _build_sidebar(parent: Control, role: int, C) -> Control:
 	for tab in tabs:
 		var btn = Button.new()
 		btn.text = tab[1]
-		btn.custom_minimum_size = Vector2(0, 36)
+		btn.custom_minimum_size = Vector2(0, 68)
 		btn.alignment = HORIZONTAL_ALIGNMENT_LEFT
-		btn.add_theme_font_size_override("font_size", 13)
+		btn.add_theme_font_size_override("font_size", 18)
 
 		var st_n = StyleBoxFlat.new()
 		st_n.bg_color = Color(0,0,0,0)
-		st_n.corner_radius_top_left    = 6; st_n.corner_radius_top_right    = 6
-		st_n.corner_radius_bottom_left = 6; st_n.corner_radius_bottom_right = 6
-		var st_h = st_n.duplicate(); st_h.bg_color = Color(0.15, 0.15, 0.22, 0.8)
+		st_n.corner_radius_top_left    = 8; st_n.corner_radius_top_right    = 8
+		st_n.corner_radius_bottom_left = 8; st_n.corner_radius_bottom_right = 8
+		st_n.content_margin_left = 12
+		var st_h = st_n.duplicate()
+		st_h.bg_color = Color(1.0, 0.65, 0.0, 0.08)
+		st_h.border_color = Color(1.0, 0.65, 0.0, 0.18)
+		st_h.border_width_left = 2
 		var st_p = st_n.duplicate()
-		st_p.bg_color = Color(0.15, 0.10, 0.02, 0.9)
-		st_p.border_color = Color(1.0, 0.65, 0.0, 0.6)
+		st_p.bg_color = Color(1.0, 0.55, 0.0, 0.14)
+		st_p.border_color = Color(1.0, 0.72, 0.0, 0.90)
 		st_p.border_width_left = 3
+		st_p.shadow_color = Color(1.0, 0.55, 0.0, 0.15)
+		st_p.shadow_size  = 6
 
 		btn.add_theme_stylebox_override("normal",  st_n)
 		btn.add_theme_stylebox_override("hover",   st_h)
 		btn.add_theme_stylebox_override("pressed", st_p)
-		btn.add_theme_color_override("font_color", Color(0.7, 0.7, 0.7))
-		btn.add_theme_color_override("font_hover_color",   Color(0.9, 0.9, 0.9))
-		btn.add_theme_color_override("font_pressed_color", Color(1.0, 0.75, 0.2))
+		btn.add_theme_color_override("font_color",           Color(0.72, 0.68, 0.62))
+		btn.add_theme_color_override("font_hover_color",     Color(0.95, 0.90, 0.80))
+		btn.add_theme_color_override("font_pressed_color",   Color(1.0,  0.80, 0.25))
 
 		var tab_id = tab[0]
 		btn.pressed.connect(func(): _switch_tab(tab_id, C))
@@ -197,35 +245,74 @@ func _switch_tab(tab_id: String, C) -> void:
 func _content_vbox() -> VBoxContainer:
 	var m = MarginContainer.new()
 	m.set_anchors_preset(Control.PRESET_FULL_RECT)
-	m.add_theme_constant_override("margin_left",   24)
-	m.add_theme_constant_override("margin_right",  24)
-	m.add_theme_constant_override("margin_top",    20)
-	m.add_theme_constant_override("margin_bottom", 20)
+	m.add_theme_constant_override("margin_left",   32)
+	m.add_theme_constant_override("margin_right",  32)
+	m.add_theme_constant_override("margin_top",    28)
+	m.add_theme_constant_override("margin_bottom", 28)
 	_tab_content.add_child(m)
 
 	var v = VBoxContainer.new()
-	v.add_theme_constant_override("separation", 16)
+	v.add_theme_constant_override("separation", 20)
 	v.size_flags_horizontal = Control.SIZE_EXPAND_FILL
 	v.size_flags_vertical   = Control.SIZE_EXPAND_FILL
 	m.add_child(v)
 	return v
 
 func _tab_title(parent: Control, text: String) -> void:
+	var title_container = HBoxContainer.new()
+	title_container.add_theme_constant_override("separation", 12)
+	parent.add_child(title_container)
+
+	var bar = ColorRect.new()
+	bar.color = Color(1.0, 0.65, 0.0, 1.0)
+	bar.custom_minimum_size = Vector2(4, 0)
+	bar.size_flags_vertical = Control.SIZE_EXPAND_FILL
+	title_container.add_child(bar)
+
+	var vb = VBoxContainer.new()
+	vb.add_theme_constant_override("separation", 2)
+	title_container.add_child(vb)
+
 	var lbl = Label.new()
 	lbl.text = text
-	lbl.add_theme_font_size_override("font_size", 16)
-	lbl.add_theme_color_override("font_color", Color(1.0, 0.65, 0.0))
-	parent.add_child(lbl)
+	lbl.add_theme_font_size_override("font_size", 20)
+	lbl.add_theme_color_override("font_color", Color(1.0, 0.78, 0.28))
+	vb.add_child(lbl)
+
+	var div = ColorRect.new()
+	div.custom_minimum_size = Vector2(0, 1)
+	div.color = Color(1.0, 0.65, 0.0, 0.15)
+	div.size_flags_horizontal = Control.SIZE_EXPAND_FILL
+	parent.add_child(div)
 
 func _make_button(text: String, color: Color) -> Button:
 	var btn = Button.new()
 	btn.text = text
+	btn.mouse_default_cursor_shape = Control.CURSOR_POINTING_HAND
+
 	var st = StyleBoxFlat.new()
-	st.bg_color = color
-	st.corner_radius_top_left    = 6; st.corner_radius_top_right    = 6
-	st.corner_radius_bottom_left = 6; st.corner_radius_bottom_right = 6
-	btn.add_theme_stylebox_override("normal", st)
-	btn.add_theme_color_override("font_color", Color.WHITE)
+	st.bg_color = Color(color.r, color.g, color.b, color.a * 0.85)
+	st.border_color = Color(color.r * 1.3, color.g * 1.3, color.b * 1.3, 0.55).clamp()
+	st.border_width_left = 1; st.border_width_right  = 1
+	st.border_width_top  = 1; st.border_width_bottom = 1
+	st.corner_radius_top_left    = 8; st.corner_radius_top_right    = 8
+	st.corner_radius_bottom_left = 8; st.corner_radius_bottom_right = 8
+	st.content_margin_left   = 14; st.content_margin_right  = 14
+	st.content_margin_top    = 6;  st.content_margin_bottom = 6
+
+	var st_h = st.duplicate()
+	st_h.bg_color = Color(color.r * 1.2, color.g * 1.2, color.b * 1.2, 1.0).clamp()
+	st_h.shadow_color = Color(color.r, color.g, color.b, 0.30)
+	st_h.shadow_size  = 6
+
+	var st_p = st.duplicate()
+	st_p.bg_color = Color(color.r * 0.8, color.g * 0.8, color.b * 0.8, 1.0).clamp()
+
+	btn.add_theme_stylebox_override("normal",  st)
+	btn.add_theme_stylebox_override("hover",   st_h)
+	btn.add_theme_stylebox_override("pressed", st_p)
+	btn.add_theme_color_override("font_color", Color(1.0, 1.0, 1.0, 0.95))
+	btn.add_theme_font_size_override("font_size", 13)
 	return btn
 
 func _api_post(endpoint: String, body: Dictionary, callback: Callable) -> void:
@@ -237,14 +324,20 @@ func _api_post(endpoint: String, body: Dictionary, callback: Callable) -> void:
 	]
 	http.request(NetworkManager.BASE_URL + endpoint,
 		headers, HTTPClient.METHOD_POST, JSON.stringify(body))
+	var self_ref = weakref(self)
 	http.request_completed.connect(func(result, code, _h, resp_body):
+		var s = self_ref.get_ref()
+		if s == null or not is_instance_valid(s):
+			if is_instance_valid(http): http.queue_free()
+			return
 		var data = {}
 		if resp_body.size() > 0:
 			var parsed = JSON.parse_string(resp_body.get_string_from_utf8())
 			if parsed is Dictionary:
 				data = parsed
-		callback.call(code, data)
-		http.queue_free()
+		if is_instance_valid(http): http.queue_free()
+		if callback.is_valid():
+			callback.call(code, data)
 	)
 
 func _api_get(endpoint: String, callback: Callable) -> void:
@@ -252,19 +345,25 @@ func _api_get(endpoint: String, callback: Callable) -> void:
 	add_child(http)
 	var headers = ["Authorization: Bearer " + NetworkManager.token]
 	http.request(NetworkManager.BASE_URL + endpoint, headers)
+	var self_ref = weakref(self)
 	http.request_completed.connect(func(result, code, _h, resp_body):
+		var s = self_ref.get_ref()
+		if s == null or not is_instance_valid(s):
+			if is_instance_valid(http): http.queue_free()
+			return
 		var data = {}
 		if resp_body.size() > 0:
 			var parsed = JSON.parse_string(resp_body.get_string_from_utf8())
 			if parsed is Dictionary:
 				data = parsed
-		callback.call(code, data)
-		http.queue_free()
+		if is_instance_valid(http): http.queue_free()
+		if callback.is_valid():
+			callback.call(code, data)
 	)
 
 func _status_label(parent: Control) -> Label:
 	var lbl = Label.new()
-	lbl.add_theme_font_size_override("font_size", 13)
+	lbl.add_theme_font_size_override("font_size", 14)
 	lbl.add_theme_color_override("font_color", Color(0.4, 0.9, 0.4))
 	lbl.horizontal_alignment = HORIZONTAL_ALIGNMENT_CENTER
 	parent.add_child(lbl)
@@ -273,8 +372,8 @@ func _status_label(parent: Control) -> Label:
 func _form_lbl(txt: String) -> Label:
 	var l = Label.new()
 	l.text = txt
-	l.add_theme_font_size_override("font_size", 13)
-	l.add_theme_color_override("font_color", Color(0.7, 0.7, 0.7))
+	l.add_theme_font_size_override("font_size", 14)
+	l.add_theme_color_override("font_color", Color(0.78, 0.74, 0.68))
 	l.vertical_alignment = VERTICAL_ALIGNMENT_CENTER
 	return l
 
@@ -392,38 +491,52 @@ func _build_reports_tab(C) -> void:
 func _add_report_card(parent: Control, r: Dictionary) -> void:
 	var card = PanelContainer.new()
 	var st = StyleBoxFlat.new()
-	st.bg_color = Color(0.12, 0.08, 0.08, 0.9)
-	st.border_color = Color(0.6, 0.2, 0.2, 0.5)
-	st.border_width_left = 3
-	st.corner_radius_top_left    = 8; st.corner_radius_top_right    = 8
-	st.corner_radius_bottom_left = 8; st.corner_radius_bottom_right = 8
-	st.content_margin_left   = 16; st.content_margin_right  = 16
-	st.content_margin_top    = 12; st.content_margin_bottom = 12
+	st.bg_color = Color(0.14, 0.07, 0.07, 0.95)
+	st.border_color = Color(0.75, 0.20, 0.20, 0.70)
+	st.border_width_left = 4
+	st.border_width_right = 1; st.border_width_top = 1; st.border_width_bottom = 1
+	st.corner_radius_top_left    = 10; st.corner_radius_top_right    = 10
+	st.corner_radius_bottom_left = 10; st.corner_radius_bottom_right = 10
+	st.content_margin_left   = 18; st.content_margin_right  = 18
+	st.content_margin_top    = 14; st.content_margin_bottom = 14
+	st.shadow_color = Color(0.6, 0.1, 0.1, 0.18)
+	st.shadow_size  = 6
 	card.add_theme_stylebox_override("panel", st)
 	parent.add_child(card)
 
 	var cv = VBoxContainer.new()
-	cv.add_theme_constant_override("separation", 6)
+	cv.add_theme_constant_override("separation", 8)
 	card.add_child(cv)
 
 	var info = Label.new()
-	info.text = "🔴 %s reportó a %s  ·  Motivo: %s  ·  %s" % [
+	info.text = "🔴  %s  reportó a  %s   ·   Motivo: %s   ·   %s" % [
 		r.get("reporter_name","?"),
 		r.get("reported_name","?"),
 		r.get("reason","?"),
 		r.get("created_at","").substr(0,16)
 	]
-	info.add_theme_font_size_override("font_size", 13)
-	info.add_theme_color_override("font_color", Color(0.9, 0.9, 0.9))
+	info.add_theme_font_size_override("font_size", 14)
+	info.add_theme_color_override("font_color", Color(0.95, 0.88, 0.88))
 	cv.add_child(info)
 
 	if r.get("message_content","") != "":
+		var msg_panel = PanelContainer.new()
+		var mp_st = StyleBoxFlat.new()
+		mp_st.bg_color = Color(0.08, 0.05, 0.05, 0.80)
+		mp_st.border_color = Color(0.5, 0.2, 0.2, 0.30)
+		mp_st.border_width_left = 2
+		mp_st.corner_radius_top_left    = 6; mp_st.corner_radius_top_right    = 6
+		mp_st.corner_radius_bottom_left = 6; mp_st.corner_radius_bottom_right = 6
+		mp_st.content_margin_left = 12; mp_st.content_margin_right = 12
+		mp_st.content_margin_top  = 8;  mp_st.content_margin_bottom = 8
+		msg_panel.add_theme_stylebox_override("panel", mp_st)
+		cv.add_child(msg_panel)
 		var msg_lbl = Label.new()
-		msg_lbl.text = "Mensaje: \"" + r.get("message_content","") + "\""
-		msg_lbl.add_theme_font_size_override("font_size", 12)
-		msg_lbl.add_theme_color_override("font_color", Color(0.6, 0.6, 0.6))
+		msg_lbl.text = "\"" + r.get("message_content","") + "\""
+		msg_lbl.add_theme_font_size_override("font_size", 13)
+		msg_lbl.add_theme_color_override("font_color", Color(0.65, 0.60, 0.60))
 		msg_lbl.autowrap_mode = TextServer.AUTOWRAP_WORD
-		cv.add_child(msg_lbl)
+		msg_panel.add_child(msg_lbl)
 
 	var btn_row = HBoxContainer.new()
 	btn_row.add_theme_constant_override("separation", 8)
@@ -432,10 +545,9 @@ func _add_report_card(parent: Control, r: Dictionary) -> void:
 	var report_id = r.get("id", 0)
 	var reported_id = r.get("reported_id","")
 
-	for dur in [["Silenciar 1h", 1], ["Silenciar 24h", 24], ["Silenciar 7d", 168]]:
-		var btn = _make_button(dur[0], Color(0.5, 0.3, 0.0, 0.9))
-		btn.custom_minimum_size = Vector2(100, 30)
-		btn.add_theme_font_size_override("font_size", 11)
+	for dur in [["🔇 Silenciar 1h", 1], ["🔇 Silenciar 24h", 24], ["🔇 Silenciar 7d", 168]]:
+		var btn = _make_button(dur[0], Color(0.50, 0.28, 0.0, 0.95))
+		btn.custom_minimum_size = Vector2(120, 34)
 		var hours = dur[1]
 		btn.pressed.connect(func():
 			_api_post("/api/mod/mute", {"user_id": reported_id, "duration_hours": hours, "reason": "report"}, func(code, d):
@@ -445,9 +557,8 @@ func _add_report_card(parent: Control, r: Dictionary) -> void:
 		)
 		btn_row.add_child(btn)
 
-	var dismiss_btn = _make_button("Ignorar", Color(0.2, 0.2, 0.2, 0.9))
-	dismiss_btn.custom_minimum_size = Vector2(80, 30)
-	dismiss_btn.add_theme_font_size_override("font_size", 11)
+	var dismiss_btn = _make_button("✕ Ignorar", Color(0.22, 0.22, 0.26, 0.95))
+	dismiss_btn.custom_minimum_size = Vector2(90, 34)
 	dismiss_btn.pressed.connect(func():
 		_api_post("/api/mod/reports/%d/resolve" % report_id, {"action": "dismiss"}, func(code, _d):
 			if not is_instance_valid(card): return
@@ -503,35 +614,72 @@ func _build_search_tab(C) -> void:
 func _add_user_card(parent: Control, u: Dictionary) -> void:
 	var card = PanelContainer.new()
 	var st = StyleBoxFlat.new()
-	st.bg_color = Color(0.1, 0.12, 0.18, 0.9)
-	st.border_color = Color(0.2, 0.25, 0.35)
-	st.border_width_left = 2
-	st.corner_radius_top_left    = 8; st.corner_radius_top_right    = 8
-	st.corner_radius_bottom_left = 8; st.corner_radius_bottom_right = 8
-	st.content_margin_left   = 16; st.content_margin_right  = 16
-	st.content_margin_top    = 12; st.content_margin_bottom = 12
+	var is_banned = u.get("ban_reason", null) != null
+	var is_muted  = u.get("muted_until", null) != null
+	st.bg_color = Color(0.18, 0.06, 0.06, 0.92) if is_banned else Color(0.10, 0.12, 0.18, 0.92)
+	st.border_color = Color(0.70, 0.18, 0.18, 0.65) if is_banned else Color(0.25, 0.32, 0.48, 0.55)
+	st.border_width_left = 4
+	st.border_width_right = 1; st.border_width_top = 1; st.border_width_bottom = 1
+	st.corner_radius_top_left    = 10; st.corner_radius_top_right    = 10
+	st.corner_radius_bottom_left = 10; st.corner_radius_bottom_right = 10
+	st.content_margin_left   = 18; st.content_margin_right  = 18
+	st.content_margin_top    = 14; st.content_margin_bottom = 14
 	card.add_theme_stylebox_override("panel", st)
 	parent.add_child(card)
 
 	var cv = VBoxContainer.new()
-	cv.add_theme_constant_override("separation", 8)
+	cv.add_theme_constant_override("separation", 10)
 	card.add_child(cv)
 
-	var info_lbl = Label.new()
-	var is_banned = u.get("ban_reason", null) != null
-	var is_muted  = u.get("muted_until", null) != null
-	info_lbl.text = "%s  [%s]  ELO: %s  Monedas: %s  %s%s" % [
-		u.get("username","?"),
-		ROLE_NAMES.get(u.get("role",1), "?"),
-		str(u.get("elo", 0)),
-		str(u.get("coins", 0)),
-		"🔨 BANEADO  " if is_banned else "",
-		"🔇 SILENCIADO  " if is_muted else "",
-	]
-	info_lbl.add_theme_font_size_override("font_size", 14)
-	info_lbl.add_theme_color_override("font_color",
-		Color(0.9, 0.3, 0.3) if is_banned else Color(0.9, 0.9, 0.9))
-	cv.add_child(info_lbl)
+	# Info row
+	var info_row = HBoxContainer.new()
+	info_row.add_theme_constant_override("separation", 16)
+	cv.add_child(info_row)
+
+	var name_lbl = Label.new()
+	name_lbl.text = u.get("username","?")
+	name_lbl.add_theme_font_size_override("font_size", 17)
+	name_lbl.add_theme_color_override("font_color",
+		Color(0.95, 0.45, 0.45) if is_banned else Color(0.95, 0.92, 0.85))
+	info_row.add_child(name_lbl)
+
+	var role_pill = PanelContainer.new()
+	var rp_st = StyleBoxFlat.new()
+	rp_st.bg_color = Color(1.0, 0.65, 0.0, 0.12)
+	rp_st.border_color = Color(1.0, 0.65, 0.0, 0.30)
+	rp_st.border_width_left=1; rp_st.border_width_right=1
+	rp_st.border_width_top=1;  rp_st.border_width_bottom=1
+	rp_st.corner_radius_top_left=12; rp_st.corner_radius_top_right=12
+	rp_st.corner_radius_bottom_left=12; rp_st.corner_radius_bottom_right=12
+	rp_st.content_margin_left=10; rp_st.content_margin_right=10
+	rp_st.content_margin_top=3;   rp_st.content_margin_bottom=3
+	role_pill.add_theme_stylebox_override("panel", rp_st)
+	role_pill.size_flags_vertical = Control.SIZE_SHRINK_CENTER
+	var role_lbl_inner = Label.new()
+	role_lbl_inner.text = ROLE_NAMES.get(u.get("role",1), "?")
+	role_lbl_inner.add_theme_font_size_override("font_size", 11)
+	role_lbl_inner.add_theme_color_override("font_color", Color(1.0, 0.78, 0.28))
+	role_pill.add_child(role_lbl_inner)
+	info_row.add_child(role_pill)
+
+	var stats_lbl = Label.new()
+	stats_lbl.text = "ELO %s  ·  🪙 %s" % [str(u.get("elo", 0)), str(u.get("coins", 0))]
+	stats_lbl.add_theme_font_size_override("font_size", 13)
+	stats_lbl.add_theme_color_override("font_color", Color(0.55, 0.55, 0.62))
+	info_row.add_child(stats_lbl)
+
+	if is_banned:
+		var ban_lbl = Label.new()
+		ban_lbl.text = "🔨 BANEADO"
+		ban_lbl.add_theme_font_size_override("font_size", 13)
+		ban_lbl.add_theme_color_override("font_color", Color(0.95, 0.35, 0.35))
+		info_row.add_child(ban_lbl)
+	if is_muted:
+		var mute_lbl = Label.new()
+		mute_lbl.text = "🔇 SILENCIADO"
+		mute_lbl.add_theme_font_size_override("font_size", 13)
+		mute_lbl.add_theme_color_override("font_color", Color(0.95, 0.65, 0.20))
+		info_row.add_child(mute_lbl)
 
 	var role_self = PlayerData.role if "role" in PlayerData else 3
 	var target_role = u.get("role", 1)
@@ -543,10 +691,9 @@ func _add_user_card(parent: Control, u: Dictionary) -> void:
 		cv.add_child(action_row)
 
 		if role_self >= 3:
-			for dur in [["Mutear 1h", 1], ["Mutear 24h", 24]]:
-				var b = _make_button(dur[0], Color(0.5, 0.3, 0.0, 0.9))
-				b.custom_minimum_size = Vector2(90, 28)
-				b.add_theme_font_size_override("font_size", 11)
+			for dur in [["🔇 Mutear 1h", 1], ["🔇 Mutear 24h", 24]]:
+				var b = _make_button(dur[0], Color(0.50, 0.28, 0.0, 0.95))
+				b.custom_minimum_size = Vector2(110, 34)
 				var h = dur[1]
 				b.pressed.connect(func():
 					_api_post("/api/mod/mute", {"user_id": user_id, "duration_hours": h, "reason": "panel"}, func(code, _d):
@@ -557,9 +704,8 @@ func _add_user_card(parent: Control, u: Dictionary) -> void:
 				action_row.add_child(b)
 
 		if role_self >= 5 and not is_banned:
-			var ban_b = _make_button("🔨 Banear", Color(0.5, 0.1, 0.1, 0.9))
-			ban_b.custom_minimum_size = Vector2(90, 28)
-			ban_b.add_theme_font_size_override("font_size", 11)
+			var ban_b = _make_button("🔨 Banear", Color(0.52, 0.08, 0.08, 0.95))
+			ban_b.custom_minimum_size = Vector2(110, 34)
 			ban_b.pressed.connect(func():
 				_api_post("/api/mod/ban", {"user_id": user_id, "reason": "ban desde panel"}, func(code, _d):
 					if not is_instance_valid(ban_b): return
@@ -569,9 +715,8 @@ func _add_user_card(parent: Control, u: Dictionary) -> void:
 			action_row.add_child(ban_b)
 
 		if role_self >= 5 and is_banned:
-			var unban_b = _make_button("✅ Desbanear", Color(0.1, 0.4, 0.1, 0.9))
-			unban_b.custom_minimum_size = Vector2(90, 28)
-			unban_b.add_theme_font_size_override("font_size", 11)
+			var unban_b = _make_button("✅ Desbanear", Color(0.08, 0.42, 0.12, 0.95))
+			unban_b.custom_minimum_size = Vector2(110, 34)
 			unban_b.pressed.connect(func():
 				_api_post("/api/mod/unban", {"user_id": user_id}, func(code, _d):
 					if not is_instance_valid(unban_b): return
@@ -628,17 +773,17 @@ func _build_chat_log_tab(C) -> void:
 
 				var ts = Label.new()
 				ts.text = m.get("created_at","").substr(11,5)
-				ts.custom_minimum_size = Vector2(40, 0)
-				ts.add_theme_font_size_override("font_size", 11)
-				ts.add_theme_color_override("font_color", Color(0.4,0.4,0.4))
+				ts.custom_minimum_size = Vector2(46, 0)
+				ts.add_theme_font_size_override("font_size", 12)
+				ts.add_theme_color_override("font_color", Color(0.38,0.38,0.44))
 				row.add_child(ts)
 
 				var name = Label.new()
 				name.text = m.get("username","?")
-				name.custom_minimum_size = Vector2(100, 0)
-				name.add_theme_font_size_override("font_size", 12)
+				name.custom_minimum_size = Vector2(110, 0)
+				name.add_theme_font_size_override("font_size", 13)
 				name.add_theme_color_override("font_color",
-					Color(0.6,0.2,0.2) if m.get("is_deleted",0) == 1 else Color(0.4,0.8,0.4))
+					Color(0.65,0.20,0.20) if m.get("is_deleted",0) == 1 else Color(0.38,0.82,0.48))
 				row.add_child(name)
 
 				var content = Label.new()
@@ -646,9 +791,9 @@ func _build_chat_log_tab(C) -> void:
 				content.size_flags_horizontal = Control.SIZE_EXPAND_FILL
 				content.autowrap_mode = TextServer.AUTOWRAP_OFF
 				content.text_overrun_behavior = TextServer.OVERRUN_TRIM_ELLIPSIS
-				content.add_theme_font_size_override("font_size", 12)
+				content.add_theme_font_size_override("font_size", 13)
 				content.add_theme_color_override("font_color",
-					Color(0.4,0.4,0.4) if m.get("is_deleted",0) == 1 else Color(0.85,0.85,0.85))
+					Color(0.38,0.38,0.40) if m.get("is_deleted",0) == 1 else Color(0.88,0.88,0.90))
 				row.add_child(content)
 		)
 
@@ -663,14 +808,14 @@ func _build_rewards_tab(C) -> void:
 	var note = Label.new()
 	note.text = "Selecciona el tipo de recurso, la cantidad y el jugador. Confirma antes de aplicar."
 	note.autowrap_mode = TextServer.AUTOWRAP_WORD
-	note.add_theme_font_size_override("font_size", 12)
-	note.add_theme_color_override("font_color", Color(0.55, 0.55, 0.55))
+	note.add_theme_font_size_override("font_size", 13)
+	note.add_theme_color_override("font_color", Color(0.58, 0.55, 0.50))
 	v.add_child(note)
 
 	var form = GridContainer.new()
 	form.columns = 2
-	form.add_theme_constant_override("h_separation", 16)
-	form.add_theme_constant_override("v_separation", 12)
+	form.add_theme_constant_override("h_separation", 20)
+	form.add_theme_constant_override("v_separation", 14)
 	v.add_child(form)
 
 	form.add_child(_form_lbl("Usuario (nombre exacto):"))
@@ -717,14 +862,14 @@ func _build_rewards_tab(C) -> void:
 
 	var status_lbl = _status_label(v)
 
-	var give_btn = _make_button("🎁  Otorgar", Color(0.1, 0.42, 0.15, 0.95))
-	give_btn.custom_minimum_size = Vector2(160, 42)
-	give_btn.add_theme_font_size_override("font_size", 14)
+	var give_btn = _make_button("🎁  Otorgar", Color(0.08, 0.42, 0.14, 0.95))
+	give_btn.custom_minimum_size = Vector2(180, 48)
+	give_btn.add_theme_font_size_override("font_size", 16)
 	btn_row.add_child(give_btn)
 
-	var take_btn = _make_button("➖  Quitar", Color(0.48, 0.1, 0.1, 0.95))
-	take_btn.custom_minimum_size = Vector2(160, 42)
-	take_btn.add_theme_font_size_override("font_size", 14)
+	var take_btn = _make_button("➖  Quitar", Color(0.48, 0.08, 0.08, 0.95))
+	take_btn.custom_minimum_size = Vector2(180, 48)
+	take_btn.add_theme_font_size_override("font_size", 16)
 	btn_row.add_child(take_btn)
 
 	var _do_send = func(is_take: bool):
@@ -889,28 +1034,35 @@ func _build_stats_tab(C) -> void:
 			var sec_data = sections[section_name]
 			var card = PanelContainer.new()
 			var st = StyleBoxFlat.new()
-			st.bg_color = Color(0.1,0.12,0.18,0.9)
-			st.border_color = Color(0.2,0.25,0.35)
-			st.border_width_left = 3
-			st.corner_radius_top_left = 8; st.corner_radius_top_right = 8
-			st.corner_radius_bottom_left = 8; st.corner_radius_bottom_right = 8
-			st.content_margin_left = 16; st.content_margin_right = 16
-			st.content_margin_top = 12; st.content_margin_bottom = 12
+			st.bg_color = Color(0.09,0.11,0.17,0.95)
+			st.border_color = Color(1.0, 0.60, 0.0, 0.28)
+			st.border_width_left = 4
+			st.border_width_right = 1; st.border_width_top = 1; st.border_width_bottom = 1
+			st.corner_radius_top_left = 10; st.corner_radius_top_right = 10
+			st.corner_radius_bottom_left = 10; st.corner_radius_bottom_right = 10
+			st.content_margin_left = 18; st.content_margin_right = 18
+			st.content_margin_top = 14; st.content_margin_bottom = 14
+			st.shadow_color = Color(0.0, 0.0, 0.0, 0.22)
+			st.shadow_size  = 5
 			card.add_theme_stylebox_override("panel", st)
 			grid.add_child(card)
 			var cv = VBoxContainer.new()
-			cv.add_theme_constant_override("separation", 6)
+			cv.add_theme_constant_override("separation", 8)
 			card.add_child(cv)
 			var title_lbl = Label.new()
 			title_lbl.text = section_name
-			title_lbl.add_theme_font_size_override("font_size", 14)
-			title_lbl.add_theme_color_override("font_color", Color(1.0,0.65,0.0))
+			title_lbl.add_theme_font_size_override("font_size", 16)
+			title_lbl.add_theme_color_override("font_color", Color(1.0,0.72,0.18))
 			cv.add_child(title_lbl)
+			var div2 = ColorRect.new()
+			div2.custom_minimum_size = Vector2(0,1)
+			div2.color = Color(1.0, 0.60, 0.0, 0.15)
+			cv.add_child(div2)
 			for key in sec_data:
 				var kv = Label.new()
 				kv.text = "%s:  %s" % [key.replace("_"," "), str(sec_data[key])]
-				kv.add_theme_font_size_override("font_size", 13)
-				kv.add_theme_color_override("font_color", Color(0.85,0.85,0.85))
+				kv.add_theme_font_size_override("font_size", 14)
+				kv.add_theme_color_override("font_color", Color(0.88,0.85,0.80))
 				cv.add_child(kv)
 	)
 
@@ -923,8 +1075,9 @@ func _build_announce_tab(C) -> void:
 	input.custom_minimum_size = Vector2(0, 120)
 	input.add_theme_stylebox_override("normal", UITheme.input_style(Color(0.1,0.1,0.15)))
 	v.add_child(input)
-	var btn = _make_button("📢 Enviar Anuncio a todos", Color(0.5, 0.3, 0.0, 0.9))
-	btn.custom_minimum_size = Vector2(220, 40)
+	var btn = _make_button("📢  Enviar Anuncio a todos", Color(0.50, 0.28, 0.0, 0.95))
+	btn.custom_minimum_size = Vector2(260, 48)
+	btn.add_theme_font_size_override("font_size", 16)
 	btn.size_flags_horizontal = Control.SIZE_SHRINK_CENTER
 	v.add_child(btn)
 	var status_lbl = _status_label(v)
@@ -948,16 +1101,16 @@ func _build_slowmode_tab(C) -> void:
 		v.add_child(row)
 		var ch_lbl = Label.new()
 		ch_lbl.text = "#" + ch
-		ch_lbl.custom_minimum_size = Vector2(80, 0)
-		ch_lbl.add_theme_font_size_override("font_size", 14)
-		ch_lbl.add_theme_color_override("font_color", Color(0.8,0.8,0.8))
+		ch_lbl.custom_minimum_size = Vector2(90, 0)
+		ch_lbl.add_theme_font_size_override("font_size", 16)
+		ch_lbl.add_theme_color_override("font_color", Color(0.88,0.85,0.78))
 		ch_lbl.vertical_alignment = VERTICAL_ALIGNMENT_CENTER
 		row.add_child(ch_lbl)
 		var spin = SpinBox.new()
 		spin.min_value = 0; spin.max_value = 120; spin.value = 0; spin.suffix = "s"
 		row.add_child(spin)
-		var apply_btn = _make_button("Aplicar", Color(0.3,0.3,0.5,0.9))
-		apply_btn.custom_minimum_size = Vector2(80, 28)
+		var apply_btn = _make_button("Aplicar", Color(0.28,0.28,0.48,0.95))
+		apply_btn.custom_minimum_size = Vector2(100, 38)
 		var channel = ch
 		apply_btn.pressed.connect(func():
 			_api_post("/api/mod/slowmode", {"channel": channel, "seconds": int(spin.value)}, func(code, _data):
@@ -968,8 +1121,8 @@ func _build_slowmode_tab(C) -> void:
 		row.add_child(apply_btn)
 	var note = Label.new()
 	note.text = "0 segundos = desactivado"
-	note.add_theme_font_size_override("font_size", 12)
-	note.add_theme_color_override("font_color", Color(0.5,0.5,0.5))
+	note.add_theme_font_size_override("font_size", 13)
+	note.add_theme_color_override("font_color", Color(0.48,0.46,0.42))
 	v.add_child(note)
 
 # ─── PESTAÑA: GIMNASIOS ─────────────────────────────────────
@@ -980,8 +1133,8 @@ func _build_gyms_tab(C) -> void:
 	var note = Label.new()
 	note.text = "Asigna o remueve líderes y sub-líderes. Un usuario solo puede liderar un gym a la vez."
 	note.autowrap_mode = TextServer.AUTOWRAP_WORD
-	note.add_theme_font_size_override("font_size", 12)
-	note.add_theme_color_override("font_color", Color(0.55, 0.55, 0.55))
+	note.add_theme_font_size_override("font_size", 13)
+	note.add_theme_color_override("font_color", Color(0.58, 0.55, 0.50))
 	v.add_child(note)
 
 	var status_lbl = _status_label(v)
@@ -1014,21 +1167,23 @@ func _build_gyms_tab(C) -> void:
 func _add_gym_card(parent: Control, gym: Dictionary, status_lbl: Label) -> void:
 	var card = PanelContainer.new()
 	var st = StyleBoxFlat.new()
-	st.bg_color = Color(0.08, 0.10, 0.15, 0.95)
-	st.border_color = Color(0.25, 0.35, 0.55, 0.7)
-	st.border_width_left   = 3
+	st.bg_color = Color(0.07, 0.09, 0.14, 0.97)
+	st.border_color = Color(0.28, 0.40, 0.65, 0.75)
+	st.border_width_left   = 4
 	st.border_width_right  = 1
 	st.border_width_top    = 1
 	st.border_width_bottom = 1
-	st.corner_radius_top_left    = 8; st.corner_radius_top_right    = 8
-	st.corner_radius_bottom_left = 8; st.corner_radius_bottom_right = 8
-	st.content_margin_left   = 16; st.content_margin_right  = 16
-	st.content_margin_top    = 12; st.content_margin_bottom = 12
+	st.corner_radius_top_left    = 10; st.corner_radius_top_right    = 10
+	st.corner_radius_bottom_left = 10; st.corner_radius_bottom_right = 10
+	st.content_margin_left   = 18; st.content_margin_right  = 18
+	st.content_margin_top    = 14; st.content_margin_bottom = 14
+	st.shadow_color = Color(0.0, 0.0, 0.0, 0.20)
+	st.shadow_size  = 6
 	card.add_theme_stylebox_override("panel", st)
 	parent.add_child(card)
 
 	var cv = VBoxContainer.new()
-	cv.add_theme_constant_override("separation", 8)
+	cv.add_theme_constant_override("separation", 10)
 	card.add_child(cv)
 
 	var gym_type_colors = {
@@ -1046,14 +1201,14 @@ func _add_gym_card(parent: Control, gym: Dictionary, status_lbl: Label) -> void:
 
 	var gym_name_lbl = Label.new()
 	gym_name_lbl.text = gym.get("name", "?")
-	gym_name_lbl.add_theme_font_size_override("font_size", 15)
+	gym_name_lbl.add_theme_font_size_override("font_size", 17)
 	gym_name_lbl.add_theme_color_override("font_color", type_color)
 	gym_name_lbl.size_flags_horizontal = Control.SIZE_EXPAND_FILL
 	title_row.add_child(gym_name_lbl)
 
 	var type_badge = Label.new()
 	type_badge.text = gym.get("gym_type", "")
-	type_badge.add_theme_font_size_override("font_size", 11)
+	type_badge.add_theme_font_size_override("font_size", 13)
 	type_badge.add_theme_color_override("font_color", type_color.lerp(Color.WHITE, 0.3))
 	title_row.add_child(type_badge)
 
@@ -1089,21 +1244,21 @@ func _add_leader_row(
 
 	var role_lbl = Label.new()
 	role_lbl.text = "%s %s:" % [icon, role_label]
-	role_lbl.custom_minimum_size = Vector2(90, 0)
-	role_lbl.add_theme_font_size_override("font_size", 13)
-	role_lbl.add_theme_color_override("font_color", Color(0.7, 0.7, 0.7))
+	role_lbl.custom_minimum_size = Vector2(100, 0)
+	role_lbl.add_theme_font_size_override("font_size", 14)
+	role_lbl.add_theme_color_override("font_color", Color(0.78, 0.74, 0.68))
 	role_lbl.vertical_alignment = VERTICAL_ALIGNMENT_CENTER
 	row.add_child(role_lbl)
 
 	var current_lbl = Label.new()
 	if current_name:
 		current_lbl.text = current_name
-		current_lbl.add_theme_color_override("font_color", Color(0.9, 0.85, 0.5))
+		current_lbl.add_theme_color_override("font_color", Color(0.95, 0.88, 0.50))
 	else:
 		current_lbl.text = "— Sin asignar —"
-		current_lbl.add_theme_color_override("font_color", Color(0.4, 0.4, 0.4))
-	current_lbl.custom_minimum_size = Vector2(140, 0)
-	current_lbl.add_theme_font_size_override("font_size", 13)
+		current_lbl.add_theme_color_override("font_color", Color(0.38, 0.38, 0.42))
+	current_lbl.custom_minimum_size = Vector2(150, 0)
+	current_lbl.add_theme_font_size_override("font_size", 14)
 	current_lbl.vertical_alignment = VERTICAL_ALIGNMENT_CENTER
 	row.add_child(current_lbl)
 
@@ -1150,9 +1305,8 @@ func _add_leader_row(
 		sel[0] = results_opt.get_item_metadata(idx)
 	)
 
-	var assign_btn = _make_button("✔ Asignar", Color(0.1, 0.42, 0.15, 0.95))
-	assign_btn.custom_minimum_size = Vector2(90, 0)
-	assign_btn.add_theme_font_size_override("font_size", 12)
+	var assign_btn = _make_button("✔ Asignar", Color(0.08, 0.42, 0.14, 0.95))
+	assign_btn.custom_minimum_size = Vector2(100, 34)
 	row.add_child(assign_btn)
 
 	assign_btn.pressed.connect(func():
@@ -1178,9 +1332,8 @@ func _add_leader_row(
 	)
 
 	if current_id:
-		var remove_btn = _make_button("✕", Color(0.45, 0.1, 0.1, 0.9))
-		remove_btn.custom_minimum_size = Vector2(30, 0)
-		remove_btn.add_theme_font_size_override("font_size", 12)
+		var remove_btn = _make_button("✕ Remover", Color(0.45, 0.08, 0.08, 0.95))
+		remove_btn.custom_minimum_size = Vector2(100, 34)
 		row.add_child(remove_btn)
 		remove_btn.pressed.connect(func():
 			_show_confirm_dialog(
@@ -1250,8 +1403,8 @@ func _build_action_log_tab(C) -> void:
 				a.get("target_name","—"),
 				("(" + details.substr(0,60) + ")") if details else ""
 			]
-			lbl.add_theme_font_size_override("font_size", 12)
-			lbl.add_theme_color_override("font_color", Color(0.7,0.7,0.7))
+			lbl.add_theme_font_size_override("font_size", 13)
+			lbl.add_theme_color_override("font_color", Color(0.70,0.68,0.65))
 			list.add_child(lbl)
 	)
 
@@ -1274,30 +1427,30 @@ func _build_mod_ranking_tab(C) -> void:
 			v.add_child(row)
 			var pos_lbl = Label.new()
 			pos_lbl.text = "#%d" % (i + 1)
-			pos_lbl.custom_minimum_size = Vector2(30, 0)
-			pos_lbl.add_theme_font_size_override("font_size", 14)
-			pos_lbl.add_theme_color_override("font_color", Color(1.0,0.65,0.0))
+			pos_lbl.custom_minimum_size = Vector2(40, 0)
+			pos_lbl.add_theme_font_size_override("font_size", 18)
+			pos_lbl.add_theme_color_override("font_color", Color(1.0,0.72,0.18))
 			row.add_child(pos_lbl)
 			var name_lbl = Label.new()
 			name_lbl.text = r.get("mod_name","?")
 			name_lbl.size_flags_horizontal = Control.SIZE_EXPAND_FILL
-			name_lbl.add_theme_font_size_override("font_size", 14)
-			name_lbl.add_theme_color_override("font_color", Color(0.9,0.9,0.9))
+			name_lbl.add_theme_font_size_override("font_size", 16)
+			name_lbl.add_theme_color_override("font_color", Color(0.92,0.90,0.86))
 			row.add_child(name_lbl)
 			var count_lbl = Label.new()
 			count_lbl.text = str(r.get("actions",0)) + " acciones"
-			count_lbl.add_theme_font_size_override("font_size", 13)
-			count_lbl.add_theme_color_override("font_color", Color(0.4,0.8,0.4))
+			count_lbl.add_theme_font_size_override("font_size", 15)
+			count_lbl.add_theme_color_override("font_color", Color(0.38,0.82,0.48))
 			row.add_child(count_lbl)
 	)
 
 # ─── SIN ACCESO ─────────────────────────────────────────
 func _show_no_access(container: Control, C) -> void:
 	var lbl = Label.new()
-	lbl.text = "🔒 Sin acceso"
+	lbl.text = "🔒  Sin acceso"
 	lbl.set_anchors_preset(Control.PRESET_FULL_RECT)
 	lbl.horizontal_alignment = HORIZONTAL_ALIGNMENT_CENTER
 	lbl.vertical_alignment   = VERTICAL_ALIGNMENT_CENTER
-	lbl.add_theme_font_size_override("font_size", 20)
-	lbl.add_theme_color_override("font_color", Color(0.4,0.4,0.4))
+	lbl.add_theme_font_size_override("font_size", 24)
+	lbl.add_theme_color_override("font_color", Color(0.38,0.36,0.34))
 	container.add_child(lbl)

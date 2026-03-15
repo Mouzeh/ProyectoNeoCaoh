@@ -1,0 +1,19 @@
+[remap]
+
+importer="mp3"
+type="AudioStreamMP3"
+uid="uid://qi54adkbe1k5"
+path="res://.godot/imported/sonido al empezar la partida.mp3-035d37fd54de984ffc58e01d3e0cfa7b.mp3str"
+
+[deps]
+
+source_file="res://assets/sounds/sonido al empezar la partida.mp3"
+dest_files=["res://.godot/imported/sonido al empezar la partida.mp3-035d37fd54de984ffc58e01d3e0cfa7b.mp3str"]
+
+[params]
+
+loop=false
+loop_offset=0
+bpm=0
+beat_count=0
+bar_beats=4

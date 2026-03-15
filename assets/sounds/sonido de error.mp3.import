@@ -1,0 +1,19 @@
+[remap]
+
+importer="mp3"
+type="AudioStreamMP3"
+uid="uid://b23bfljy8y5b2"
+path="res://.godot/imported/sonido de error.mp3-d01f3c5337a1b163dead108d7526d9a6.mp3str"
+
+[deps]
+
+source_file="res://assets/sounds/sonido de error.mp3"
+dest_files=["res://.godot/imported/sonido de error.mp3-d01f3c5337a1b163dead108d7526d9a6.mp3str"]
+
+[params]
+
+loop=false
+loop_offset=0
+bpm=0
+beat_count=0
+bar_beats=4

@@ -105,7 +105,7 @@ static func _build_ui(container: Control, menu, C) -> void:
 	var header = Panel.new()
 	header.anchor_left = 0; header.anchor_right  = 1
 	header.anchor_top  = 0; header.anchor_bottom = 0
-	header.offset_top  = 40; header.offset_bottom = 120
+	header.offset_top  = 0; header.offset_bottom = 100
 	var hs = StyleBoxFlat.new()
 	hs.bg_color = Color(C.COLOR_PANEL.r, C.COLOR_PANEL.g, C.COLOR_PANEL.b, 0.90)
 	hs.border_color = Color(C.COLOR_GOLD.r, C.COLOR_GOLD.g, C.COLOR_GOLD.b, 0.5)

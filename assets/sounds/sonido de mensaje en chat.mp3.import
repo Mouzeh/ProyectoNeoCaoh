@@ -1,0 +1,19 @@
+[remap]
+
+importer="mp3"
+type="AudioStreamMP3"
+uid="uid://be8ko5811kbgf"
+path="res://.godot/imported/sonido de mensaje en chat.mp3-0f9d2bd35c72873c08b36e6b6c1b5f9e.mp3str"
+
+[deps]
+
+source_file="res://assets/sounds/sonido de mensaje en chat.mp3"
+dest_files=["res://.godot/imported/sonido de mensaje en chat.mp3-0f9d2bd35c72873c08b36e6b6c1b5f9e.mp3str"]
+
+[params]
+
+loop=false
+loop_offset=0
+bpm=0
+beat_count=0
+bar_beats=4

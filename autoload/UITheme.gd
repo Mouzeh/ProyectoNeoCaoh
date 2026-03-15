@@ -5,6 +5,16 @@ extends Node
 # Registrar en Project → Project Settings → Autoload como "UITheme"
 # ============================================================
 
+# ─── TAMAÑOS DE FUENTE CENTRALIZADOS ────────────────────────
+const FS_XS     = 11   # badges pequeños, detalles mínimos
+const FS_SM     = 13   # textos secundarios, subtítulos pequeños
+const FS_BASE   = 15   # texto base del chat, labels generales
+const FS_MD     = 17   # botones, items de menú
+const FS_LG     = 20   # títulos de sección
+const FS_XL     = 24   # títulos principales
+const FS_PILL   = 12   # pills / badges
+const FS_DOT    = 10   # decoradores (◆)
+
 # ─── PALETA ─────────────────────────────────────────────────
 const COLOR_BG       = Color(0.04, 0.05, 0.08)
 const COLOR_PANEL    = Color(0.07, 0.09, 0.14, 0.97)
@@ -59,7 +69,7 @@ func type_icon(t: String) -> Texture2D:
 # ============================================================
 
 # ─── Label centrado ─────────────────────────────────────────
-func clbl(text: String, fs: int, color: Color) -> Label:
+func clbl(text: String, fs: int = FS_BASE, color: Color = COLOR_TEXT) -> Label:
 	var l := Label.new()
 	l.text = text
 	l.horizontal_alignment = HORIZONTAL_ALIGNMENT_CENTER
@@ -69,7 +79,7 @@ func clbl(text: String, fs: int, color: Color) -> Label:
 	return l
 
 # ─── Label alineado a la izquierda ──────────────────────────
-func llbl(text: String, fs: int, color: Color) -> Label:
+func llbl(text: String, fs: int = FS_BASE, color: Color = COLOR_TEXT) -> Label:
 	var l := Label.new()
 	l.text = text
 	l.size_flags_horizontal = Control.SIZE_EXPAND_FILL
@@ -100,7 +110,7 @@ func divider() -> Control:
 			hb.add_child(ll)
 			var dot := Label.new()
 			dot.text = " ◆ "
-			dot.add_theme_font_size_override("font_size", 9)
+			dot.add_theme_font_size_override("font_size", FS_DOT)
 			dot.add_theme_color_override("font_color", COLOR_GOLD_DIM)
 			hb.add_child(dot)
 		else:
@@ -139,13 +149,13 @@ func pill(text: String, bg: Color, fg: Color, min_h: int) -> Control:
 	l.vertical_alignment    = VERTICAL_ALIGNMENT_CENTER
 	l.size_flags_horizontal = Control.SIZE_EXPAND_FILL
 	l.size_flags_vertical   = Control.SIZE_EXPAND_FILL
-	l.add_theme_font_size_override("font_size", 10)
+	l.add_theme_font_size_override("font_size", FS_PILL)
 	l.add_theme_color_override("font_color", fg)
 	pc.add_child(l)
 	return pc
 
 # ─── Botón estilizado ────────────────────────────────────────
-func btn(text: String, color: Color, min_h: int, fs: int) -> Button:
+func btn(text: String, color: Color, min_h: int = 44, fs: int = FS_MD) -> Button:
 	var b := Button.new()
 	b.text = text
 	b.custom_minimum_size   = Vector2(0, min_h)
@@ -166,11 +176,9 @@ func btn(text: String, color: Color, min_h: int, fs: int) -> Button:
 	return b
 
 # ─── Botón primario (gold) ───────────────────────────────────
-# Atajo rápido para el botón de acción principal
-func primary_btn(text: String, min_h: int = 48, fs: int = 15) -> Button:
+func primary_btn(text: String, min_h: int = 52, fs: int = FS_MD) -> Button:
 	var b := btn(text, COLOR_GOLD, min_h, fs)
 	b.add_theme_color_override("font_color", COLOR_PANEL)
-	# Sombra dorada
 	var normal := b.get_theme_stylebox("normal") as StyleBoxFlat
 	normal.shadow_color  = Color(COLOR_GOLD.r, COLOR_GOLD.g, COLOR_GOLD.b, 0.2)
 	normal.shadow_size   = 15
@@ -182,7 +190,7 @@ func primary_btn(text: String, min_h: int = 48, fs: int = 15) -> Button:
 	return b
 
 # ─── Botón outline (sin fondo) ───────────────────────────────
-func outline_btn(text: String, fg: Color, min_h: int = 44, fs: int = 14) -> Button:
+func outline_btn(text: String, fg: Color, min_h: int = 48, fs: int = FS_MD) -> Button:
 	var b := Button.new()
 	b.text = text
 	b.custom_minimum_size   = Vector2(0, min_h)
@@ -344,7 +352,6 @@ func apply_scrollbar_theme(scroll: ScrollContainer) -> void:
 	scroll.theme = theme
 
 # ─── Helper: buscar nodo por nombre ─────────────────────────
-# (también disponible en UITheme para no depender del script padre)
 func find_node(root: Node, target: String) -> Node:
 	if root.name == target:
 		return root

@@ -1,0 +1,19 @@
+[remap]
+
+importer="mp3"
+type="AudioStreamMP3"
+uid="uid://c0gdj2j3y16la"
+path="res://.godot/imported/Turno Rival.mp3-22bb916f3fcdbe9728dcb7caae79bad4.mp3str"
+
+[deps]
+
+source_file="res://assets/sounds/Turno Rival.mp3"
+dest_files=["res://.godot/imported/Turno Rival.mp3-22bb916f3fcdbe9728dcb7caae79bad4.mp3str"]
+
+[params]
+
+loop=false
+loop_offset=0
+bpm=0
+beat_count=0
+bar_beats=4

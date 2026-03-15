@@ -24,10 +24,11 @@ const GymScreen         = preload("res://scenes/main_menu/screens/GymScreen.gd")
 const GymTypeScreen     = preload("res://scenes/main_menu/screens/GymTypeScreen.gd")
 const LiderGymScreen    = preload("res://scenes/main_menu/screens/LiderGymScreen.gd")
 const SpectateScreen    = preload("res://scenes/main_menu/screens/SpectateScreen.gd")
+const GTSScreen         = preload("res://scenes/main_menu/screens/GTSScreen.gd")  # ← GTS
 
 # ─── Componentes ─────────────────────────────────────────────
-const RoomCard     = preload("res://scenes/main_menu/components/RoomCard.gd")
-const MiniCard     = preload("res://scenes/main_menu/components/MiniCard.gd")
+const RoomCard = preload("res://scenes/main_menu/components/RoomCard.gd")
+const MiniCard = preload("res://scenes/main_menu/components/MiniCard.gd")
 
 
 enum Screen {
@@ -49,6 +50,7 @@ enum Screen {
 	GYM_TYPE,
 	LIDER_GYM,
 	SPECTATE,
+	GTS,   # ← GTS
 }
 
 # ─── Estado global compartido con todas las pantallas ────────
@@ -78,8 +80,9 @@ var screen_container: Control = null
 var _particles:       Array   = []
 var _particle_timer:  float   = 0.0
 
-# ─── Referencia al ChatScreen activo (para redirigir WS) ─────
+# ─── Referencias a pantallas activas ─────────────────────────
 var _chat_screen_node: Node = null
+var _gts_screen_node:  Node = null   # ← GTS
 
 # ─── Pantallas que muestran navbar ───────────────────────────
 const NAVBAR_SCREENS = [
@@ -98,6 +101,7 @@ const NAVBAR_SCREENS = [
 	Screen.GYM,
 	Screen.GYM_TYPE,
 	Screen.LIDER_GYM,
+	Screen.GTS,    # ← GTS
 	# SPECTATE no muestra navbar — pantalla inmersiva
 ]
 
@@ -154,14 +158,18 @@ func navigate_to(screen_name: String, params: Dictionary = {}) -> void:
 		"GymTypeScreen":     _show_screen(Screen.GYM_TYPE)
 		"LiderGymScreen":    _show_screen(Screen.LIDER_GYM)
 		"DeckBuilderScreen": _show_screen(Screen.DECK_BUILDER)
-		"GymBattleScreen":   pass  # implementar cuando hagamos la batalla
+		"GTSScreen":         _show_screen(Screen.GTS)   # ← GTS
+		"GymBattleScreen":   pass
 
-
-# ── Reemplaza la función _show_screen completa en MainMenu.gd ──
 
 func _show_screen(screen: Screen) -> void:
 	current_screen = screen
 	_chat_screen_node = null
+	_gts_screen_node  = null   # ← GTS reset
+
+	# Destruir navbar anterior si existe
+	var old_navbar = get_node_or_null("TopNavbar")
+	if old_navbar: old_navbar.queue_free()
 
 	for child in screen_container.get_children():
 		child.queue_free()
@@ -184,17 +192,24 @@ func _show_screen(screen: Screen) -> void:
 		Screen.GYM:          GymScreen.build(screen_container, self)
 		Screen.GYM_TYPE:     GymTypeScreen.build(screen_container, self, _gym_params)
 		Screen.LIDER_GYM:    LiderGymScreen.build(screen_container, self, _gym_params)
+		Screen.GTS:          GTSScreen.build(screen_container, self)   # ← GTS
 		Screen.SPECTATE:
 			var ss = SpectateScreen.new()
 			screen_container.add_child(ss)
 			ss.build(screen_container, self, _gym_params)
 
+	# Guardar referencias a pantallas que reciben mensajes WS
 	if screen == Screen.CHAT:
 		await get_tree().process_frame
 		_chat_screen_node = screen_container.get_node_or_null("ChatScreenNode")
 
+	if screen == Screen.GTS:
+		await get_tree().process_frame
+		_gts_screen_node = screen_container.get_node_or_null("GTSScreenNode")
+
 	if current_screen in NAVBAR_SCREENS:
 		_build_top_navbar()
+
 
 func _show_profile(username: String) -> void:
 	viewing_username = username
@@ -227,75 +242,125 @@ func _build_placeholder(title: String, msg: String) -> void:
 # ============================================================
 func _build_top_navbar() -> void:
 	var navbar = PanelContainer.new()
+	navbar.name = "TopNavbar"
 	navbar.set_anchors_preset(Control.PRESET_TOP_WIDE)
-	navbar.custom_minimum_size = Vector2(0, 50)
+	navbar.custom_minimum_size = Vector2(0, 92)
 	navbar.z_index = 100
 	var ns = StyleBoxFlat.new()
 	ns.bg_color = Color(0.05, 0.07, 0.09, 0.95)
 	ns.border_color = Color(COLOR_GOLD_DIM.r, COLOR_GOLD_DIM.g, COLOR_GOLD_DIM.b, 0.5)
 	ns.border_width_bottom = 2
+	ns.content_margin_top    = 0
+	ns.content_margin_bottom = 0
+	ns.content_margin_left   = 8
+	ns.content_margin_right  = 8
 	navbar.add_theme_stylebox_override("panel", ns)
+
+	var center_wrap = CenterContainer.new()
+	center_wrap.set_anchors_preset(Control.PRESET_FULL_RECT)
+	navbar.add_child(center_wrap)
 
 	var hbox = HBoxContainer.new()
 	hbox.alignment = BoxContainer.ALIGNMENT_CENTER
-	hbox.add_theme_constant_override("separation", 20)
-	navbar.add_child(hbox)
+	hbox.add_theme_constant_override("separation", 4)
+	center_wrap.add_child(hbox)
 
 	var tabs = [
-		["🏠 HOME",       Screen.HOME],
-		["⚔️ MESAS",      Screen.LOBBY],
-		["🃏 DECK",        Screen.DECK_BUILDER],
-		["📦 COLECCIÓN",   Screen.COLLECTION],
-		["🏪 TIENDA",      Screen.SHOP],
-		["🎟️ PASE",       Screen.BATTLE_PASS],
-		["🏟️ GYMS",       Screen.GYM],
-		["🏆 RANKING",     Screen.RANKING],
-		["💬 CHAT",        Screen.CHAT],
-		["👤 PERFIL",      Screen.PROFILE],
-		["⚙️ AJUSTES",     Screen.SETTINGS],
+		["HOME",      Screen.HOME,         "res://assets/iconos/home.png"],
+		["MESAS",     Screen.LOBBY,        "res://assets/iconos/mesas.png"],
+		["DECK",      Screen.DECK_BUILDER, "res://assets/iconos/deck.png"],
+		["COLECCIÓN", Screen.COLLECTION,   "res://assets/iconos/coleccion.png"],
+		["TIENDA",    Screen.SHOP,         "res://assets/iconos/tienda.png"],
+		["PASE",      Screen.BATTLE_PASS,  "res://assets/iconos/pase.png"],
+		["GYMS",      Screen.GYM,          "res://assets/iconos/gym.png"],
+		["GTS",       Screen.GTS,          "res://assets/iconos/gts.png"],   # ← GTS
+		["RANKING",   Screen.RANKING,      "res://assets/iconos/ranking.png"],
+		["CHAT",      Screen.CHAT,         "res://assets/iconos/chat.png"],
+		["PERFIL",    Screen.PROFILE,      "res://assets/iconos/perfil.png"],
+		["AJUSTES",   Screen.SETTINGS,     "res://assets/iconos/config.png"],
 	]
 
 	var role = PlayerData.role if "role" in PlayerData else 1
 	if role >= 3:
-		tabs.append(["⚙️ MOD", Screen.MOD_PANEL])
+		tabs.append(["MOD", Screen.MOD_PANEL, "res://assets/iconos/mod.png"])
 
 	for tab in tabs:
-		var b = Button.new()
-		b.text = tab[0]
-		b.custom_minimum_size = Vector2(90, 50)
-		b.add_theme_font_size_override("font_size", 11)
 		var is_active = (current_screen == tab[1])
 
-		b.add_theme_color_override("font_color",       COLOR_GOLD if is_active else COLOR_TEXT_DIM)
-		b.add_theme_color_override("font_hover_color", COLOR_GOLD.lightened(0.2))
+		var b = Button.new()
+		b.text = ""
+		b.custom_minimum_size = Vector2(76, 76)
+		b.size_flags_vertical = Control.SIZE_SHRINK_CENTER
+		b.mouse_default_cursor_shape = Control.CURSOR_ARROW if is_active else Control.CURSOR_POINTING_HAND
 
 		var bs = StyleBoxFlat.new()
-		bs.bg_color            = Color(1, 1, 1, 0.05) if is_active else Color(0, 0, 0, 0)
+		bs.bg_color            = Color(1, 1, 1, 0.07) if is_active else Color(0, 0, 0, 0)
 		bs.border_color        = COLOR_GOLD if is_active else Color(0, 0, 0, 0)
 		bs.border_width_bottom = 3 if is_active else 0
+		bs.corner_radius_top_left     = 6
+		bs.corner_radius_top_right    = 6
+		bs.corner_radius_bottom_left  = 0
+		bs.corner_radius_bottom_right = 0
 		b.add_theme_stylebox_override("normal",  bs)
 		b.add_theme_stylebox_override("hover",   bs)
 		b.add_theme_stylebox_override("pressed", bs)
 
+		var inner = VBoxContainer.new()
+		inner.set_anchors_preset(Control.PRESET_FULL_RECT)
+		inner.alignment = BoxContainer.ALIGNMENT_CENTER
+		inner.add_theme_constant_override("separation", 4)
+		inner.mouse_filter = Control.MOUSE_FILTER_IGNORE
+		b.add_child(inner)
+
+		# Icono — si no existe gts.png usa un fallback de texto
+		var icon_path = tab[2]
+		var icon_tex  = load(icon_path) as Texture2D if ResourceLoader.exists(icon_path) else null
+		if icon_tex:
+			var tex_rect = TextureRect.new()
+			tex_rect.texture = icon_tex
+			tex_rect.custom_minimum_size  = Vector2(56, 56)
+			tex_rect.size                 = Vector2(56, 56)
+			tex_rect.stretch_mode         = TextureRect.STRETCH_KEEP_ASPECT_CENTERED
+			tex_rect.expand_mode          = TextureRect.EXPAND_IGNORE_SIZE
+			tex_rect.size_flags_horizontal = Control.SIZE_SHRINK_CENTER
+			tex_rect.modulate  = COLOR_GOLD if is_active else Color(COLOR_TEXT_DIM.r, COLOR_TEXT_DIM.g, COLOR_TEXT_DIM.b, 0.7)
+			tex_rect.mouse_filter = Control.MOUSE_FILTER_IGNORE
+			inner.add_child(tex_rect)
+		else:
+			# Fallback: emoji como icono si no hay imagen
+			var emoji_lbl = Label.new()
+			emoji_lbl.text = "🔄" if tab[0] == "GTS" else "?"
+			emoji_lbl.add_theme_font_size_override("font_size", 28)
+			emoji_lbl.horizontal_alignment = HORIZONTAL_ALIGNMENT_CENTER
+			emoji_lbl.mouse_filter = Control.MOUSE_FILTER_IGNORE
+			inner.add_child(emoji_lbl)
+
+		var lbl = Label.new()
+		lbl.text = tab[0]
+		lbl.horizontal_alignment = HORIZONTAL_ALIGNMENT_CENTER
+		lbl.add_theme_font_size_override("font_size", 11)
+		lbl.add_theme_color_override("font_color", COLOR_GOLD if is_active else COLOR_TEXT_DIM)
+		lbl.mouse_filter = Control.MOUSE_FILTER_IGNORE
+		inner.add_child(lbl)
+
 		if tab[1] == Screen.MOD_PANEL and role >= 3:
-			b.add_theme_color_override("font_color", Color(1.0, 0.65, 0.0) if not is_active else COLOR_GOLD)
+			lbl.add_theme_color_override("font_color", Color(1.0, 0.65, 0.0) if not is_active else COLOR_GOLD)
 
 		if not is_active:
 			var target = tab[1]
-			b.pressed.connect(func(): _show_screen(target))
-		else:
-			b.mouse_default_cursor_shape = Control.CURSOR_ARROW
+			b.pressed.connect(func(): SoundManager.play("nav_click"); _show_screen(target))
 
 		hbox.add_child(b)
 
-	screen_container.add_child(navbar)
+	add_child(navbar)
 
 # ============================================================
-# REDIRIGIR MENSAJES WEBSOCKET AL CHAT Y ACTUALIZACIONES
+# REDIRIGIR MENSAJES WEBSOCKET AL CHAT, GTS Y ACTUALIZACIONES
 # ============================================================
 func handle_ws_message(data: Dictionary) -> void:
 	var msg_type = data.get("type", "")
 
+	# ── Actualización de datos del jugador ───────────────────
 	if msg_type == "PLAYER_DATA_UPDATE":
 		var p = data.get("payload", {})
 		if p.has("coins"):             PlayerData.coins             = p["coins"]
@@ -323,6 +388,7 @@ func handle_ws_message(data: Dictionary) -> void:
 		_show_global_toast("🔔 " + msg)
 		return
 
+	# ── Mensajes de Chat ─────────────────────────────────────
 	if msg_type == "CHAT_ANNOUNCEMENT":
 		var content = data.get("message", {}).get("content", "")
 		if content != "":
@@ -336,6 +402,38 @@ func handle_ws_message(data: Dictionary) -> void:
 			_chat_screen_node.handle_ws_message(data)
 		return
 
+	# ── Mensajes GTS — redirigir a GTSScreen si está activo ──
+	if msg_type.begins_with("GTS_"):
+		# Toast global para notificaciones GTS importantes
+		match msg_type:
+			"GTS_CARD_SOLD":
+				var payload = data.get("payload", {})
+				_show_global_toast("💰 ¡Carta vendida! +" + str(payload.get("coins", "?")) + " 🪙")
+			"GTS_TRADE_ACCEPTED":
+				var payload = data.get("payload", {})
+				_show_global_toast("🔄 ¡Intercambio aceptado! Recibiste: " + str(payload.get("received_card", "?")))
+			"GTS_AUCTION_WON":
+				var payload = data.get("payload", {})
+				_show_global_toast("🏆 ¡Ganaste la subasta! Carta: " + str(payload.get("card_id", "?")))
+			"GTS_AUCTION_SOLD":
+				var payload = data.get("payload", {})
+				_show_global_toast("💰 ¡Tu subasta terminó! +" + str(payload.get("amount", "?")) + " 🪙")
+			"GTS_AUCTION_EXPIRED":
+				_show_global_toast("⏰ Tu subasta expiró sin pujas. Carta devuelta.")
+			"GTS_LISTING_EXPIRED":
+				_show_global_toast("⏰ Un listing tuyo expiró. Carta devuelta.")
+			"GTS_TRADE_OFFER":
+				_show_global_toast("🔄 Tienes una nueva oferta de intercambio")
+			"GTS_NEW_BID":
+				var payload = data.get("payload", {})
+				_show_global_toast("⬆️ Nueva puja: " + str(payload.get("amount", "?")) + " 🪙 en tu subasta")
+
+		# Redirigir al nodo GTS si está visible (función estática — pasa el nodo como argumento)
+		if is_instance_valid(_gts_screen_node):
+			_gts_screen_node.handle_ws_message(data)
+		return
+
+	# ── Mensajes de sala/juego ───────────────────────────────
 	match msg_type:
 		"ROOM_LIST_UPDATE":
 			current_rooms = data.get("rooms", [])
@@ -345,8 +443,12 @@ func handle_ws_message(data: Dictionary) -> void:
 			_show_screen(Screen.QUEUE)
 
 # ============================================================
-# TOAST GLOBAL DE ANUNCIOS — desliza desde la derecha
+# TOAST GLOBAL — desliza desde la derecha
 # ============================================================
+func show_toast(message: String, is_error: bool = false) -> void:
+	_show_global_toast(message, is_error)
+
+
 func _markdown_to_bbcode(text: String) -> String:
 	var result    = ""
 	var remaining = text
@@ -364,6 +466,7 @@ func _markdown_to_bbcode(text: String) -> String:
 		remaining = remaining.substr(m.get_end())
 	return result
 
+
 func _dismiss_toast(toast_ref: WeakRef) -> void:
 	var toast = toast_ref.get_ref()
 	if toast == null or not is_instance_valid(toast): return
@@ -377,7 +480,8 @@ func _dismiss_toast(toast_ref: WeakRef) -> void:
 	if t2 != null and is_instance_valid(t2):
 		t2.queue_free()
 
-func _show_global_toast(message: String) -> void:
+
+func _show_global_toast(message: String, is_error: bool = false) -> void:
 	var old = get_node_or_null("GlobalToast")
 	if old and is_instance_valid(old):
 		_dismiss_toast(weakref(old))
@@ -388,7 +492,7 @@ func _show_global_toast(message: String) -> void:
 	const TOAST_W  : float = 380.0
 	const TOAST_H  : float = 72.0
 	const MARGIN_R : float = 16.0
-	const TOP_Y    : float = 64.0
+	const TOP_Y    : float = 100.0
 
 	var toast = PanelContainer.new()
 	toast.name          = "GlobalToast"
@@ -403,8 +507,8 @@ func _show_global_toast(message: String) -> void:
 	toast.modulate.a    = 0.0
 
 	var style = StyleBoxFlat.new()
-	style.bg_color               = Color(0.08, 0.06, 0.01, 0.97)
-	style.border_color           = COLOR_GOLD
+	style.bg_color = Color(0.20, 0.04, 0.04, 0.97) if is_error else Color(0.08, 0.06, 0.01, 0.97)
+	style.border_color           = COLOR_RED if is_error else COLOR_GOLD
 	style.border_width_left      = 4
 	style.border_width_right     = 2
 	style.border_width_top       = 2
@@ -427,7 +531,7 @@ func _show_global_toast(message: String) -> void:
 	toast.add_child(hbox)
 
 	var icon_lbl = Label.new()
-	icon_lbl.text = "🔔"
+	icon_lbl.text = "❌" if is_error else "🔔"
 	icon_lbl.add_theme_font_size_override("font_size", 22)
 	icon_lbl.vertical_alignment = VERTICAL_ALIGNMENT_CENTER
 	hbox.add_child(icon_lbl)
@@ -439,9 +543,9 @@ func _show_global_toast(message: String) -> void:
 	hbox.add_child(vbox)
 
 	var title_lbl = Label.new()
-	title_lbl.text = "🔔 ANUNCIO"
-	title_lbl.add_theme_font_size_override("font_size", 9)
-	title_lbl.add_theme_color_override("font_color", COLOR_GOLD_DIM)
+	title_lbl.text = "⚠️ ERROR" if is_error else "🔔 NOTIFICACIÓN"
+	title_lbl.add_theme_font_size_override("font_size", 10)
+	title_lbl.add_theme_color_override("font_color", COLOR_RED if is_error else COLOR_GOLD_DIM)
 	vbox.add_child(title_lbl)
 
 	var msg_lbl = RichTextLabel.new()
@@ -449,10 +553,10 @@ func _show_global_toast(message: String) -> void:
 	msg_lbl.scroll_active         = false
 	msg_lbl.fit_content           = true
 	msg_lbl.size_flags_horizontal = Control.SIZE_EXPAND_FILL
-	msg_lbl.add_theme_font_size_override("normal_font_size", 13)
-	msg_lbl.add_theme_color_override("default_color",        COLOR_TEXT)
-	msg_lbl.add_theme_color_override("font_color",           COLOR_TEXT)
-	msg_lbl.add_theme_color_override("font_link_color",      COLOR_GOLD)
+	msg_lbl.add_theme_font_size_override("normal_font_size", 15)
+	msg_lbl.add_theme_color_override("default_color",   COLOR_TEXT)
+	msg_lbl.add_theme_color_override("font_color",      COLOR_TEXT)
+	msg_lbl.add_theme_color_override("font_link_color", COLOR_GOLD)
 	msg_lbl.text = _markdown_to_bbcode(message)
 	msg_lbl.meta_clicked.connect(func(meta): OS.shell_open(str(meta)))
 	vbox.add_child(msg_lbl)
@@ -500,7 +604,7 @@ func _build_background() -> void:
 
 	screen_container = Control.new()
 	screen_container.set_anchors_preset(Control.PRESET_FULL_RECT)
-	screen_container.offset_left   = 0; screen_container.offset_top    = 0
+	screen_container.offset_left   = 0; screen_container.offset_top    = 92
 	screen_container.offset_right  = 0; screen_container.offset_bottom = 0
 	add_child(screen_container)
 
@@ -594,41 +698,30 @@ func _connect_network() -> void:
 		_show_screen(Screen.QUEUE)
 	)
 
-	# ── Espectador: confirmar entrada y navegar a SpectateScreen ──
 	NetworkManager.spectate_ok.connect(_on_spectate_ok)
 
 
 # ============================================================
 # ESPECTAR
 # ============================================================
-
-# Llamado desde RoomCard ANTES de que llegue spectate_ok del servidor.
-# Guarda los datos de la sala para que _on_spectate_ok los use.
 func _on_spectate_room(room: Dictionary) -> void:
 	_gym_params = room
 
 
-# Llamado cuando el servidor confirma que el espectador entró (SPECTATE_OK).
-# Prioriza los datos que ya guardó RoomCard en _gym_params; si no coinciden
-# busca en current_rooms; como último recurso construye un dict mínimo.
 func _on_spectate_ok(room_id: String, state, _count: int) -> void:
-	# ── 1. ¿Ya tenemos los datos de esta sala en _gym_params? ──
 	var saved_id = _gym_params.get("room_id", _gym_params.get("id", ""))
 	if saved_id == room_id and not _gym_params.is_empty():
-		# Adjuntar estado inicial si la partida ya estaba en curso
 		if state != null and typeof(state) == TYPE_DICTIONARY and not state.is_empty():
 			_gym_params["initial_state"] = state
 		_show_screen(Screen.SPECTATE)
 		return
 
-	# ── 2. Buscar en la lista de salas conocida ────────────────
 	var room: Dictionary = {}
 	for r in current_rooms:
 		if r.get("room_id", r.get("id", "")) == room_id:
 			room = r
 			break
 
-	# ── 3. Fallback: dict mínimo ──────────────────────────────
 	if room.is_empty():
 		room = { "room_id": room_id, "name": "Mesa " + room_id }
 

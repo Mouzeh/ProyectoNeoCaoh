@@ -33,28 +33,49 @@ const LOG_CATEGORIES = {
 	"chat_opp":{"icon": "💬", "icon_png": "chat",    "color": Color(1.00, 0.65, 0.30), "float": false},
 }
 
+# BG alpha por categoría — las importantes resaltan más (mejora #5)
+const CATEGORY_BG_ALPHA = {
+	"ko":     0.22,
+	"prize":  0.20,
+	"damage": 0.18,
+	"flip":   0.15,
+	"attack": 0.12,
+	"turn":   0.00,   # los turnos usan separador propio
+	"default": 0.07,
+}
+
 signal chat_sent(text: String)
 
 # ── Nodos ────────────────────────────────────────────────────
-var _scroll:     ScrollContainer = null
-var _vbox:       VBoxContainer   = null
-var _expand_btn: Button          = null
-var _hide_btn:   Button          = null
-var _show_tab:   Button          = null
-var _counter_lbl: Label          = null
-var _font_lbl:   Label           = null
-var _chat_input: LineEdit        = null
-var _color_dot:  Button          = null
+var _scroll:      ScrollContainer = null
+var _vbox:        VBoxContainer   = null
+var _expand_btn:  Button          = null
+var _hide_btn:    Button          = null
+var _show_tab:    Button          = null
+var _counter_lbl: Label           = null
+var _font_lbl:    Label           = null
+var _chat_input:  LineEdit        = null
+var _color_dot:   Button          = null
+var _new_msgs_btn: Button         = null   # mejora #6
 
 # ── Estado ───────────────────────────────────────────────────
-var _is_expanded:   bool  = false
-var _is_hidden:     bool  = false
-var _base_rect:     Rect2
-var _expanded_rect: Rect2
-var _font_size:     int   = 13
-var _entry_count:   int   = 0
-var _scroll_queued: bool  = false
-var _vp_h:          float = 600.0
+var _is_expanded:     bool  = false
+var _is_hidden:       bool  = false
+var _base_rect:       Rect2
+var _expanded_rect:   Rect2
+var _font_size:       int   = 13
+var _entry_count:     int   = 0
+var _scroll_queued:   bool  = false
+var _vp_h:            float = 600.0
+var _user_scrolled_up: bool = false   # mejora #6
+var _pending_new:      int  = 0       # mejora #6
+
+# mejora #7 — filtro por categoría
+var _active_filters: Dictionary = {}   # cat -> bool (true = visible)
+var _filter_btns:    Dictionary = {}   # cat -> Button
+
+const FILTER_CATS = ["attack", "ko", "damage", "prize", "heal", "status",
+					  "flip", "energy", "trainer", "turn", "chat_me"]
 
 var chat_color: Color  = Color(0.40, 0.85, 1.00)
 var chat_name:  String = "Tú"
@@ -85,6 +106,11 @@ func setup(W: float, H: float) -> void:
 	_expanded_rect = Rect2(12, H - h_exp  - 12, W_EXPANDED, h_exp)
 	position = _base_rect.position
 	size     = _base_rect.size
+
+	# inicializar filtros — todos activos por defecto
+	for cat in FILTER_CATS:
+		_active_filters[cat] = true
+
 	_build_ui()
 	call_deferred("_build_show_tab")
 
@@ -94,8 +120,8 @@ func setup(W: float, H: float) -> void:
 # ============================================================
 func _build_show_tab() -> void:
 	if not get_parent(): return
-	_show_tab         = Button.new()
-	_show_tab.name    = "LogShowTab"
+	_show_tab        = Button.new()
+	_show_tab.name   = "LogShowTab"
 	_show_tab.visible = false
 	_show_tab.z_index = 50
 	var tab_y = _base_rect.position.y + _base_rect.size.y * 0.35
@@ -270,16 +296,193 @@ func _build_ui() -> void:
 	_scroll.get_v_scroll_bar().add_theme_stylebox_override("grabber",       grab)
 	_scroll.get_v_scroll_bar().add_theme_stylebox_override("grabber_hover", grab)
 
-	# FIX PRINCIPAL: VBoxContainer con SIZE_EXPAND_FILL en horizontal
-	# y sin minimum_size fijo, para que se adapte al ancho del scroll.
+	# detectar scroll manual del usuario (mejora #6)
+	_scroll.get_v_scroll_bar().value_changed.connect(_on_scroll_changed)
+
 	_vbox = VBoxContainer.new()
 	_vbox.name = "LogEntries"
 	_vbox.size_flags_horizontal = Control.SIZE_EXPAND_FILL
-	_vbox.size_flags_vertical   = Control.SIZE_SHRINK_BEGIN  # ← no estira hacia abajo
+	_vbox.size_flags_vertical   = Control.SIZE_SHRINK_BEGIN
 	_vbox.add_theme_constant_override("separation", 1)
 	_scroll.add_child(_vbox)
 
+	_build_new_msgs_btn()   # mejora #6
+	_build_filter_bar()     # mejora #7
 	_build_chat_zone()
+
+
+# ============================================================
+# MEJORA #6 — BOTÓN "N MENSAJES NUEVOS"
+# ============================================================
+func _build_new_msgs_btn() -> void:
+	_new_msgs_btn = Button.new()
+	_new_msgs_btn.visible = false
+	_new_msgs_btn.z_index = 30
+	_new_msgs_btn.focus_mode = Control.FOCUS_NONE
+	_new_msgs_btn.set_anchors_preset(Control.PRESET_BOTTOM_WIDE)
+	_new_msgs_btn.offset_top    = -(CHAT_H + 34)
+	_new_msgs_btn.offset_bottom = -(CHAT_H + 6)
+	_new_msgs_btn.offset_left   = 30
+	_new_msgs_btn.offset_right  = -30
+	_new_msgs_btn.mouse_default_cursor_shape = Control.CURSOR_POINTING_HAND
+
+	var sn = StyleBoxFlat.new()
+	sn.bg_color    = Color(0.10, 0.20, 0.12, 0.95)
+	sn.border_color = C_GOLD; sn.border_width_bottom = 1; sn.border_width_top = 1
+	sn.border_width_left = 1; sn.border_width_right = 1
+	sn.corner_radius_top_left = 8; sn.corner_radius_top_right = 8
+	sn.corner_radius_bottom_left = 8; sn.corner_radius_bottom_right = 8
+	_new_msgs_btn.add_theme_stylebox_override("normal", sn)
+
+	var sh = StyleBoxFlat.new()
+	sh.bg_color    = Color(0.18, 0.36, 0.20, 0.98)
+	sh.border_color = C_GOLD; sh.border_width_bottom = 1; sh.border_width_top = 1
+	sh.border_width_left = 1; sh.border_width_right = 1
+	sh.corner_radius_top_left = 8; sh.corner_radius_top_right = 8
+	sh.corner_radius_bottom_left = 8; sh.corner_radius_bottom_right = 8
+	_new_msgs_btn.add_theme_stylebox_override("hover", sh)
+
+	_new_msgs_btn.add_theme_color_override("font_color", C_GOLD)
+	_new_msgs_btn.add_theme_font_size_override("font_size", 11)
+	_new_msgs_btn.pressed.connect(_jump_to_bottom)
+	add_child(_new_msgs_btn)
+
+
+func _on_scroll_changed(value: float) -> void:
+	var bar = _scroll.get_v_scroll_bar()
+	var at_bottom = value >= bar.max_value - bar.page - 4
+	if at_bottom:
+		_user_scrolled_up = false
+		_pending_new      = 0
+		_new_msgs_btn.visible = false
+	else:
+		_user_scrolled_up = true
+
+
+func _jump_to_bottom() -> void:
+	_user_scrolled_up = false
+	_pending_new      = 0
+	_new_msgs_btn.visible = false
+	_queue_scroll_down()
+
+
+# ============================================================
+# MEJORA #7 — BARRA DE FILTROS
+# ============================================================
+func _build_filter_bar() -> void:
+	var bar = HBoxContainer.new()
+	bar.name = "FilterBar"
+	bar.set_anchors_preset(Control.PRESET_TOP_WIDE)
+	bar.offset_top    = HEADER_H + 2
+	bar.offset_bottom = HEADER_H + 22
+	bar.offset_left   = 4
+	bar.offset_right  = -4
+	bar.add_theme_constant_override("separation", 2)
+	bar.mouse_filter = Control.MOUSE_FILTER_PASS
+	add_child(bar)
+
+	# Reajustar el scroll para dejar espacio a la barra
+	if _scroll:
+		_scroll.offset_top = HEADER_H + 24
+
+	const FILTER_ICONS = {
+		"attack": "⚔", "ko": "💀", "damage": "💥", "prize": "🏆",
+		"heal": "💚", "status": "🌀", "flip": "🪙", "energy": "⚡",
+		"trainer": "🃏", "turn": "🔄", "chat_me": "💬",
+	}
+
+	for cat in FILTER_CATS:
+		var icon = FILTER_ICONS.get(cat, "·")
+		var btn  = Button.new()
+		btn.text         = icon
+		btn.flat         = true
+		btn.focus_mode   = Control.FOCUS_NONE
+		btn.tooltip_text = cat
+		btn.custom_minimum_size = Vector2(22, 18)
+		btn.add_theme_font_size_override("font_size", 11)
+		btn.mouse_default_cursor_shape = Control.CURSOR_POINTING_HAND
+
+		var color = LOG_CATEGORIES.get(cat, {}).get("color", C_GOLD)
+		btn.add_theme_color_override("font_color",       color)
+		btn.add_theme_color_override("font_hover_color", color.lightened(0.3))
+
+		var sn = StyleBoxFlat.new()
+		sn.bg_color = Color(color.r, color.g, color.b, 0.20)
+		sn.corner_radius_top_left    = 3; sn.corner_radius_top_right    = 3
+		sn.corner_radius_bottom_left = 3; sn.corner_radius_bottom_right = 3
+		btn.add_theme_stylebox_override("normal", sn)
+
+		var sp = StyleBoxFlat.new()
+		sp.bg_color = Color(0.10, 0.10, 0.10, 0.25)
+		sp.corner_radius_top_left    = 3; sp.corner_radius_top_right    = 3
+		sp.corner_radius_bottom_left = 3; sp.corner_radius_bottom_right = 3
+		btn.add_theme_stylebox_override("pressed", sp)
+
+		_filter_btns[cat] = btn
+		btn.pressed.connect(func(): _toggle_filter(cat))
+		bar.add_child(btn)
+
+	# separador + botón "all"
+	var sep = Label.new(); sep.text = "│"
+	sep.add_theme_color_override("font_color", C_GOLD_DIM)
+	sep.add_theme_font_size_override("font_size", 10)
+	bar.add_child(sep)
+
+	var all_btn = _mk_btn("✦", "Mostrar todo")
+	all_btn.custom_minimum_size = Vector2(20, 18)
+	all_btn.add_theme_font_size_override("font_size", 10)
+	all_btn.pressed.connect(_reset_filters)
+	bar.add_child(all_btn)
+
+
+func _toggle_filter(cat: String) -> void:
+	_active_filters[cat] = not _active_filters.get(cat, true)
+	_refresh_filter_buttons()
+	_apply_filters()
+
+
+func _reset_filters() -> void:
+	for cat in FILTER_CATS:
+		_active_filters[cat] = true
+	_refresh_filter_buttons()
+	_apply_filters()
+
+
+func _refresh_filter_buttons() -> void:
+	for cat in _filter_btns:
+		var btn   = _filter_btns[cat]
+		var color = LOG_CATEGORIES.get(cat, {}).get("color", C_GOLD)
+		var active = _active_filters.get(cat, true)
+		var sn = StyleBoxFlat.new()
+		sn.bg_color = Color(color.r, color.g, color.b, 0.20 if active else 0.04)
+		sn.corner_radius_top_left    = 3; sn.corner_radius_top_right    = 3
+		sn.corner_radius_bottom_left = 3; sn.corner_radius_bottom_right = 3
+		btn.add_theme_stylebox_override("normal", sn)
+		btn.modulate.a = 1.0 if active else 0.35
+
+
+func _apply_filters() -> void:
+	if not _vbox: return
+	for entry in _vbox.get_children():
+		var cat = entry.get_meta("category", "info")
+		var visible_cat = cat if cat != "chat_opp" else "chat_me"
+		entry.visible = _active_filters.get(visible_cat, true)
+
+
+# ============================================================
+# EVENTOS DE ENTRADA Y FOCO
+# ============================================================
+func _input(event: InputEvent) -> void:
+	if event is InputEventKey and event.pressed and event.keycode == KEY_ESCAPE:
+		if is_chat_focused():
+			_chat_input.release_focus()
+			get_viewport().set_input_as_handled()
+
+
+func is_chat_focused() -> bool:
+	if is_instance_valid(_chat_input):
+		return _chat_input.has_focus()
+	return false
 
 
 # ============================================================
@@ -377,21 +580,29 @@ func _build_chat_zone() -> void:
 # CHAT
 # ============================================================
 func _on_chat_submitted(text: String) -> void:
+	_chat_input.release_focus()
 	text = text.strip_edges()
 	if text == "": return
 	_chat_input.clear()
 	add_chat_message(chat_name, text, chat_color, true)
 	emit_signal("chat_sent", text)
 
+
 func receive_chat_message(player_name: String, text: String, color: Color = Color(1.0, 0.65, 0.30)) -> void:
 	add_chat_message(player_name, text, color, false)
+
 
 func add_chat_message(player_name: String, text: String, color: Color, is_mine: bool) -> void:
 	if not _vbox: return
 	_trim_entries()
 
+	var cat = "chat_me" if is_mine else "chat_opp"
 	var entry = _make_entry_container(Color(color.r, color.g, color.b, 0.13), color, 4)
-	var hbox  = entry.get_child(0)
+	entry.set_meta("category", cat)
+	# aplicar visibilidad según filtro activo
+	entry.visible = _active_filters.get("chat_me", true)
+
+	var hbox = entry.get_child(0)
 
 	var mg = Control.new(); mg.custom_minimum_size = Vector2(4, 0); hbox.add_child(mg)
 
@@ -419,6 +630,9 @@ func add_chat_message(player_name: String, text: String, color: Color, is_mine: 
 	msg_lbl.add_theme_constant_override("outline_size", 2)
 	inner.add_child(msg_lbl)
 
+	# mejora #1 — timestamp
+	inner.add_child(_make_timestamp_label())
+
 	_vbox.add_child(entry)
 	_finish_entry(entry)
 
@@ -436,8 +650,21 @@ func add_message(text: String) -> void:
 
 	if cat_data["float"]: _show_float(text, color)
 
-	var entry = _make_entry_container(Color(color.r, color.g, color.b, 0.07), color, 3)
-	var hbox  = entry.get_child(0)
+	# mejora #2 — separador de turno
+	if cat == "turn":
+		_vbox.add_child(_make_turn_separator(text, color))
+		_entry_count += 1
+		if _counter_lbl: _counter_lbl.text = str(_entry_count)
+		_queue_scroll_down()
+		return
+
+	var bg_alpha = CATEGORY_BG_ALPHA.get(cat, CATEGORY_BG_ALPHA["default"])
+	var entry = _make_entry_container(Color(color.r, color.g, color.b, bg_alpha), color, 3)
+	entry.set_meta("category", cat)
+	# aplicar visibilidad según filtros
+	entry.visible = _active_filters.get(cat, true)
+
+	var hbox = entry.get_child(0)
 
 	var margin = Control.new(); margin.custom_minimum_size = Vector2(4, 0); hbox.add_child(margin)
 	hbox.add_child(_make_icon(cat_data, color))
@@ -445,23 +672,102 @@ func add_message(text: String) -> void:
 	var mc = _make_margin_container()
 	hbox.add_child(mc)
 
-	mc.add_child(_make_text_label(text, color.lightened(0.18)))
+	var inner = VBoxContainer.new()
+	inner.size_flags_horizontal = Control.SIZE_EXPAND_FILL
+	inner.add_theme_constant_override("separation", 0)
+	mc.add_child(inner)
+
+	inner.add_child(_make_text_label(text, color.lightened(0.18)))
+	# mejora #1 — timestamp
+	inner.add_child(_make_timestamp_label())
 
 	_vbox.add_child(entry)
 	_finish_entry(entry)
 
 
 # ============================================================
+# MEJORA #1 — TIMESTAMP
+# ============================================================
+func _make_timestamp_label() -> Label:
+	var now = Time.get_time_dict_from_system()
+	var ts  = "%02d:%02d:%02d" % [now.hour, now.minute, now.second]
+	var lbl = Label.new()
+	lbl.text = ts
+	lbl.horizontal_alignment = HORIZONTAL_ALIGNMENT_RIGHT
+	lbl.size_flags_horizontal = Control.SIZE_EXPAND_FILL
+	lbl.add_theme_font_size_override("font_size", 8)
+	lbl.add_theme_color_override("font_color", Color(0.38, 0.40, 0.35, 0.70))
+	return lbl
+
+
+# ============================================================
+# MEJORA #2 — SEPARADOR DE TURNO
+# ============================================================
+func _make_turn_separator(text: String, color: Color) -> Control:
+	var sep_container = Control.new()
+	sep_container.set_meta("category", "turn")
+	sep_container.visible = _active_filters.get("turn", true)
+	sep_container.custom_minimum_size = Vector2(0, 22)
+	sep_container.size_flags_horizontal = Control.SIZE_EXPAND_FILL
+
+	var line_l = ColorRect.new()
+	line_l.color = color.darkened(0.25)
+	line_l.mouse_filter = Control.MOUSE_FILTER_IGNORE
+	line_l.set_anchors_preset(Control.PRESET_CENTER_LEFT)
+	line_l.size   = Vector2(0, 1)   # se ajusta en _ready via resized
+	line_l.name   = "LineLeft"
+	sep_container.add_child(line_l)
+
+	var lbl = Label.new()
+	lbl.text = " %s " % text.strip_edges()
+	lbl.horizontal_alignment = HORIZONTAL_ALIGNMENT_CENTER
+	lbl.vertical_alignment   = VERTICAL_ALIGNMENT_CENTER
+	lbl.add_theme_font_size_override("font_size", 10)
+	lbl.add_theme_color_override("font_color", color.lightened(0.2))
+	lbl.set_anchors_preset(Control.PRESET_CENTER)
+	lbl.name = "TurnLabel"
+	sep_container.add_child(lbl)
+
+	var line_r = ColorRect.new()
+	line_r.color = color.darkened(0.25)
+	line_r.mouse_filter = Control.MOUSE_FILTER_IGNORE
+	line_r.set_anchors_preset(Control.PRESET_CENTER_RIGHT)
+	line_r.size = Vector2(0, 1)
+	line_r.name = "LineRight"
+	sep_container.add_child(line_r)
+
+	# posicionar líneas laterales cuando el nodo tenga tamaño real
+	sep_container.resized.connect(func():
+		if not is_instance_valid(sep_container): return
+		var lbl_node  = sep_container.find_child("TurnLabel", false, false)
+		var line_left  = sep_container.find_child("LineLeft",  false, false)
+		var line_right = sep_container.find_child("LineRight", false, false)
+		if not (lbl_node and line_left and line_right): return
+		lbl_node.size = Vector2(0, 20)
+		lbl_node.position = Vector2(0, 1)
+		await sep_container.get_tree().process_frame
+		if not is_instance_valid(lbl_node): return
+		var lbl_w  = lbl_node.size.x
+		var total  = sep_container.size.x
+		var pad    = 6.0
+		var center = total / 2.0
+		line_left.size     = Vector2(center - lbl_w / 2.0 - pad, 1)
+		line_left.position = Vector2(pad, sep_container.size.y / 2.0)
+		line_right.size     = Vector2(center - lbl_w / 2.0 - pad, 1)
+		line_right.position = Vector2(center + lbl_w / 2.0 + pad, sep_container.size.y / 2.0)
+	)
+
+	# fade-in
+	sep_container.modulate.a = 0.0
+	create_tween().tween_property(sep_container, "modulate:a", 1.0, 0.25)
+	return sep_container
+
+
+# ============================================================
 # CONSTRUCTORES DE UI REUTILIZABLES
 # ============================================================
-
-## Crea el PanelContainer exterior de una entrada del log.
-## Retorna el panel; su hijo [0] es el HBoxContainer.
 func _make_entry_container(bg_color: Color, border_color: Color, border_left: int) -> PanelContainer:
 	var entry = PanelContainer.new()
-	# FIX CLAVE: SIZE_EXPAND_FILL en H + no fijar minimum_size
-	# permite que el PanelContainer se adapte al ancho del scroll
-	# cuando cambia el font_size en runtime.
 	entry.size_flags_horizontal = Control.SIZE_EXPAND_FILL
 	entry.size_flags_vertical   = Control.SIZE_SHRINK_BEGIN
 
@@ -469,7 +775,6 @@ func _make_entry_container(bg_color: Color, border_color: Color, border_left: in
 	es.bg_color          = bg_color
 	es.border_color      = border_color
 	es.border_width_left = border_left
-	# FIX: content_margin para que el texto tenga espacio interno
 	es.content_margin_left   = 2
 	es.content_margin_right  = 4
 	es.content_margin_top    = 1
@@ -481,28 +786,39 @@ func _make_entry_container(bg_color: Color, border_color: Color, border_left: in
 	hbox.add_theme_constant_override("separation", 4)
 	entry.add_child(hbox)
 
+	# mejora #4 — hover highlight
+	entry.mouse_entered.connect(func(): _on_entry_hover(entry, es, border_color, true))
+	entry.mouse_exited.connect(func():  _on_entry_hover(entry, es, border_color, false))
+	entry.mouse_filter = Control.MOUSE_FILTER_PASS
+
 	return entry
 
 
-## Crea el Label principal de texto con autowrap correcto.
+func _on_entry_hover(entry: PanelContainer, style: StyleBoxFlat, border_color: Color, hovered: bool) -> void:
+	if not is_instance_valid(entry): return
+	var tw = create_tween()
+	var target_a = style.bg_color.a * (1.8 if hovered else (1.0 / 1.8))
+	target_a = clamp(target_a, 0.0, 1.0)
+	tw.tween_method(
+		func(v: float): style.bg_color.a = v,
+		style.bg_color.a,
+		target_a,
+		0.10
+	)
+
+
 func _make_text_label(text: String, color: Color) -> Label:
 	var lbl = Label.new()
 	lbl.name = "TextLabel"
 	lbl.text = text
-
-	# FIX CRÍTICO: EXPAND_FILL + autowrap + NO fijar size manualmente.
-	# Si se fija size o minimum_size junto con autowrap, el label
-	# no recalcula al cambiar font_size y el texto se desborda.
 	lbl.size_flags_horizontal = Control.SIZE_EXPAND_FILL
 	lbl.size_flags_vertical   = Control.SIZE_SHRINK_BEGIN
 	lbl.autowrap_mode         = TextServer.AUTOWRAP_WORD_SMART
-
 	lbl.add_theme_font_size_override("font_size", _font_size)
 	lbl.add_theme_color_override("font_color", color)
 	return lbl
 
 
-## MarginContainer para el texto dentro del HBox.
 func _make_margin_container() -> MarginContainer:
 	var mc = MarginContainer.new()
 	mc.size_flags_horizontal = Control.SIZE_EXPAND_FILL
@@ -543,35 +859,41 @@ func _trim_entries() -> void:
 func _finish_entry(entry: Control) -> void:
 	_entry_count += 1
 	if _counter_lbl: _counter_lbl.text = str(_entry_count)
+
+	# mejora #3 — animación slide + fade
 	entry.modulate.a = 0.0
-	create_tween().tween_property(entry, "modulate:a", 1.0, 0.18)
-	_queue_scroll_down()
+	entry.position.x += 8.0
+	var tw = create_tween().set_parallel(true)
+	tw.tween_property(entry, "modulate:a",  1.0, 0.18)
+	tw.tween_property(entry, "position:x",  0.0, 0.14).set_trans(Tween.TRANS_SINE).set_ease(Tween.EASE_OUT)
+
+	# mejora #6 — contador de nuevos mensajes
+	if _user_scrolled_up:
+		_pending_new += 1
+		_new_msgs_btn.text    = "↓  %d nuevo%s" % [_pending_new, "s" if _pending_new > 1 else ""]
+		_new_msgs_btn.visible = true
+	else:
+		_queue_scroll_down()
 
 
 # ============================================================
-# CAMBIO DE FUENTE — FIX PRINCIPAL
+# CAMBIO DE FUENTE
 # ============================================================
 func _change_font(delta: int) -> void:
 	_font_size = clamp(_font_size + delta, 9, 22)
 	if _font_lbl: _font_lbl.text = str(_font_size)
 
 	for entry in _vbox.get_children():
-		# Actualizar todos los TextLabel dentro de cada entrada
 		var labels = _find_all_text_labels(entry)
 		for lbl in labels:
 			lbl.add_theme_font_size_override("font_size", _font_size)
 
-	# FIX: Forzar recálculo de layout del VBox y el scroll
-	# sin esto, Godot no siempre recomputa el tamaño mínimo de los Labels
 	await get_tree().process_frame
-	if is_instance_valid(_vbox):
-		_vbox.queue_sort()
-	if is_instance_valid(_scroll):
-		_scroll.queue_redraw()
+	if is_instance_valid(_vbox):   _vbox.queue_sort()
+	if is_instance_valid(_scroll): _scroll.queue_redraw()
 	_queue_scroll_down()
 
 
-## Busca recursivamente todos los Label con name == "TextLabel"
 func _find_all_text_labels(node: Node) -> Array:
 	var result: Array = []
 	for child in node.get_children():
@@ -610,8 +932,10 @@ func set_chat_color(color: Color) -> void:
 	chat_color = color
 	if _color_dot: _color_dot.add_theme_color_override("font_color", chat_color)
 
+
 func set_chat_name(player_name: String) -> void:
 	chat_name = player_name
+
 
 func _cycle_chat_color() -> void:
 	_color_idx = (_color_idx + 1) % CHAT_COLORS.size()
@@ -621,8 +945,11 @@ func _cycle_chat_color() -> void:
 func clear() -> void:
 	if _vbox:
 		for c in _vbox.get_children(): c.queue_free()
-	_entry_count = 0
-	if _counter_lbl: _counter_lbl.text = ""
+	_entry_count  = 0
+	_pending_new  = 0
+	_user_scrolled_up = false
+	if _counter_lbl:   _counter_lbl.text = ""
+	if _new_msgs_btn:  _new_msgs_btn.visible = false
 
 
 # ============================================================

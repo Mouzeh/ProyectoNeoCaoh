@@ -22,6 +22,12 @@ var claimed_bp:        Dictionary = {"free": [], "premium": []}
 var medals:            Array  = []
 var unopened_packs:    int    = 0
 
+# ─── Monedas Personalizables ────────────────────────────────
+var equipped_coin:     String = "default"
+
+# ─── Slots de mazo desbloqueados (mínimo 3, máximo 6) ───────
+var deck_slots: int = 3
+
 # ─── GYM ────────────────────────────────────────────────────
 var gym_id:   String = ""
 var gym_role: String = ""
@@ -33,6 +39,26 @@ var active_deck_slot: int        = 1
 
 # ─── Estado ─────────────────────────────────────────────────
 var is_logged_in: bool = false
+
+
+# ============================================================
+# Normaliza una lista de claimed a Array[int] siempre
+# ============================================================
+static func _normalize_bp_list(raw: Array) -> Array:
+	var result: Array = []
+	for item in raw:
+		var v = int(item)
+		if not result.has(v):
+			result.append(v)
+	return result
+
+static func _normalize_claimed_bp(raw: Dictionary) -> Dictionary:
+	var out = {"free": [], "premium": []}
+	if raw.has("free")    and typeof(raw["free"])    == TYPE_ARRAY:
+		out["free"]    = _normalize_bp_list(raw["free"])
+	if raw.has("premium") and typeof(raw["premium"]) == TYPE_ARRAY:
+		out["premium"] = _normalize_bp_list(raw["premium"])
+	return out
 
 
 # ============================================================
@@ -53,36 +79,59 @@ func load_from_server(data: Dictionary) -> void:
 	bubble_color_idx  = data.get("bubble_color_idx", 0)
 	unopened_packs    = data.get("unopened_packs", 0)
 
-	# ─── GYM: proteger contra null del servidor ───────────────
-	var raw_gym_id   = data.get("gym_id",   "")
-	var raw_gym_role = data.get("gym_role", "")
-	gym_id   = str(raw_gym_id)   if raw_gym_id   != null else ""
-	gym_role = str(raw_gym_role) if raw_gym_role != null else ""
-	if gym_id   == "null": gym_id   = ""
-	if gym_role == "null": gym_role = ""
+	# ── Slots desbloqueados — debe cargarse ANTES de active_deck_slot
+	deck_slots = int(data.get("deck_slots", 3))
+	deck_slots = clampi(deck_slots, 3, 6)
+
+	var raw_slot = data.get("active_deck_slot", 1)
+	active_deck_slot = int(raw_slot) if raw_slot != null else 1
+	if active_deck_slot < 1 or active_deck_slot > deck_slots:
+		active_deck_slot = 1
+
+	var raw_gym_id   = data.get("gym_id",   null)
+	var raw_gym_role = data.get("gym_role", null)
+	if raw_gym_id == null or typeof(raw_gym_id) == TYPE_DICTIONARY or typeof(raw_gym_id) == TYPE_ARRAY:
+		gym_id = ""
+	else:
+		gym_id = str(raw_gym_id)
+		if gym_id == "null" or gym_id == "<null>": gym_id = ""
+	if raw_gym_role == null or typeof(raw_gym_role) == TYPE_DICTIONARY or typeof(raw_gym_role) == TYPE_ARRAY:
+		gym_role = ""
+	else:
+		gym_role = str(raw_gym_role)
+		if gym_role == "null" or gym_role == "<null>": gym_role = ""
 
 	if data.has("medals"):
 		medals = data.get("medals", [])
 
-	# Cargar historial del Pase de Batalla
-	var raw_claimed = data.get("claimed_bp", '{"free":[], "premium":[]}')
-	if typeof(raw_claimed) == TYPE_STRING:
+	var raw_claimed = data.get("claimed_bp", null)
+	print("[PlayerData] claimed_bp raw tipo=", typeof(raw_claimed), " valor=", raw_claimed)
+
+	var parsed_claimed: Dictionary = {"free": [], "premium": []}
+
+	if raw_claimed == null or (typeof(raw_claimed) == TYPE_STRING and raw_claimed == ""):
+		parsed_claimed = {"free": [], "premium": []}
+	elif typeof(raw_claimed) == TYPE_STRING:
 		var json = JSON.new()
-		if json.parse(raw_claimed) == OK:
-			claimed_bp = json.get_data()
+		var err = json.parse(raw_claimed)
+		if err == OK and typeof(json.get_data()) == TYPE_DICTIONARY:
+			parsed_claimed = json.get_data()
+		else:
+			print("[PlayerData] ERROR parseando claimed_bp string: ", err)
 	elif typeof(raw_claimed) == TYPE_DICTIONARY:
-		claimed_bp = raw_claimed
+		parsed_claimed = raw_claimed
 	else:
-		claimed_bp = {"free": [], "premium": []}
+		print("[PlayerData] claimed_bp tipo inesperado: ", typeof(raw_claimed))
+
+	claimed_bp = _normalize_claimed_bp(parsed_claimed)
+	print("[PlayerData] claimed_bp normalizado: ", claimed_bp)
 
 	inventory = data.get("inventory", {})
 
 	var raw_decks = data.get("decks", {})
 
-	# ── DEBUG ──────────────────────────────────────────────────
 	print("[PlayerData] raw_decks tipo: ", typeof(raw_decks))
 	print("[PlayerData] raw_decks valor: ", raw_decks)
-	# ──────────────────────────────────────────────────────────
 
 	decks.clear()
 
@@ -101,16 +150,40 @@ func load_from_server(data: Dictionary) -> void:
 				_process_and_store_deck(d)
 
 	is_logged_in = true
+	
+	# ─── Cargar moneda equipada desde el servidor en segundo plano ───
+	_fetch_equipped_coin_from_server()
+	
 	var active_cards = get_active_deck()
-	print("[PlayerData] Loaded: '%s' | role:%d | gym_id:'%s' | gym_role:'%s' | tier:%s | decks:%d | Active deck: %d" % [
-		username, role, gym_id, gym_role, tier, decks.size(), active_cards.size()
+	print("[PlayerData] Loaded: '%s' | role:%d | gym_id:'%s' | gym_role:'%s' | tier:%s | decks:%d | active_slot:%d | deck_slots:%d | Active deck: %d" % [
+		username, role, gym_id, gym_role, tier, decks.size(), active_deck_slot, deck_slots, active_cards.size()
 	])
 	print("[PlayerData] decks final: ", decks)
 
 
+func _fetch_equipped_coin_from_server() -> void:
+	if NetworkManager.token == "": return
+	
+	var http = HTTPRequest.new()
+	add_child(http)
+	http.request_completed.connect(func(result, code, _h, body):
+		http.queue_free()
+		if result == HTTPRequest.RESULT_SUCCESS and code == 200:
+			var json_data = JSON.parse_string(body.get_string_from_utf8())
+			if json_data and json_data.has("equipped"):
+				equipped_coin = json_data["equipped"]
+				print("[PlayerData] Moneda equipada sincronizada: ", equipped_coin)
+	)
+	http.request(
+		NetworkManager.BASE_URL + "/api/shop/my-coins",
+		["Authorization: Bearer " + NetworkManager.token],
+		HTTPClient.METHOD_GET, ""
+	)
+
+
 func _process_and_store_deck(d: Dictionary) -> void:
 	var slot_raw  = d.get("slot", 1)
-	var slot_str  = str(int(slot_raw))   # 1.0 → 1 → "1"
+	var slot_str  = str(int(slot_raw))
 	var name_str  = d.get("name", "Mazo Nuevo")
 	var raw_cards = d.get("cards", [])
 
@@ -137,8 +210,35 @@ func _process_and_store_deck(d: Dictionary) -> void:
 			elif typeof(item) == TYPE_DICTIONARY and item.has("card_id"):
 				clean_array.append(str(item["card_id"]))
 
-	print("[PlayerData] _process_and_store_deck slot=%s name=%s cards=%d tier=%s" % [slot_str, name_str, clean_array.size(), tier_str])
-	decks[slot_str] = {"name": name_str, "cards": clean_array, "tier": tier_str}
+	var raw_featured = d.get("featured_cards", [])
+	if typeof(raw_featured) == TYPE_STRING:
+		var json2 = JSON.new()
+		if json2.parse(raw_featured) == OK:
+			raw_featured = json2.get_data()
+
+	var featured_array : Array = []
+	if typeof(raw_featured) == TYPE_ARRAY:
+		for item in raw_featured:
+			if typeof(item) == TYPE_STRING:
+				featured_array.append(item.strip_edges())
+
+	var validated_featured : Array = []
+	for fid in featured_array:
+		if fid in clean_array:
+			validated_featured.append(fid)
+	if validated_featured.size() > 3:
+		validated_featured = validated_featured.slice(0, 3)
+
+	print("[PlayerData] _process_and_store_deck slot=%s name=%s cards=%d tier=%s featured=%d" % [
+		slot_str, name_str, clean_array.size(), tier_str, validated_featured.size()
+	])
+
+	decks[slot_str] = {
+		"name":           name_str,
+		"cards":          clean_array,
+		"tier":           tier_str,
+		"featured_cards": validated_featured,
+	}
 
 
 # ============================================================
@@ -166,8 +266,34 @@ func get_deck_tier(slot: int) -> String:
 		return t if t in ["C", "B", "A", "S", "SS"] else "C"
 	return "C"
 
-func save_deck_local(slot: int, name: String, cards: Array, deck_tier: String = "C") -> void:
-	decks[str(slot)] = {"name": name, "cards": cards, "tier": deck_tier}
+func get_deck_featured(slot: int) -> Array:
+	var d = decks.get(str(slot), {})
+	if d is Dictionary:
+		return d.get("featured_cards", [])
+	return []
+
+func set_deck_featured_local(slot: int, featured: Array) -> void:
+	var d = decks.get(str(slot), {})
+	if d is Dictionary:
+		d["featured_cards"] = featured
+		decks[str(slot)] = d
+
+func save_deck_local(slot: int, name: String, cards: Array,
+		deck_tier: String = "C", featured: Array = [], preserve_featured: bool = false) -> void:
+	var final_featured : Array
+	if preserve_featured:
+		final_featured = get_deck_featured(slot)
+	else:
+		final_featured = featured
+		if final_featured.size() > 3:
+			final_featured = final_featured.slice(0, 3)
+
+	decks[str(slot)] = {
+		"name":           name,
+		"cards":          cards,
+		"tier":           deck_tier,
+		"featured_cards": final_featured,
+	}
 
 func get_used_slots() -> Array:
 	return decks.keys()
@@ -257,6 +383,8 @@ func logout() -> void:
 	gym_id            = ""
 	gym_role          = ""
 	active_deck_slot  = 1
+	deck_slots        = 3
+	equipped_coin     = "default" # <-- Reset al salir
 	is_logged_in      = false
 	NetworkManager.token     = ""
 	NetworkManager.player_id = ""
@@ -266,8 +394,10 @@ func logout() -> void:
 # ============================================================
 # API / Servidor
 # ============================================================
-func save_deck_to_server(slot: int, deck_name: String, cards_array: Array, deck_tier: String = "C") -> void:
-	save_deck_local(slot, deck_name, cards_array, deck_tier)
+func save_deck_to_server(slot: int, deck_name: String, cards_array: Array,
+		deck_tier: String = "C", featured_cards: Array = []) -> void:
+
+	save_deck_local(slot, deck_name, cards_array, deck_tier, featured_cards, false)
 
 	if not is_logged_in or NetworkManager.token == "":
 		print("[PlayerData] Jugador no logueado o sin token. Guardado localmente.")
@@ -290,9 +420,50 @@ func save_deck_to_server(slot: int, deck_name: String, cards_array: Array, deck_
 		"Content-Type: application/json",
 		"Authorization: Bearer " + NetworkManager.token
 	]
-	var payload = JSON.stringify({"slot": slot, "name": deck_name, "cards": cards_array, "tier": deck_tier})
+	var payload = JSON.stringify({
+		"slot":           slot,
+		"name":           deck_name,
+		"cards":          cards_array,
+		"tier":           deck_tier,
+		"featured_cards": featured_cards,
+	})
 
 	var err = http.request(url, headers, HTTPClient.METHOD_POST, payload)
 	if err != OK:
 		print("[PlayerData] Error al iniciar la petición HTTP: ", err)
+		http.queue_free()
+
+
+# ============================================================
+# Guardar mazo activo en servidor
+# ============================================================
+func save_active_deck_to_server(slot: int) -> void:
+	active_deck_slot = slot
+
+	if not is_logged_in or NetworkManager.token == "":
+		print("[PlayerData] Sin sesión, slot guardado solo localmente: ", slot)
+		return
+
+	var http = HTTPRequest.new()
+	add_child(http)
+
+	http.request_completed.connect(func(_result, response_code, _headers, body_response):
+		http.queue_free()
+		if response_code == 200:
+			print("[PlayerData] Mazo activo guardado en servidor: slot ", slot)
+		else:
+			print("[PlayerData] Error guardando mazo activo. Código: ", response_code,
+				" | ", body_response.get_string_from_utf8())
+	)
+
+	var url     = NetworkManager.BASE_URL + "/api/decks/active"
+	var headers = [
+		"Content-Type: application/json",
+		"Authorization: Bearer " + NetworkManager.token
+	]
+	var payload = JSON.stringify({"active_deck_slot": slot})
+
+	var err = http.request(url, headers, HTTPClient.METHOD_PUT, payload)
+	if err != OK:
+		print("[PlayerData] Error iniciando request: ", err)
 		http.queue_free()

@@ -1100,7 +1100,7 @@ var CARDS: Dictionary = {
 		"image_es": "res://assets/cards/Neo Genesis ES/wooper-neo-genesis-es-82.jpg",
 		"type": "POKEMON", "pokemon_type": "WATER",
 		"hp": 50, "stage": 0, "evolves_from": "",
-		"retreat_cost": 2, "weakness": "GRASS", "resistance": "LIGHTNING",
+		"retreat_cost": 1, "weakness": "GRASS", "resistance": "LIGHTNING",
 		"rarity": "COMMON",
 		"attacks": [
 			{"name": "Amnesia", "cost": {"WATER": 1}, "damage": 10, "effect": "Choose 1 of the Defending Pokémon's attacks. That Pokémon can't use that attack during your opponent's next turn."},

@@ -6,7 +6,7 @@ signal disconnected_from_server
 signal auth_ok(player_id)
 signal game_started(state)
 signal state_updated(state, log)
-signal game_over(winner, you_won)
+signal game_over(winner, you_won, rewards)
 signal error_received(message)
 signal opponent_disconnected
 signal chat_received(player_id, text)
@@ -29,15 +29,15 @@ signal spectator_chat_received(room_id, user_id, username, text)
 signal spectator_joined(room_id, user_id, count)
 signal spectator_left(room_id, user_id, count)
 
-
 signal challenge_decision_received(available: Array)
 signal challenge_pick_basics_received(available: Array, opp_placed_count: int)
+signal new_pokedex_peek_received(cards: Array)
+
 
 # ─── CONSTANTES DE MESA ──────────────────────────────────────
 const ROOM_MODE_CASUAL  = "casual"
 const ROOM_MODE_RANKING = "ranking"
 const ROOM_MODE_WAGER   = "wager"
-
 
 const TIER_ACCESS_ALL   = "all"
 const TIER_ACCESS_EQUAL = "equal"
@@ -147,14 +147,6 @@ func authenticate(pid: String, tok: String = "") -> void:
 func get_room_list() -> void:
 	_send({"type": "GET_ROOM_LIST", "payload": {}})
 
-## Crear sala con todas las opciones de mesa.
-## options puede contener:
-##   mode        (casual | ranking | wager)
-##   deck_tier   (C | B | A | S | SS)
-##   tier_access (all | equal | down)
-##   name        (string)
-##   password    (string, vacío = sin contraseña)
-##   wager       ({ type: "coins"|"gems"|"packs", amount: int })
 func create_room(deck: Array, options: Dictionary = {}) -> void:
 	if not _validate_deck(deck, "crear mesa"): return
 	_send({
@@ -170,9 +162,6 @@ func create_room(deck: Array, options: Dictionary = {}) -> void:
 		}
 	})
 
-## Unirse a una sala existente.
-## deck_tier: tier del deck del jugador (para validación de acceso)
-## password:  necesaria si la sala tiene contraseña
 func join_room(room_id: String, deck: Array, deck_tier: String = "C", password: String = "") -> void:
 	if not _validate_deck(deck, "unirse a mesa"): return
 	_send({
@@ -299,7 +288,8 @@ func _handle_message(text: String) -> void:
 
 		"GAME_OVER":
 			_was_in_battle = false
-			emit_signal("game_over", msg.get("winner", ""), msg.get("you_won", false))
+			var rewards = msg.get("rewards", {"coins": 0, "xp": 0})
+			emit_signal("game_over", msg.get("winner", ""), msg.get("you_won", false), rewards)
 
 		"OPPONENT_DISCONNECTED":
 			emit_signal("opponent_disconnected")
@@ -394,16 +384,24 @@ func _handle_message(text: String) -> void:
 				msg.get("user_id", ""),
 				msg.get("count",   0)
 			)
-# ── Challenge! ───────────────────────────────────────────
+
+		# ── Challenge! ───────────────────────────────────────
+		# El servidor envía CHALLENGE_DECISION al OPONENTE (el que debe decidir)
 		"CHALLENGE_DECISION":
 			emit_signal("challenge_decision_received", msg.get("available", []))
 
+		# El servidor envía CHALLENGE_PICK_YOUR_BASICS al INICIADOR
+		# (después de que el oponente aceptó y colocó sus básicos)
 		"CHALLENGE_PICK_YOUR_BASICS":
 			emit_signal("challenge_pick_basics_received",
 				msg.get("available", []),
 				msg.get("opp_placed_count", 0)
 			)
-			
+
+		"NEW_POKEDEX_PEEK":
+			emit_signal("new_pokedex_peek_received", msg.get("cards", []))
+
+
 		# ── También retransmitir eventos de espectador al MainMenu ──
 		"GAME_STARTED":
 			emit_signal("spectate_game_start",

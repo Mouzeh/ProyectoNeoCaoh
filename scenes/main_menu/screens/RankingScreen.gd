@@ -23,7 +23,7 @@ static func build(container: Control, menu) -> void:
 	var header = Panel.new()
 	header.anchor_left = 0; header.anchor_right  = 1
 	header.anchor_top  = 0; header.anchor_bottom = 0
-	header.offset_top  = 50; header.offset_bottom = 120
+	header.offset_top  = 0; header.offset_bottom = 120
 	var hs = StyleBoxFlat.new()
 	hs.bg_color = Color(C.COLOR_PANEL.r, C.COLOR_PANEL.g, C.COLOR_PANEL.b, 0.85)
 	hs.border_color = Color(C.COLOR_GOLD_DIM.r, C.COLOR_GOLD_DIM.g, C.COLOR_GOLD_DIM.b, 0.3)
