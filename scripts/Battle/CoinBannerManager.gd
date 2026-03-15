@@ -16,6 +16,7 @@ const COIN_BASE_PATH_FRONT = "res://assets/imagen/tokens/TCG Flip Coins/CoinFont
 const COIN_BASE_PATH_BACK  = "res://assets/imagen/tokens/TCG Flip Coins/CoinBack/"
 
 const COIN_FILES = {
+	# --- ORIGINALES ---
 	"default":             {"front": "ESPEON-LARGE-PURPLE-RAINBOW.png",      "back": "LARGE-YELLOW-A.png"},
 	"chikorita":           {"front": "CHIKORITA-SMALL-GREEN-NON.png",        "back": "LARGE-YELLOW-A.png"},
 	"cyndaquil":           {"front": "CYNDAQUIL-SMALL-GOLD-NON.png",         "back": "LARGE-YELLOW-A.png"},
@@ -31,6 +32,122 @@ const COIN_FILES = {
 	"pikachu_waving_gold": {"front": "PIKACHU_waving-LARGE-GOLD-MIRROR.png", "back": "LARGE-YELLOW-A.png"},
 	"mew_glitter":         {"front": "MEW-SMALL-SILVER-GLITTER.png",         "back": "LARGE-YELLOW-A.png"},
 	"arceus_gold":         {"front": "ARCEUS-SMALL-GOLD-MIRROR.png",         "back": "LARGE-YELLOW-A.png"},
+
+	# --- NUEVAS: Monedas Genéricas 151 ---
+	"moneda_151_oscuridad": {"front": "240px-151MT_Black_Darkness_Coin.jpg", "back": "cback.png"},
+	"moneda_151_agua":      {"front": "240px-151MT_Blue_Water_Coin.jpg",     "back": "cback.png"},
+	"moneda_151_lucha":     {"front": "240px-151MT_Brown_Fighting_Coin.jpg", "back": "cback.png"},
+	"moneda_151_metal":     {"front": "240px-151MT_Gray_Metal_Coin.jpg",     "back": "cback.png"},
+	"moneda_151_planta":    {"front": "240px-151MT_Green_Grass_Coin.jpg",    "back": "cback.png"},
+	"moneda_151_psiquico":  {"front": "240px-151MT_Purple_Psychic_Coin.jpg", "back": "cback.png"},
+	"moneda_151_fuego":     {"front": "240px-151MT_Red_Fire_Coin.jpg",       "back": "cback.png"},
+	"moneda_151_incolora":  {"front": "240px-151MT_White_Colorless_Coin.jpg","back": "cback.png"},
+	"moneda_151_rayo":      {"front": "240px-151MT_Yellow_Lightning_Coin.jpg","back": "cback.png"},
+
+	# --- NUEVAS: Monedas Promos CTVM / UPC / PARBL ---
+	"moneda_mew_rosa":      {"front": "240px-151UPC_Pink_Mew_Coin.jpg",      "back": "cback.png"},
+	"moneda_slowpoke":      {"front": "240px-CTVM_Pink_Slowpoke_Coin.jpg",   "back": "cback.png"},
+	"moneda_ditto":         {"front": "240px-CTVM_Purple_Ditto_Coin.jpg",    "back": "cback.png"},
+	"moneda_psyduck":       {"front": "240px-CTVM_Yellow_Psyduck_Coin.jpg",  "back": "cback.png"},
+	"moneda_pikachu_oro":   {"front": "240px-PARBL_Gold_Pikachu_Coin.jpg",   "back": "cback.png"},
+
+	# --- NUEVAS: Pokémon Gen 1 y Gen 2 ---
+	"moneda_aero_1":        {"front": "AERODACTYL-SMALL-DARK-BROWN-MIRROR-A.png", "back": "cback.png"},
+	"moneda_aero_2":        {"front": "AERODACTYL-SMALL-LIGHT-BROWN-MIRROR-A.png","back": "cback.png"},
+	"moneda_aero_3":        {"front": "AERODACTYL-SMALL-LIGHT-BROWN-STARLIGHT-A.png","back": "cback.png"},
+	"moneda_alakazam":      {"front": "ALAKAZAM-SMALL-PURPLE-COSMOS-B.png",      "back": "cback.png"},
+	"moneda_blastoise":     {"front": "BLASTOISE-LARGE-BLUE-MIRROR.png",         "back": "cback.png"},
+	"moneda_blissey":       {"front": "BLISSEY-SMALL-PINK-MIRROR.png",           "back": "cback.png"},
+	"moneda_bulbasaur":     {"front": "BULBASAUR-SMALL-GREEN-NON.png",           "back": "cback.png"},
+	"moneda_chansey_1":     {"front": "CHANSEY-LARGE-PINK-CRACKED ICE.png",      "back": "cback.png"},
+	"moneda_chansey_2":     {"front": "CHANSEY-LARGE-SILVER-RAINBOW.png",        "back": "cback.png"},
+	"moneda_chansey_3":     {"front": "CHANSEY-LARGE-SILVER-STARLIGHT.png",      "back": "cback.png"},
+	"moneda_chansey_4":     {"front": "CHANSEY-SMALL-SILVER-MIRROR-A.png",       "back": "cback.png"},
+	"moneda_chansey_5":     {"front": "CHANSEY-SMALL-SILVER-STARLIGHT-A.png",    "back": "cback.png"},
+	"moneda_chansey_6":     {"front": "CHANSEY-SMALL-SILVER-STARLIGHT-AB.png",   "back": "cback.png"},
+	"moneda_chansey_7":     {"front": "CHANSEY-SMALL-SILVER-STARLIGHT-B.png",    "back": "cback.png"},
+	"moneda_charizard_2":   {"front": "CHARIZARD-SMALL-SILVER-METAL-E.png",      "back": "cback.png"},
+	"moneda_charmander":    {"front": "CHARMANDER-SMALL-PINK-NON.png",           "back": "cback.png"},
+	"moneda_chikorita_2":   {"front": "CHIKORITA-SMALL-SILVER-MIRROR.png",       "back": "cback.png"},
+	"moneda_chikorita_3":   {"front": "CHIKORITA-SMALL-SILVER-NON.png",          "back": "cback.png"},
+	"moneda_cyndaquil_2":   {"front": "CYNDAQUIL-SMALL-RED-MIRROR.png",          "back": "cback.png"},
+	"moneda_eevee":         {"front": "EEVEE-SMALL-SILVER-STARLIGHT-A.png",      "back": "cback.png"},
+	"moneda_lugia_3":       {"front": "LUGIA-SMALL-SILVER-METAL-B.png",          "back": "cback.png"},
+	"moneda_lugia_4":       {"front": "LUGIA-SMALL-SILVER-METAL-C.png",          "back": "cback.png"},
+	"moneda_lugia_5":       {"front": "LUGIA-SMALL-YELLOW-NON.png",              "back": "cback.png"},
+	"moneda_meowth":        {"front": "MEOWTH-SMALL-SILVER-COSMOS-B.png",        "back": "cback.png"},
+	"moneda_pikachu_1":     {"front": "PIKACHU-LARGE-YELLOW-METAL-A.png",        "back": "cback.png"},
+	"moneda_pikachu_2":     {"front": "PIKACHU-SMALL-BLUE-NON-A.png",            "back": "cback.png"},
+	"moneda_pikachu_3":     {"front": "PIKACHU-SMALL-BRONZE-MIRROR.png",         "back": "cback.png"},
+	"moneda_pikachu_5":     {"front": "PIKACHU-SMALL-SILVER-METAL-A.png",        "back": "cback.png"},
+	"moneda_pikachu_7":     {"front": "PIKACHU-SMALL-SILVER-SPECKLE.png",        "back": "cback.png"},
+	"moneda_pikachu_8":     {"front": "PIKACHU-SMALL-YELLOW-STARLIGHT-B.png",    "back": "cback.png"},
+	"moneda_pikachu_cola_1":{"front": "PIKACHU_tail-LARGE-GOLD-MIRROR.png",      "back": "cback.png"},
+	"moneda_pikachu_cola_2":{"front": "PIKACHU_tail-LARGE-SILVER-RAINBOW.png",   "back": "cback.png"},
+	"moneda_pikachu_saluda_1":{"front":"PIKACHU_waving-LARGE-BRONZE-MIRROR.png", "back": "cback.png"},
+	"moneda_pikachu_saluda_2":{"front":"PIKACHU_waving-LARGE-GOLD-CRACKED ICE.png","back":"cback.png"},
+	"moneda_pikachu_saluda_4":{"front":"PIKACHU_waving-LARGE-GOLD-RAINBOW.png",  "back": "cback.png"},
+	"moneda_pikachu_saluda_5":{"front":"PIKACHU_waving-LARGE-SILVER-MIRROR.png", "back": "cback.png"},
+	"moneda_pikachu_saluda_6":{"front":"PIKACHU_waving-LARGE-SILVER-PIXEL.png",  "back": "cback.png"},
+	"moneda_pikachu_saluda_7":{"front":"PIKACHU_waving-LARGE-SILVER-SHEEN.png",  "back": "cback.png"},
+	"moneda_starmie":       {"front": "STARMIE-SMALL-BLUE-COSMOS-B.png",         "back": "cback.png"},
+	"moneda_steelix":       {"front": "STEELIX-SMALL-SILVER-CRACKED ICE.png",    "back": "cback.png"},
+	"moneda_totodile_1":    {"front": "TOTODILE-SMALL-BLUE-MIRROR.png",          "back": "cback.png"},
+	"moneda_totodile_3":    {"front": "TOTODILE-SMALL-TEAL-MIRROR.png",          "back": "cback.png"},
+	"moneda_tyranitar_1":   {"front": "TYRANITAR-SMALL-BLUE-CRACKED ICE.png",    "back": "cback.png"},
+	"moneda_tyranitar_2":   {"front": "TYRANITAR-SMALL-GOLD-BAR.png",            "back": "cback.png"},
+	"moneda_umbreon":       {"front": "UMBREON-LARGE-GREY-RAINBOW.png",          "back": "cback.png"},
+	"moneda_vileplume_1":   {"front": "VILEPLUME-SMALL-GREEN-CONFETTI-A.png",    "back": "cback.png"},
+	"moneda_vileplume_2":   {"front": "VILEPLUME-SMALL-GREEN-COSMOS-B.png",      "back": "cback.png"},
+	"moneda_vileplume_3":   {"front": "VILEPLUME-SMALL-GREEN-STARLIGHT-B.png",   "back": "cback.png"},
+
+	# --- NUEVAS: Monedas Energías y Otros ---
+	"moneda_energia_azul":  {"front": "ENERGY-SMALL-BLUE-NON.png",               "back": "cback.png"},
+	"moneda_energia_bronce":{"front": "ENERGY-SMALL-BRONZE-MIRROR.png",          "back": "cback.png"},
+	"moneda_energia_oro_1": {"front": "ENERGY-SMALL-GOLD-MIRROR.png",            "back": "cback.png"},
+	"moneda_energia_oro_2": {"front": "ENERGY-SMALL-GOLD-RAINBOW.png",           "back": "cback.png"},
+	"moneda_energia_verde_1":{"front": "ENERGY-SMALL-GREEN-NON.png",             "back": "cback.png"},
+	"moneda_energia_verde_2":{"front": "ENERGY-SMALL-LIME GREEN-MIRROR.png",     "back": "cback.png"},
+	"moneda_energia_morada":{"front": "ENERGY-SMALL-PURPLE-MIRROR.png",          "back": "cback.png"},
+	"moneda_energia_plata_1":{"front": "ENERGY-SMALL-SILVER-CONFETTI.png",       "back": "cback.png"},
+	"moneda_energia_plata_2":{"front": "ENERGY-SMALL-SILVER-MIRROR.png",         "back": "cback.png"},
+	"moneda_energia_plata_3":{"front": "ENERGY-SMALL-SILVER-NON.png",            "back": "cback.png"},
+	"moneda_energia_plata_4":{"front": "ENERGY-SMALL-SILVER-RAINBOW.png",        "back": "cback.png"},
+	"moneda_pokeball":      {"front": "PROFESSOR POKEBALL-LARGE-RED-MIRROR.png", "back": "cback.png"},
+	"moneda_rocket_1":      {"front": "ROCKET-SMALL-RED-NON.png",                "back": "cback.png"},
+	"moneda_rocket_2":      {"front": "ROCKET-SMALL-SILVER-CRACKED ICE.png",     "back": "cback.png"},
+
+	# --- NUEVAS: SVG ---
+	"moneda_svg_venusaur":  {"front": "SVG_Green_Venusaur_Coin.png",             "back": "cback.png"},
+	"moneda_svg_charizard": {"front": "SVG_Orange_Charizard_Coin.png",           "back": "cback.png"},
+
+	# --- NUEVAS: TCG Pocket Set ---
+	"tcgp_blastoise":       {"front": "TCGP_Coin_Blastoise.png",                 "back": "cback.png"},
+	"tcgp_charizard_1":     {"front": "TCGP_Coin_Charizard.png",                 "back": "cback.png"},
+	"tcgp_charizard_shiny": {"front": "TCGP_Coin_Shiny_Charizard.png",           "back": "cback.png"},
+	"tcgp_eevee_1":         {"front": "TCGP_Coin_Eevee.png",                     "back": "cback.png"},
+	"tcgp_eevee_2":         {"front": "TCGP_Coin_Eevee_ver_2.png",               "back": "cback.png"},
+	"tcgp_erika_1":         {"front": "TCGP_Coin_Erika_Alt.png",                 "back": "cback.png"},
+	"tcgp_erika_2":         {"front": "TCGP_Coin_Erika_Rainbow.png",             "back": "cback.png"},
+	"tcgp_espeon_umbreon":  {"front": "TCGP_Coin_Espeon_Umbreon.png",            "back": "cback.png"},
+	"tcgp_hooh_lugia":      {"front": "TCGP_Coin_Ho-Oh_Lugia.png",               "back": "cback.png"},
+	"tcgp_meowth":          {"front": "TCGP_Coin_Meowth.png",                    "back": "cback.png"},
+	"tcgp_mew":             {"front": "TCGP_Coin_Mew.png",                       "back": "cback.png"},
+	"tcgp_mewtwo":          {"front": "TCGP_Coin_Mewtwo.png",                    "back": "cback.png"},
+	"tcgp_pichu":           {"front": "TCGP_Coin_Pichu.png",                     "back": "cback.png"},
+	"tcgp_pikachu_1":       {"front": "TCGP_Coin_Pikachu.png",                   "back": "cback.png"},
+	"tcgp_pikachu_2":       {"front": "TCGP_Coin_Pikachu_ver_2.png",             "back": "cback.png"},
+	"tcgp_pokeball":        {"front": "TCGP_Coin_Poké_Ball.png",                 "back": "cback.png"},
+	"tcgp_profesor_oak":    {"front": "TCGP_Coin_Professor_Oak.png",             "back": "cback.png"},
+	"tcgp_psyduck":         {"front": "TCGP_Coin_Psyduck.png",                   "back": "cback.png"},
+	"tcgp_quagsire":        {"front": "TCGP_Coin_Quagsire.png",                  "back": "cback.png"},
+	"tcgp_red_1":           {"front": "TCGP_Coin_Red_Alt.png",                   "back": "cback.png"},
+	"tcgp_red_2":           {"front": "TCGP_Coin_Red_Rainbow.png",               "back": "cback.png"},
+	"tcgp_especial_1":      {"front": "TCGP_Coin_Special_Set_01.png",            "back": "cback.png"},
+	"tcgp_especial_2":      {"front": "TCGP_Coin_Special_Set_02.png",            "back": "cback.png"},
+	"tcgp_suicune":         {"front": "TCGP_Coin_Suicune.png",                   "back": "cback.png"},
+	"tcgp_tyranitar":       {"front": "TCGP_Coin_Tyranitar.png",                 "back": "cback.png"},
+	"tcgp_venusaur":        {"front": "TCGP_Coin_Venusaur.png",                  "back": "cback.png"}
 }
 
 # ─── ESTADO ─────────────────────────────────────────────────
@@ -338,10 +455,10 @@ func show_coin_banner(result_text: String, reason_text: String = "", effect_text
 	var tw = _parent.create_tween()
 	tw.set_parallel(true)
 	tw.tween_property(bg,        "color",      Color(0.0, 0.0, 0.0, 0.60), 0.25)
-	tw.tween_property(container, "modulate:a", 1.0,                         0.20)
-	tw.tween_property(circle,    "scale",      Vector2(1.0, 1.0),           0.35) \
+	tw.tween_property(container, "modulate:a", 1.0,                        0.20)
+	tw.tween_property(circle,    "scale",      Vector2(1.0, 1.0),          0.35) \
 		.set_trans(Tween.TRANS_BACK).set_ease(Tween.EASE_OUT)
-	tw.tween_property(glow,      "scale",      Vector2(1.0, 1.0),           0.40) \
+	tw.tween_property(glow,      "scale",      Vector2(1.0, 1.0),          0.40) \
 		.set_trans(Tween.TRANS_BACK).set_ease(Tween.EASE_OUT)
 
 	await _parent.get_tree().create_timer(3.2).timeout
